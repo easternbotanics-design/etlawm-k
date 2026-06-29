@@ -69,6 +69,8 @@ const verifyOtp = async (req, res) => {
 
   const e164phone = otpService.normalizeIndianPhone(phone_number, country_code);
 
+  console.log(`🔑 [OTP] Verification attempt for ${e164phone} - User submitted OTP: ${otp}`);
+
   if (!otpService.isValidIndianPhone(e164phone)) {
     return res.status(400).json({
       success: false,
