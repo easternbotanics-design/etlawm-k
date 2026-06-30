@@ -264,10 +264,6 @@ export default function Login() {
         return;
       }
 
-      if (data.otp) {
-        console.log(`🔑 [OTP] Received OTP: ${data.otp}`);
-      }
-
       setStep(1);
       setResend(60);
       showSuccess('OTP sent. Check your WhatsApp messages.');

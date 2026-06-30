@@ -44,7 +44,6 @@ const sendOtp = async (req, res) => {
     return res.json({
       success: true,
       message: "If the number is valid, an OTP has been sent.",
-      otp: otpResult.otp,
     });
   } catch (err) {
     console.error("[send-otp]", err);
