@@ -78,7 +78,8 @@ const sendOtp = async (phone_number, country_code = "+91") => {
     if (process.env.NODE_ENV !== 'production') {
       console.warn(`⚠️ [OTP] [DEVELOPMENT FALLBACK] Proceeding despite Fast2SMS failure. Your OTP code is: ${otpCode}`);
     } else {
-      throw error;
+      const apiErrorMsg = error.response?.data?.message || error.message;
+      throw new Error(apiErrorMsg);
     }
   }
 
