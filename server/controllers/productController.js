@@ -273,5 +273,39 @@ const deleteProductImage = async (req, res) => {
   }
 }
 
+const getProductIngredients = async (req, res) => {
+  try {
+    const { rows } = await db.productIngredients.getByProductId(req.params.id);
+    res.json({ success: true, ingredients: rows });
+  } catch (err) {
+    console.error("[get product ingredients]", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+}
 
-export { getAllProducts, getProduct, productImages, upload, uploadImage, addProduct, updateProduct, deleteProduct, addProductImage, setProductImagePrimary, deleteProductImage }
+const syncProductIngredients = async (req, res) => {
+  const { ingredientIds } = req.body;
+  try {
+    await db.productIngredients.sync(req.params.id, ingredientIds);
+    res.json({ success: true, message: "Product ingredients updated." });
+  } catch (err) {
+    console.error("[sync product ingredients]", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+}
+
+export {
+  getAllProducts,
+  getProduct,
+  productImages,
+  upload,
+  uploadImage,
+  addProduct,
+  updateProduct,
+  deleteProduct,
+  addProductImage,
+  setProductImagePrimary,
+  deleteProductImage,
+  getProductIngredients,
+  syncProductIngredients
+}

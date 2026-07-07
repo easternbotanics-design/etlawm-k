@@ -1,7 +1,7 @@
 // services/otpService.js
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-import { sendOtpMessage } from './whatsappService.js';
+import axios from 'axios';
 
 const normalizeIndianPhone = (phone_number, country_code = "+91") => {
   const digits = String(phone_number || "").replace(/\D/g, "");
@@ -42,16 +42,44 @@ const sendOtp = async (phone_number, country_code = "+91") => {
 
   const localPhone = getLocalIndianPhone(e164phone);
   
-  // Generate 4-digit OTP
-  const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+  // Generate 6-digit OTP
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
   console.log(`🔑 [OTP] Generated OTP for ${e164phone}: ${otpCode}`);
 
-  // Send via WhatsApp
+  // Send via Fast2SMS
   try {
-    await sendOtpMessage(e164phone, otpCode);
-  } catch (err) {
-    console.error(`❌ [OTP] Failed to send WhatsApp message to ${e164phone}:`, err.message || err);
+    const fast2smsData = {
+      otp_id: process.env.FAST2SMS_OTP_ID,
+      mobile: localPhone,
+      otp_expiry: parseInt(process.env.OTP_EXPIRY_MINUTES, 10) || 5,
+      otp_length: 6,
+      otp: otpCode
+    };
+
+    const response = await axios({
+      url: 'https://www.fast2sms.com/dev/otp/send',
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': process.env.FAST2SMS_API_KEY,
+        'content-type': 'application/json'
+      },
+      data: JSON.stringify(fast2smsData)
+    });
+
+    console.log(`[OTP] Fast2SMS response:`, response.data);
+
+    if (!response.data || response.data.return !== true) {
+      throw new Error(response.data?.message || "Fast2SMS returned failure status.");
+    }
+  } catch (error) {
+    console.error(`❌ [OTP] Failed to send Fast2SMS SMS:`, error.response?.data || error.message);
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(`⚠️ [OTP] [DEVELOPMENT FALLBACK] Proceeding despite Fast2SMS failure. Your OTP code is: ${otpCode}`);
+    } else {
+      throw error;
+    }
   }
 
   // Hash OTP code
@@ -63,7 +91,6 @@ const sendOtp = async (phone_number, country_code = "+91") => {
     localPhone,
     session_id,
     otp_hash,
-    otp: otpCode,
   };
 };
 
@@ -78,7 +105,7 @@ const verifyOtp = async (otpRecord, otp) => {
     throw new Error("No secure OTP hash available for verification.");
   }
 
-  if (!/^\d{4}$/.test(cleanOtp)) {
+  if (!/^\d{6}$/.test(cleanOtp)) {
     throw new Error("Invalid OTP format.");
   }
 

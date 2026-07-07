@@ -98,7 +98,7 @@ export function FilterContent({ filters, setFilters }) {
 
         if (cancelled) return;
 
-        setCategories(data.filter((category) => category.isActive));
+        setCategories(data.filter((category) => category.isActive && category.slug !== "all-products"));
       } catch (err) {
         if (!cancelled) {
           setCategoryError(err.message || "Failed to load categories");

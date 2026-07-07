@@ -5,6 +5,7 @@ import {
   getUserOrders,
   getOrderById,
   updateOrderStatus,
+  getAllOrders,
 } from "../controllers/orderController.js";
 
 import {
@@ -15,6 +16,8 @@ import {
 import { createOrder, validateOrder } from "../controllers/paymentController2.js";
 
 const orderRouter = express.Router();
+
+orderRouter.get("/admin/all", requireAdmin, getAllOrders);
 
 orderRouter.post("/", requireAuth, placeOrder);
 

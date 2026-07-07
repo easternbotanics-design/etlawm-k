@@ -59,3 +59,30 @@ export async function getOrderById(orderId) {
 
   return handleResponse(response, "Failed to fetch order");
 }
+
+export async function getAllOrders() {
+  if (!API) {
+    throw new Error("VITE_SERVER_API is missing.");
+  }
+
+  const response = await fetch(`${API}/api/orders/admin/all`, {
+    method: "GET",
+    headers: getHeaders(false),
+  });
+
+  return handleResponse(response, "Failed to fetch orders");
+}
+
+export async function updateOrderStatus(orderId, status) {
+  if (!API) {
+    throw new Error("VITE_SERVER_API is missing.");
+  }
+
+  const response = await fetch(`${API}/api/orders/${orderId}/status`, {
+    method: "PATCH",
+    headers: getHeaders(true),
+    body: JSON.stringify({ status }),
+  });
+
+  return handleResponse(response, "Failed to update order status");
+}

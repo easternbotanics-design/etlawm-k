@@ -198,7 +198,7 @@ export default function Login() {
   const [step, setStep] = useState(0);
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
-  const [digits, setDigits] = useState(Array(4).fill(''));
+  const [digits, setDigits] = useState(Array(6).fill(''));
   const [name, setName] = useState({ first: '', last: '' });
   const [status, setStatus] = useState({ msg: '', type: '' });
   const [loading, setLoading] = useState(false);
@@ -208,17 +208,6 @@ export default function Login() {
   const [googleProfile, setGoogleProfile] = useState(null);
 
   const digitRefs = useRef([]);
-
-  const alertShownRef = useRef(false);
-  
-  useEffect(() => {
-    if (alertShownRef.current) return;
-  
-    if (!authLoading && !token && !user) {
-      alertShownRef.current = true;
-      alert("Work in progress, you won't be able to log in");
-    }
-  }, [authLoading, token, user]);
 
   useEffect(() => {
     if (!authLoading && token && user) {
@@ -266,7 +255,7 @@ export default function Login() {
 
       setStep(1);
       setResend(60);
-      showSuccess('OTP sent. Check your WhatsApp messages.');
+      showSuccess('OTP sent successfully to your mobile number.');
       setTimeout(() => digitRefs.current[0]?.focus(), 100);
     } catch {
       showError('Could not reach the server.');
@@ -281,7 +270,7 @@ export default function Login() {
     next[idx] = char;
     setDigits(next);
 
-    if (char && idx < 3) {
+    if (char && idx < 5) {
       digitRefs.current[idx + 1]?.focus();
     }
   };
@@ -296,19 +285,19 @@ export default function Login() {
     const pasted = event.clipboardData
       .getData('text')
       .replace(/\D/g, '')
-      .slice(0, 4);
+      .slice(0, 6);
 
     if (!pasted) return;
 
     event.preventDefault();
-    const next = Array(4).fill('');
+    const next = Array(6).fill('');
     pasted.split('').forEach((char, index) => {
       next[index] = char;
     });
 
     setDigits(next);
     setTimeout(() => {
-      digitRefs.current[Math.min(pasted.length, 3)]?.focus();
+      digitRefs.current[Math.min(pasted.length, 5)]?.focus();
     }, 50);
   };
 
@@ -317,8 +306,8 @@ export default function Login() {
     clearStatus();
 
     const otp = digits.join('');
-    if (otp.length !== 4) {
-      showError('Please enter all four OTP digits.');
+    if (otp.length !== 6) {
+      showError('Please enter all six OTP digits.');
       return;
     }
 
@@ -469,7 +458,7 @@ export default function Login() {
   const headings = ['Welcome', 'Verify your number', 'Complete your profile'];
   const subtitles = [
     'Enter your mobile number to continue.',
-    `Enter the four-digit code sent to ${countryCode} ${phone}.`,
+    `Enter the six-digit code sent to ${countryCode} ${phone}.`,
     'Add your name manually or use Google to fill it automatically.',
   ];
 
@@ -518,7 +507,7 @@ export default function Login() {
               className="mb-7 max-w-[250px] text-[12px] leading-[1.8]"
               style={{ color: colours.mutedText }}
             >
-              bleh
+            
             </p>
             <StepDots step={step} />
           </div>
@@ -637,7 +626,7 @@ export default function Login() {
                   type="button"
                   onClick={() => {
                     setStep(0);
-                    setDigits(Array(4).fill(''));
+                    setDigits(Array(6).fill(''));
                     clearStatus();
                   }}
                   className="underline underline-offset-4"

@@ -88,7 +88,7 @@ export default function Collection() {
   const [fetchKey, setFetchKey] = useState(0);
 
   const [filters, setFilters] = useState({
-    categories: (categorySlug && categorySlug !== "all-products") ? [categorySlug] : [],
+    categories: categorySlug ? [categorySlug] : [],
     concerns: [],
     sort: "newest",
   });
@@ -96,7 +96,7 @@ export default function Collection() {
   useEffect(() => {
     setFilters((prev) => ({
       ...prev,
-      categories: (categorySlug && categorySlug !== "all-products") ? [categorySlug] : [],
+      categories: categorySlug ? [categorySlug] : [],
     }));
   }, [categorySlug]);
 
@@ -118,7 +118,7 @@ export default function Collection() {
         setProducts(productsData);
 
         setCategories(
-          categoriesData.filter((category) => category.isActive)
+          categoriesData.filter((category) => category.isActive && category.slug !== "all-products")
         );
       } catch (err) {
         if (!cancelled) {
@@ -140,12 +140,6 @@ export default function Collection() {
 
   const activeCategory = useMemo(() => {
     if (!categorySlug) return null;
-    if (categorySlug === "all-products") {
-      return {
-        name: "All Products",
-        slug: "all-products",
-      };
-    }
 
     return (
       categories.find((category) => category.slug === categorySlug) || null
@@ -155,7 +149,7 @@ export default function Collection() {
   const visibleProducts = useMemo(() => {
     let list = [...products];
 
-    if (filters.categories.length > 0) {
+    if (filters.categories.length > 0 && !filters.categories.includes("all-products")) {
       list = list.filter((product) =>
         filters.categories.includes(product.category)
       );
@@ -244,7 +238,7 @@ export default function Collection() {
             padding: "8px 24px 0",
           }}
         >
-          <Breadcrumb category={activeCategory} />
+          <Breadcrumb />
 
           {/* <div style={{ marginBottom: "12px" }}>
             <h1

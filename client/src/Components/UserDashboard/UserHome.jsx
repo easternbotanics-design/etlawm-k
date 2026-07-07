@@ -1,29 +1,11 @@
-import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { colours, fonts } from "../../theme/theme";
-import WhatsappOptInCard from "./WhatsappOptInCard";
 
 const UserHome = () => {
   const { user } = useAuth();
-  const [sessionDismissed, setSessionDismissed] = useState(
-    sessionStorage.getItem("dismiss_whatsapp_optin") === "true"
-  );
-
-  const handleAskLater = () => {
-    sessionStorage.setItem("dismiss_whatsapp_optin", "true");
-    setSessionDismissed(true);
-  };
-
-  const showPrompt = user && !user.whatsapp_opt_in && !sessionDismissed;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {showPrompt && (
-        <WhatsappOptInCard 
-          showAskLater={true} 
-          onAskLater={handleAskLater} 
-        />
-      )}
 
       <div 
         className="rounded-2xl border p-8 bg-white"

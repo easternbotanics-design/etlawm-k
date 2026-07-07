@@ -4,7 +4,6 @@ import CMSHomepageReviews from "../Components/AdminPanel/AdminContent/CMSHomepag
 import ReviewContent from "../Components/AdminPanel/AdminContent/CMSReview.jsx";
 import CMSReviewForm from "../Components/AdminPanel/AdminContent/CMSReviewForm.jsx";
 import ProductReviews from "../Components/AdminPanel/AdminContent/ProductReviews.jsx";
-import CMSQuestions from "../Components/AdminPanel/AdminContent/CMSQuestions.jsx";
 import AdminCollection from "../Components/AdminPanel/AdminCollection/AdminCollection.jsx";
 import AdminProductForm from "../Components/AdminPanel/AdminCollection/CMSProductForm.jsx";
 import AdminSidebar from "../Components/AdminPanel/AdminSidebar.jsx";
@@ -12,7 +11,11 @@ import AdminTopBar from "../Components/AdminPanel/AdminTopBar.jsx";
 import AdminProfile from "../Components/AdminPanel/AdminProfile.jsx";
 import AdminSettings from "../Components/AdminPanel/AdminSettings.jsx";
 import AdminCollectionProducts from "../Components/AdminPanel/AdminCollection/AdminCollectionProducts.jsx";
+import CMSIngredients from "../Components/AdminPanel/AdminContent/CMSIngredients.jsx";
+import CMSIngredientForm from "../Components/AdminPanel/AdminContent/CMSIngredientForm.jsx";
+import AdminOrders from "../Components/AdminPanel/AdminOrders.jsx";
 import { colours, fonts } from "../theme/theme.js";
+
 
 const AdminHome = () => {
   return (
@@ -132,7 +135,10 @@ const AdminDashBoard = () => {
             <Route path="/content/reviews/add-review" element={<CMSReviewForm />} />
             <Route path="/content/reviews/edit/:id" element={<CMSReviewForm />} />
             <Route path="/content/reviews/:slug" element={<ProductReviews />} />
-            <Route path="/content/questions" element={<CMSQuestions />} />
+            <Route path="/content/ingredients" element={<CMSIngredients />} />
+            <Route path="/content/ingredients/add" element={<CMSIngredientForm />} />
+            <Route path="/content/ingredients/edit/:id" element={<CMSIngredientForm />} />
+
 
             {/* Collections Group */}
             <Route path="collection" element={<AdminCollection />} />
@@ -140,6 +146,9 @@ const AdminDashBoard = () => {
             <Route path="collection/edit/:id" element={<AdminProductForm />} />
             <Route path="collection/:slug" element={<AdminCollectionProducts />} />
   
+            {/* Operations Group */}
+            <Route path="operations/orders" element={<AdminOrders />} />
+
             {/* Profile & Settings routes */}
             <Route path="profile" element={<AdminProfile />} />
             <Route path="settings" element={<AdminSettings />} />

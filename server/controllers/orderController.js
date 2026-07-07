@@ -216,9 +216,27 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+// Admin: Get all orders
+const getAllOrders = async (req, res) => {
+  try {
+    const { rows } = await db.orders.findAllAdmin();
+    return res.json({
+      success: true,
+      orders: rows,
+    });
+  } catch (err) {
+    console.error("[get all orders admin]", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error.",
+    });
+  }
+};
+
 export {
   placeOrder,
   getUserOrders,
   getOrderById,
   updateOrderStatus,
+  getAllOrders,
 };

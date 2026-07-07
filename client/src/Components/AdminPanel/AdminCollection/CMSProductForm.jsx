@@ -79,6 +79,82 @@ export default function AdminProductForm() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  
+  const [selectedIngredients, setSelectedIngredients] = useState([]);
+  const [showPopup, setShowPopup] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allIngredients, setAllIngredients] = useState([]);
+  const [loadingIngredients, setLoadingIngredients] = useState(false);
+
+  useEffect(() => {
+    const loadAllIngredients = async () => {
+      try {
+        setLoadingIngredients(true);
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API}/api/admin/ingredients`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAllIngredients(data.ingredients ?? []);
+        }
+      } catch (err) {
+        console.error("Failed to load ingredients", err);
+      } finally {
+        setLoadingIngredients(false);
+      }
+    };
+    loadAllIngredients();
+  }, []);
+
+  const refreshIngredientsList = async () => {
+    try {
+      setLoadingIngredients(true);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API}/api/admin/ingredients`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAllIngredients(data.ingredients ?? []);
+      }
+    } catch (err) {
+      console.error("Failed to refresh ingredients", err);
+    } finally {
+      setLoadingIngredients(false);
+    }
+  };
+
+  const handleToggleIngredient = (ingredient) => {
+    setSelectedIngredients((prev) => {
+      const exists = prev.some((item) => item.id === ingredient.id);
+      if (exists) {
+        return prev.filter((item) => item.id !== ingredient.id);
+      } else {
+        return [...prev, ingredient];
+      }
+    });
+  };
+
+  const handleRemoveIngredient = (ingredientId) => {
+    setSelectedIngredients((prev) => prev.filter((item) => item.id !== ingredientId));
+  };
+
+  const handleCreateNewIngredient = () => {
+    window.open('/admin/content/ingredients', '_blank');
+  };
+
+  const filteredIngredients = allIngredients.filter(
+    (ing) =>
+      ing.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ing.scientific_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const getHeaders = () => {
     const token = localStorage.getItem('token');
@@ -93,7 +169,7 @@ export default function AdminProductForm() {
   const finalPrice = Math.max(
     0,
     form.discountType === 'percentage'
-      ? basePrice - (basePrice * discountValue) / 100
+      ? Math.floor(basePrice - (basePrice * discountValue) / 100)
       : basePrice - discountValue
   );
 
@@ -105,7 +181,8 @@ export default function AdminProductForm() {
         const catRes = await fetch(`${API}/api/categories`);
         if (!catRes.ok) throw new Error('Failed to load categories');
         const catData = await catRes.json();
-        setCategories(catData.categories ?? []);
+        const filteredCats = (catData.categories ?? []).filter(cat => cat.slug !== 'all-products');
+        setCategories(filteredCats);
 
         if (isEditMode) {
           const product = await getProductById(id);
@@ -141,6 +218,12 @@ export default function AdminProductForm() {
             setUploadedImages(imgData.images ?? []);
           } else if (product.image) {
             setUploadedImages([{ id: null, image_url: product.image, is_primary: true, sort_order: 0 }]);
+          }
+
+          const ingRes = await fetch(`${API}/api/product/${id}/ingredients`);
+          if (ingRes.ok) {
+            const ingData = await ingRes.json();
+            setSelectedIngredients(ingData.ingredients ?? []);
           }
         }
       } catch (err) {
@@ -366,6 +449,17 @@ export default function AdminProductForm() {
         }
 
         setSuccess(submitMode === 'draft' ? 'Draft saved successfully.' : 'Product updated successfully.');
+
+        // Sync ingredients relation
+        const token = localStorage.getItem('token');
+        await fetch(`${API}/api/admin/products/${id}/ingredients`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ ingredientIds: selectedIngredients.map(i => i.id) }),
+        });
       } else {
         savedProduct = await createProduct(payload);
 
@@ -374,6 +468,17 @@ export default function AdminProductForm() {
             const img = uploadedImages[i];
             await addProductImage(savedProduct.id, img.image_url, i === 0, i);
           }
+
+          // Sync ingredients relation
+          const token = localStorage.getItem('token');
+          await fetch(`${API}/api/admin/products/${savedProduct.id}/ingredients`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ ingredientIds: selectedIngredients.map(i => i.id) }),
+          });
         }
 
         setSuccess(submitMode === 'draft' ? 'Draft saved successfully.' : 'Product published successfully.');
@@ -576,6 +681,62 @@ export default function AdminProductForm() {
 
               <section style={cardStyle} className="border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
                 <div>
+                  <h2 style={{ fontFamily: fonts.primary }} className="text-2xl font-semibold">Ingredients</h2>
+                  <p style={{ color: colours.mutedText }} className="text-xs mt-1">Select and order the ingredients for this product.</p>
+                </div>
+
+                <div className="flex flex-wrap gap-2 min-h-[50px] p-4 rounded-xl border border-dashed items-center" style={{ borderColor: colours.border, backgroundColor: `${colours.primary}33` }}>
+                  {selectedIngredients.length > 0 ? (
+                    selectedIngredients.map((ingredient) => (
+                      <div
+                        key={ingredient.id}
+                        style={{
+                          backgroundColor: colours.accent,
+                          color: colours.background,
+                          fontFamily: fonts.secondary,
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm transition-all duration-200"
+                      >
+                        <span>{ingredient.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveIngredient(ingredient.id)}
+                          className="hover:scale-110 active:scale-95 transition-transform text-white bg-transparent border-none p-0 cursor-pointer text-sm font-bold leading-none"
+                          title="Remove ingredient"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <span style={{ color: colours.mutedText }} className="text-xs italic select-none">
+                      No ingredients selected
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowPopup(true)}
+                    style={{ backgroundColor: colours.secondary, color: colours.background }}
+                    className="form-btn-primary px-4 py-3 rounded-lg text-xs uppercase tracking-widest font-semibold transition-all cursor-pointer border-none"
+                  >
+                    Add Existing Ingredient
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateNewIngredient}
+                    style={{ borderColor: colours.border, color: colours.text }}
+                    className="form-btn-secondary border px-4 py-3 rounded-lg text-xs uppercase tracking-widest font-semibold bg-transparent transition-all cursor-pointer"
+                  >
+                    Create New Ingredient
+                  </button>
+                </div>
+              </section>
+
+              <section style={cardStyle} className="border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+                <div>
                   <h2 style={{ fontFamily: fonts.primary }} className="text-2xl font-semibold">SEO</h2>
                   <p style={{ color: colours.mutedText }} className="text-xs mt-1">Optional product-level metadata for the product page.</p>
                 </div>
@@ -687,6 +848,118 @@ export default function AdminProductForm() {
           </form>
         )}
       </main>
+
+      {showPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            style={cardStyle}
+            className="w-full max-w-lg rounded-2xl border shadow-xl flex flex-col max-h-[85vh] overflow-hidden"
+          >
+            {/* Modal Header */}
+            <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: colours.border }}>
+              <h3 style={{ fontFamily: fonts.primary }} className="text-xl font-semibold">
+                Add Existing Ingredients
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowPopup(false)}
+                className="text-stone-400 hover:text-stone-600 transition-colors bg-transparent border-none text-2xl p-0 cursor-pointer leading-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Search Input & Refresh */}
+            <div className="p-4 border-b flex gap-3 items-center" style={{ borderColor: colours.border }}>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search ingredients..."
+                style={inputStyle}
+                className="form-input flex-1 rounded-lg border px-4 py-2 text-sm placeholder-stone-400 focus:outline-none transition-all"
+              />
+              <button
+                type="button"
+                onClick={refreshIngredientsList}
+                disabled={loadingIngredients}
+                className="flex items-center gap-1.5 text-xs border rounded-lg px-3 py-2 hover:bg-stone-50 transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                style={{ borderColor: colours.border, color: colours.text }}
+              >
+                {loadingIngredients ? 'Refreshing...' : '🔄 Refresh'}
+              </button>
+            </div>
+
+            {/* Ingredients List */}
+            <div className="p-4 space-y-2" style={{ maxHeight: '400px', overflowY: 'auto' }} data-lenis-prevent>
+              {filteredIngredients.length > 0 ? (
+                filteredIngredients.map((ing) => {
+                  const isSelected = selectedIngredients.some((item) => item.id === ing.id);
+                  return (
+                    <div
+                      key={ing.id}
+                      style={{ borderColor: colours.border, backgroundColor: isSelected ? `${colours.accent}15` : 'transparent' }}
+                      className="flex items-center justify-between p-3 rounded-xl border transition-all duration-200"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        {ing.image_url ? (
+                          <img
+                            src={ing.image_url}
+                            alt={ing.name}
+                            className="w-10 h-10 rounded-lg object-cover border"
+                            style={{ borderColor: colours.border }}
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-stone-100" style={{ borderColor: colours.border }}>
+                            🌱
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate">{ing.name}</p>
+                          {ing.scientific_name && (
+                            <p style={{ color: colours.mutedText }} className="text-xs italic truncate">
+                              {ing.scientific_name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggleIngredient(ing)}
+                        style={{
+                          backgroundColor: isSelected ? colours.accent : 'transparent',
+                          color: isSelected ? colours.background : colours.text,
+                          borderColor: isSelected ? colours.accent : colours.border,
+                        }}
+                        className="px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer"
+                      >
+                        {isSelected ? 'Selected' : 'Add'}
+                      </button>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="py-8 text-center" style={{ color: colours.mutedText }}>
+                  {loadingIngredients ? 'Loading ingredients...' : `No ingredients found matching "${searchQuery}"`}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t flex justify-end gap-3" style={{ borderColor: colours.border }}>
+              <button
+                type="button"
+                onClick={() => setShowPopup(false)}
+                style={{ backgroundColor: colours.secondary, color: colours.background }}
+                className="form-btn-primary px-5 py-2.5 rounded-lg text-xs uppercase tracking-widest font-semibold transition-all cursor-pointer border-none"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -101,16 +101,32 @@ function OrderSuccess() {
               Your payment has been verified, and your order is being processed.
             </p>
 
-            <div
-              className="mt-6 inline-block rounded-xl px-4 py-2 text-sm font-semibold border"
-              style={{
-                borderColor: colours.border,
-                backgroundColor: colours.primary,
-                color: colours.secondary,
-                fontFamily: fonts.secondary,
-              }}
-            >
-              Order ID: <span className="font-mono text-xs opacity-75">{orderId}</span>
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <div
+                className="inline-block rounded-xl px-4 py-2 text-sm font-semibold border"
+                style={{
+                  borderColor: colours.border,
+                  backgroundColor: colours.primary,
+                  color: colours.secondary,
+                  fontFamily: fonts.secondary,
+                }}
+              >
+                Order ID: <span className="font-mono text-xs opacity-75">{orderId}</span>
+              </div>
+
+              {order?.razorpay_payment_id && (
+                <div
+                  className="inline-block rounded-xl px-4 py-2 text-sm font-semibold border animate-in fade-in duration-200"
+                  style={{
+                    borderColor: colours.border,
+                    backgroundColor: colours.primary,
+                    color: colours.secondary,
+                    fontFamily: fonts.secondary,
+                  }}
+                >
+                  Payment ID: <span className="font-mono text-xs opacity-75">{order.razorpay_payment_id}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -254,7 +270,7 @@ function OrderSuccess() {
           )}
 
           {/* Action buttons */}
-          <div className="mt-10 flex flex-wrap gap-4 justify-center">
+          <div className="mt-10 flex flex-wrap gap-4 justify-center no-print">
             <button
               onClick={() => navigate("/collection")}
               className="cursor-pointer px-6 py-3 text-xs font-bold tracking-[2px] uppercase border transition-all duration-200"
@@ -293,7 +309,41 @@ function OrderSuccess() {
             >
               Go to Dashboard
             </button>
+
+            <button
+              onClick={() => window.print()}
+              className="cursor-pointer px-6 py-3 text-xs font-bold tracking-[2px] uppercase transition-all duration-200"
+              style={{
+                fontFamily: fonts.secondary,
+                backgroundColor: colours.accent,
+                color: colours.primary,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = colours.secondary;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = colours.accent;
+              }}
+            >
+              Download Receipt
+            </button>
           </div>
+          
+          <style>{`
+            @media print {
+              header, nav, .no-print {
+                display: none !important;
+              }
+              main {
+                padding-top: 2rem !important;
+                padding-bottom: 2rem !important;
+                background-color: white !important;
+              }
+              .mx-auto {
+                max-width: 100% !important;
+              }
+            }
+          `}</style>
         </div>
       </main>
     </div>

@@ -1,5 +1,5 @@
 import express from 'express';
-import { upload, uploadImage, addProduct, updateProduct, deleteProduct, addProductImage, setProductImagePrimary, deleteProductImage } from '../controllers/productController.js';
+import { upload, uploadImage, addProduct, updateProduct, deleteProduct, addProductImage, setProductImagePrimary, deleteProductImage, syncProductIngredients } from '../controllers/productController.js';
 import { addCategory, updateCategory, deleteCategory } from '../controllers/categoryController.js';
 import { getAdminProfile, updateAdminProfile, getAdminSettings, updateAdminSettings, makeAdmin, getAdmins, removeAdmin } from '../controllers/adminProfileController.js';
 import {
@@ -12,7 +12,14 @@ import {
   getCmsReviewById
 } from '../controllers/reviewController.js';
 import { requireAdmin } from '../middleware/auth.js';
-import { getQuestions, deleteQuestion } from '../controllers/questionController.js';
+import {
+  createIngredient,
+  getAdminIngredients,
+  getIngredientById,
+  updateIngredient,
+  deleteIngredient
+} from '../controllers/ingredientController.js';
+
 
 const adminRouter = express.Router();
 
@@ -35,6 +42,7 @@ adminRouter.delete('/categories/:id', deleteCategory);
 adminRouter.post("/products", addProduct);
 adminRouter.patch("/products/:id", updateProduct);
 adminRouter.delete("/products/:id", deleteProduct);
+adminRouter.post("/products/:id/ingredients", syncProductIngredients);
 
 //see here this api call
 adminRouter.post("/upload", upload.single("image"), uploadImage);
@@ -49,7 +57,11 @@ adminRouter.get("/reviews/:id", getCmsReviewById);
 adminRouter.patch("/reviews/:id", updateCmsReview);
 adminRouter.delete("/reviews/:id", deleteCmsReview);
 
-adminRouter.get("/questions", getQuestions);
-adminRouter.delete("/questions/:id", deleteQuestion);
+adminRouter.get("/ingredients", getAdminIngredients);
+adminRouter.post("/ingredients", createIngredient);
+adminRouter.get("/ingredients/:id", getIngredientById);
+adminRouter.patch("/ingredients/:id", updateIngredient);
+adminRouter.delete("/ingredients/:id", deleteIngredient);
+
 
 export default adminRouter;

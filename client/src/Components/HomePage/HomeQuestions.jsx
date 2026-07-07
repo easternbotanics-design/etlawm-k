@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { colours, fonts } from "../../theme/theme.js";
-import { submitQuestion } from "../../services/questionService.js";
 
 const palette = {
   primary: colours.primary || "#F7F3EC",
@@ -13,64 +11,8 @@ const palette = {
 };
 
 const HomeQuestions = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone_number: "",
-    subject: "",
-    message: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState({ type: "", message: "" });
-
-  const handleChange = (e) => {
-    const { id, value } = e.target;
-    if (id === "message" && value.length > 250) {
-      setFormData((prev) => ({ ...prev, [id]: value.slice(0, 250) }));
-      return;
-    }
-    setFormData((prev) => ({ ...prev, [id]: value }));
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setLoading(true);
-    setStatus({ type: "", message: "" });
-
-    // Validate inputs
-    if (
-      !formData.name.trim() ||
-      !formData.email.trim() ||
-      !formData.phone_number.trim() ||
-      !formData.subject.trim() ||
-      !formData.message.trim()
-    ) {
-      setStatus({ type: "error", message: "All fields are required." });
-      setLoading(false);
-      return;
-    }
-
-    try {
-      await submitQuestion(formData);
-      setStatus({
-        type: "success",
-        message: "Your message has been sent successfully!",
-      });
-      setFormData({
-        name: "",
-        email: "",
-        phone_number: "",
-        subject: "",
-        message: "",
-      });
-    } catch (err) {
-      setStatus({
-        type: "error",
-        message: err.message || "Failed to submit your message. Please try again.",
-      });
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -145,7 +87,7 @@ const HomeQuestions = () => {
             backgroundColor: `${palette.background}cc`,
           }}
         >
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2">
             <div>
               <label
                 htmlFor="name"
@@ -161,8 +103,6 @@ const HomeQuestions = () => {
               <input
                 id="name"
                 type="text"
-                value={formData.name}
-                onChange={handleChange}
                 placeholder="Your name"
                 className="w-full rounded-none border-0 border-b bg-transparent px-0 py-3 text-sm outline-none transition placeholder:text-[#171715]/40 focus:border-[#171715]"
                 style={{
@@ -188,36 +128,7 @@ const HomeQuestions = () => {
               <input
                 id="email"
                 type="email"
-                value={formData.email}
-                onChange={handleChange}
                 placeholder="Your email"
-                className="w-full rounded-none border-0 border-b bg-transparent px-0 py-3 text-sm outline-none transition placeholder:text-[#171715]/40 focus:border-[#171715]"
-                style={{
-                  borderBottomColor: `${palette.secondary}45`,
-                  color: palette.secondary,
-                  fontFamily: fonts.secondary,
-                }}
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="phone_number"
-                className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.22em]"
-                style={{
-                  color: palette.accent,
-                  fontFamily: fonts.secondary,
-                }}
-              >
-                Phone Number
-              </label>
-
-              <input
-                id="phone_number"
-                type="tel"
-                value={formData.phone_number}
-                onChange={handleChange}
-                placeholder="Your phone number"
                 className="w-full rounded-none border-0 border-b bg-transparent px-0 py-3 text-sm outline-none transition placeholder:text-[#171715]/40 focus:border-[#171715]"
                 style={{
                   borderBottomColor: `${palette.secondary}45`,
@@ -243,8 +154,6 @@ const HomeQuestions = () => {
             <input
               id="subject"
               type="text"
-              value={formData.subject}
-              onChange={handleChange}
               placeholder="What is this about?"
               className="w-full rounded-none border-0 border-b bg-transparent px-0 py-3 text-sm outline-none transition placeholder:text-[#171715]/40 focus:border-[#171715]"
               style={{
@@ -269,9 +178,6 @@ const HomeQuestions = () => {
 
             <textarea
               id="message"
-              value={formData.message}
-              onChange={handleChange}
-              maxLength={250}
               placeholder="Write your message"
               rows="5"
               className="w-full resize-none rounded-none border-0 border-b bg-transparent px-0 py-3 text-sm outline-none transition placeholder:text-[#171715]/40 focus:border-[#171715]"
@@ -281,38 +187,23 @@ const HomeQuestions = () => {
                 fontFamily: fonts.secondary,
               }}
             />
-            <div 
-              className="mt-1.5 flex justify-between text-[10px] uppercase tracking-wider font-semibold" 
-              style={{ color: palette.muted, fontFamily: fonts.secondary }}
-            >
-              <span>Limit: 250 letters max</span>
-              <span>Letters: {formData.message.length} / 250</span>
-            </div>
           </div>
 
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            {status.message && (
-              <span
-                className={`text-xs font-semibold ${
-                  status.type === "success" ? "text-emerald-600" : "text-rose-500"
-                }`}
-                style={{ fontFamily: fonts.secondary }}
-              >
-                {status.message}
-              </span>
-            )}
+            
+              {/* Frontend only. Add your backend call inside `handleSubmit` when
+              the contact route is ready.*/}
 
             <button
               type="submit"
-              disabled={loading}
-              className="rounded-full px-7 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+              className="rounded-full px-7 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:-translate-y-0.5"
               style={{
                 backgroundColor: palette.accent,
                 fontFamily: fonts.secondary,
                 boxShadow: `0 14px 34px ${palette.accent}33`,
               }}
             >
-              {loading ? "Sending..." : "Send message"}
+              Send message
             </button>
           </div>
         </form>

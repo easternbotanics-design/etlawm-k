@@ -1,16 +1,16 @@
 import NavBar from "../Components/NavBar2.jsx";
 import HomeHero from "../Components/HomePage/HomeHero.jsx";
-import HomeDirections from "../Components/HomePage/HomeDirections.jsx";
-import HomePathways from "../Components/HomePage/HomePathways.jsx";
 import HomePrinciples from "../Components/HomePage/HomePrinciples.jsx";
-import HomeInsights from "../Components/HomePage/HomeInsights.jsx";
 import HomeSupport from "../Components/HomePage/HomeSupport.jsx";
 import HomeQuestions from "../Components/HomePage/HomeQuestions.jsx";
-import HomeFinalCTA from "../Components/HomePage/HomeFinalCTA.jsx";
-import HomeFooter from "../Components/HomePage/HomeFooter.jsx";
 import Footer from "../Components/Footer.jsx";
 import Philosophy from "../Components/HomePage/Philosophy3.jsx";
 import ProductPanel from "../Components/HomePage/ProductPanel.jsx";
+import HomeDirections from "../Components/HomePage/HomeDirections.jsx";
+import HomePathways from "../Components/HomePage/HomePathways.jsx";
+import HomeInsights from "../Components/HomePage/HomeInsights.jsx";
+import HomeFinalCTA from "../Components/HomePage/HomeFinalCTA.jsx";
+import HomeFooter from "../Components/HomePage/HomeFooter.jsx";
 
 const Home = () => {
   return (

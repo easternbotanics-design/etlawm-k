@@ -33,7 +33,6 @@ const AdminSettings = () => {
     store_name: "ETLAWM",
     support_email: "support@etlawm.com",
     low_stock_threshold: "5",
-    enable_whatsapp_notifications: "true",
   });
 
   // Admin phone numbers state
@@ -229,18 +228,18 @@ const AdminSettings = () => {
             <div className="space-y-4">
               {/* Store Name */}
               <div className="space-y-2.5">
-                {/* <label style={{ color: colours.mutedText }} className="text-xs font-bold uppercase tracking-wider">
+                <label style={{ color: colours.mutedText }} className="text-xs font-bold uppercase tracking-wider">
                   Store Name
-                </label>*/}
-                {/* <input
+                </label>
+                <input
                   type="text"
-                  // name="store_name"
+                  name="store_name"
                   value={settings.store_name}
                   onChange={handleSettingChange}
                   style={{ color: colours.text, borderColor: colours.border, backgroundColor: colours.primary + "20" }}
                   className="settings-input w-full px-4 py-2.5 border rounded-xl focus:bg-white transition-all duration-200 outline-hidden"
                   required
-                />*/}
+                />
               </div>
 
               {/* Support Email */}
@@ -274,40 +273,6 @@ const AdminSettings = () => {
                   min="0"
                   required
                 />
-              </div>
-
-              {/* WhatsApp System Notifications */}
-              <div className="pt-2">
-                <label className="flex items-center gap-3 cursor-pointer group select-none">
-                  <span className="relative flex-shrink-0 w-[18px] h-[18px]">
-                    <input
-                      type="checkbox"
-                      name="enable_whatsapp_notifications"
-                      checked={settings.enable_whatsapp_notifications === "true"}
-                      onChange={handleSettingChange}
-                      className="peer absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                    />
-                    <span
-                      style={{
-                        borderColor: settings.enable_whatsapp_notifications === "true" ? colours.accent : colours.border,
-                        backgroundColor: settings.enable_whatsapp_notifications === "true" ? colours.accent : colours.primary,
-                      }}
-                      className="block w-[18px] h-[18px] border rounded-md transition-all duration-200 flex items-center justify-center"
-                    >
-                      {settings.enable_whatsapp_notifications === "true" && (
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 4L3.8 7L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </span>
-                  </span>
-                  <span style={{ color: colours.text }} className="text-xs font-semibold tracking-wide uppercase transition-colors">
-                    Enable System WhatsApp Updates
-                  </span>
-                </label>
-                <p style={{ color: colours.mutedText }} className="text-[10px] mt-1 ml-[30px]">
-                  Fires automatic WhatsApp notifications on order fulfillment and low inventory alerts.
-                </p>
               </div>
             </div>
 

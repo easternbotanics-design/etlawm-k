@@ -1,5 +1,19 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+  "redirects": [
+    {
+      "source": "/product-page/:slug",
+      "destination": "/collection",
+      "permanent": true
+    },
+    {
+      "source": "/category/:slug",
+      "destination": "/collection",
+      "permanent": true
+    },
+    {
+      "source": "/shipping-policy",
+      "destination": "/policies/shipping-policy",
+      "permanent": true
+    }
   ]
 }

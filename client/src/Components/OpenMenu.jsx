@@ -47,12 +47,18 @@ const normalizeCategories = (data) => {
     ? data
     : data?.categories || data?.data || [];
 
-  return list.filter((category) => {
+  const filtered = list.filter((category) => {
     if (!category) return false;
 
     const activeValue = category.isActive ?? category.is_active;
 
     return activeValue === undefined ? true : Boolean(activeValue);
+  });
+
+  return filtered.sort((a, b) => {
+    if (a.slug === "all-products") return -1;
+    if (b.slug === "all-products") return 1;
+    return (a.name || "").localeCompare(b.name || "");
   });
 };
 

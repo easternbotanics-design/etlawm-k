@@ -6,6 +6,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy:ital@0;1&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --font-primary: 'Montaga', serif;
+  --font-secondary: 'Montserrat', sans-serif;
+}
+
 html {
   scroll-behavior: smooth;
 }

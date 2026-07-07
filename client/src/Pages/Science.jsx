@@ -2,10 +2,8 @@ import MaintenancePage from "../Components/MaintenancePage";
 
 const Science = () => {
   return (
-    <div>
-      <MaintenancePage />
-    </div>
+    <MaintenancePage />
   )
 }
 
-export default Science; 
+export default Science;

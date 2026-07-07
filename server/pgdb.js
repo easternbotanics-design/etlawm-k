@@ -171,6 +171,177 @@ const cmsReviews = {
     ),
 };
 
+const cmsIngredients = {
+  create: ({
+    name,
+    scientific_name,
+    image_url,
+    para1,
+    para2,
+    para3,
+    status = "published",
+    sort_order = 0,
+    is_active = true,
+  }) =>
+    query(
+      `
+      INSERT INTO cms_ingredients (
+        name,
+        scientific_name,
+        image_url,
+        para1,
+        para2,
+        para3,
+        status,
+        sort_order,
+        is_active
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+      `,
+      [
+        name,
+        scientific_name ?? null,
+        image_url,
+        para1,
+        para2,
+        para3,
+        status,
+        sort_order,
+        is_active,
+      ]
+    ),
+
+  findById: (id) =>
+    query(
+      `
+      SELECT *
+      FROM cms_ingredients
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [id]
+    ),
+
+  findAllAdmin: () =>
+    query(
+      `
+      SELECT *
+      FROM cms_ingredients
+      ORDER BY created_at DESC
+      `
+    ),
+
+  findPublished: () =>
+    query(
+      `
+      SELECT *
+      FROM cms_ingredients
+      WHERE status = 'published'
+        AND is_active = true
+      ORDER BY sort_order ASC, created_at DESC
+      `
+    ),
+
+  update: (id, fields) => {
+    const allowed = [
+      "name",
+      "scientific_name",
+      "image_url",
+      "para1",
+      "para2",
+      "para3",
+      "status",
+      "sort_order",
+      "is_active",
+    ];
+
+    const sets = [];
+    const vals = [];
+    let i = 1;
+
+    for (const key of allowed) {
+      if (fields[key] !== undefined) {
+        sets.push(`${key} = $${i++}`);
+        vals.push(fields[key]);
+      }
+    }
+
+    if (!sets.length) {
+      throw new Error("No valid fields to update");
+    }
+
+    sets.push("updated_at = now()");
+    vals.push(id);
+
+    return query(
+      `
+      UPDATE cms_ingredients
+      SET ${sets.join(", ")}
+      WHERE id = $${i}
+      RETURNING *
+      `,
+      vals
+    );
+  },
+
+  delete: (id) =>
+    query(
+      `
+      DELETE FROM cms_ingredients
+      WHERE id = $1
+      RETURNING *
+      `,
+      [id]
+    ),
+};
+
+const productIngredients = {
+  getByProductId: (productId) =>
+    query(
+      `SELECT i.*
+       FROM cms_ingredients i
+       INNER JOIN products_ingredient pi ON pi.ingredient_id = i.id
+       WHERE pi.product_id = $1
+       ORDER BY i.sort_order ASC, i.name ASC`,
+      [productId]
+    ),
+
+  sync: async (productId, ingredientIds) => {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Delete existing relations
+      await client.query(
+        `DELETE FROM products_ingredient
+         WHERE product_id = $1`,
+        [productId]
+      );
+
+      // Insert new relations
+      if (Array.isArray(ingredientIds) && ingredientIds.length > 0) {
+        for (const ingredientId of ingredientIds) {
+          await client.query(
+            `INSERT INTO products_ingredient (product_id, ingredient_id)
+             VALUES ($1, $2)
+             ON CONFLICT DO NOTHING`,
+            [productId, ingredientId]
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+      return true;
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+};
+
 // helper function, just write query( -- sql query -- ) wherever in the code to access the database
 const query = async (text, params = []) => {
     const start = Date.now();
@@ -260,14 +431,6 @@ const users = {
             vals
         );
     },
-
-    /** Set whatsapp_opt_in for a user by id */
-    setWhatsappOptIn: (id, consent) =>
-        query(
-            `UPDATE users SET whatsapp_opt_in = $1, updated_at = now()
-             WHERE id = $2 RETURNING id, phone_number, first_name, whatsapp_opt_in`,
-            [consent, id]
-        ),
 
     markPhoneVerified: (phone_number) =>
         query(
@@ -1081,6 +1244,14 @@ const orders = {
         }
     },
 
+    findAllAdmin: () =>
+        query(
+            `SELECT o.*, u.email, u.phone_number, u.first_name, u.last_name
+             FROM orders o
+             LEFT JOIN users u ON u.id = o.user_id
+             ORDER BY o.created_at DESC`
+        ),
+
     findByUser: (user_id) =>
         query(
             `SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC`,
@@ -1260,34 +1431,11 @@ const customerComplaints = {
         )
 };
 
-// ─── Homepage Questions ───────────────────────────────────────────────────────
-const homepageQuestions = {
-    create: ({ name, email, phone_number, subject, message }) =>
-        query(
-            `INSERT INTO homepage_questions (name, email, phone_number, subject, message)
-             VALUES ($1, $2, $3, $4, $5)
-             RETURNING *`,
-            [name, email, phone_number, subject, message]
-        ),
-
-    findAll: () =>
-        query(
-            `SELECT * FROM homepage_questions
-             ORDER BY created_at DESC`
-        ),
-
-    delete: (id) =>
-        query(
-            `DELETE FROM homepage_questions
-             WHERE id = $1
-             RETURNING *`,
-            [id]
-        )
-};
-
 // ─── Exports ──────────────────────────────────────────────────────────────────
 const db = {
   cmsReviews,
+  cmsIngredients,
+  productIngredients,
   pool,
   query,
   connectPG,
@@ -1306,7 +1454,6 @@ const db = {
   adminPhones,
   adminSettings,
   customerComplaints,
-  homepageQuestions,
 };
 
 export default db;

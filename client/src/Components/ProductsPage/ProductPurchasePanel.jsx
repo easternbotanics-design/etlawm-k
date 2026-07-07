@@ -35,6 +35,7 @@ export default function ProductPurchasePanel({
   const [isAdding, setIsAdding] = useState(false);
   const [localAdded, setLocalAdded] = useState(false);
   const [cartError, setCartError] = useState("");
+  const [hovered, setHovered] = useState(false);
 
   async function handleAddToCart() {
     if (isUnavailable || isAdding) return;
@@ -74,6 +75,36 @@ export default function ProductPurchasePanel({
   const handleDecrease = () => {
     setLocalAdded(false);
     if (typeof decrease === "function") decrease();
+  };
+
+  const isButtonDisabled = isUnavailable || isAdding;
+  const buttonText = isAdding 
+    ? "Adding..." 
+    : buttonAdded 
+      ? "Added" 
+      : isUnavailable 
+        ? "Out of Stock" 
+        : "Add to Cart";
+
+  const buttonStyle = {
+    fontFamily: fonts.secondary,
+    backgroundColor: isButtonDisabled
+      ? colours.border
+      : buttonAdded
+        ? colours.green || "#bfd8bd"
+        : hovered
+          ? colours.secondary
+          : colours.accent,
+    color: isButtonDisabled
+      ? colours.mutedText
+      : buttonAdded
+        ? colours.text
+        : colours.background,
+    cursor: isButtonDisabled
+      ? "not-allowed"
+      : buttonAdded
+        ? "default"
+        : "pointer",
   };
 
   return (
@@ -202,16 +233,13 @@ export default function ProductPurchasePanel({
           <button
             type="button"
             onClick={handleAddToCart}
-            disabled={true}
-            className="w-full rounded-md px-7 py-4 text-xs font-bold uppercase tracking-[0.18em] transition-colors"
-            style={{
-              backgroundColor: colours.border,
-              color: colours.mutedText,
-              cursor: "not-allowed",
-              fontFamily: fonts.secondary,
-            }}
+            disabled={isButtonDisabled}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            className="w-full rounded-md px-7 py-4 text-xs font-bold uppercase tracking-[0.18em] transition-all duration-200"
+            style={buttonStyle}
           >
-            Add to Cart
+            {buttonText}
           </button>
         </div>
 

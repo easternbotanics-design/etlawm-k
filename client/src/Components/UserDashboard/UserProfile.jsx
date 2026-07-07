@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { colours, fonts } from "../../theme/theme";
-import WhatsappOptInCard from "./WhatsappOptInCard";
 
 const API = import.meta.env.VITE_SERVER_API;
 
@@ -160,10 +159,6 @@ const UserProfile = () => {
           </div>
         </form>
       </div>
-
-      {user && !user.whatsapp_opt_in && (
-        <WhatsappOptInCard showAskLater={false} />
-      )}
     </div>
   );
 };

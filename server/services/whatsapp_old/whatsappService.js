@@ -86,7 +86,7 @@ const uploadImage = async () => {
   data.append('messaging_product', 'whatsapp');
   data.append('file', fs.createReadStream(process.cwd() + '/logo.png', { contentType: 'image/png' }));
   data.append('type', 'image/png');
-  
+
   const response = await axios({
     url: `https://graph.facebook.com/v25.0/${PHONE_NUMBER_ID}/media`,
     method: 'POST',

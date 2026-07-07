@@ -13,9 +13,9 @@ import adminRouter from './routes/adminRoute.js';
 import cartRouter from './routes/cartRoute.js';
 import reviewRouter from './routes/reviewRoute.js';
 import orderRouter from './routes/orderRoute.js';
-import whatsappRouter from './routes/whatsappRoute.js';
 import paymentRouter from './routes/paymentRoute.js';
-import questionRouter from './routes/questionRoute.js';
+import ingredientRouter from './routes/ingredientRoute.js';
+
 
 const app = express();
 
@@ -78,9 +78,9 @@ app.use("/api/admin", adminRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/orders", orderRouter);
-app.use("/api/whatsapp", whatsappRouter);
 app.use("/api/payment", paymentRouter);
-app.use("/api/questions", questionRouter);
+app.use("/api/ingredients", ingredientRouter);
+
 
 app.get("/", (req, res) => { res.send("API working") });
 

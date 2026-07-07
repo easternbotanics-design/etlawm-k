@@ -114,6 +114,12 @@ function Cart() {
     }
   });
 
+  // Clear checkout order if cart items or coupon change to avoid reusing stale/paid order IDs
+  useEffect(() => {
+    setCheckoutOrder(null);
+    sessionStorage.removeItem("checkoutOrder");
+  }, [items, coupon]);
+
   async function handleCreateOrderAndContinue() {
     if (selectedItems.length === 0) {
       setPageError("Select at least one item before checkout.");
@@ -290,7 +296,7 @@ function Cart() {
   }, [coupon, subtotal]);
 
   const deliveryCharge =
-    selectedItems.length === 0 || subtotal >= 500 ? 0 : 50;
+    selectedItems.length === 0 || subtotal >= 500 ? 0 : 1;
 
   const total = Math.max(
     subtotal - discount + deliveryCharge,

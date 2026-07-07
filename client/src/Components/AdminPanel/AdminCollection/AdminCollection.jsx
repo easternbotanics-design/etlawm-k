@@ -97,7 +97,7 @@ const CategoryCard = ({
         e.currentTarget.style.borderColor = colours.border;
       }}
     >
-      {editMode && category.slug !== "all-products" && (
+      {editMode && (
         <div className="absolute right-4 top-4 flex gap-2">
           <button
             type="button"
@@ -115,21 +115,23 @@ const CategoryCard = ({
             <EditIcon />
           </button>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(category);
-            }}
-            className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5"
-            style={{
-              borderColor: colours.border,
-              color: "#A44A3F",
-              backgroundColor: colours.background,
-            }}
-          >
-            <DeleteIcon />
-          </button>
+          {category.slug !== "all-products" && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(category);
+              }}
+              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5"
+              style={{
+                borderColor: colours.border,
+                color: "#A44A3F",
+                backgroundColor: colours.background,
+              }}
+            >
+              <DeleteIcon />
+            </button>
+          )}
         </div>
       )}
 
@@ -234,14 +236,14 @@ const AdminCollection = () => {
 
       const data = await getCategories();
 
-      const allProductsCard = {
-        id: "all-products",
-        name: "All Products",
-        slug: "all-products",
-        description: "All Products in ETLAWM",
-      };
+      // Ensure 'all-products' is placed first if present in the data
+      const sorted = [...data].sort((a, b) => {
+        if (a.slug === "all-products") return -1;
+        if (b.slug === "all-products") return 1;
+        return 0;
+      });
 
-      setCategories([allProductsCard, ...data]);
+      setCategories(sorted);
     } catch (err) {
       setError(err.message || "Failed to load categories");
     } finally {
