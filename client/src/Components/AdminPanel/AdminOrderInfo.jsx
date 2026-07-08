@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getOrderById } from "../services/orderService";
-import Navbar from "../Components/NavBar2";
-import { colours, fonts } from "../theme/theme";
-import Loader from "../Components/Loader";
+import { getOrderById } from "../../services/orderService";
+import { colours, fonts } from "../../theme/theme";
+import Loader from "../Loader";
 
-function OrderSuccess() {
+function AdminOrderInfo() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
@@ -42,10 +41,8 @@ function OrderSuccess() {
 
   return (
     <div>
-      <Navbar />
-
       <main
-        className="min-h-screen px-4 pb-12 pt-28 sm:px-6 lg:px-10 lg:pb-16 lg:pt-32"
+        className="min-h-screen px-4 pb-12 pt-28 sm:px-6 lg:px-10 lg:pb-16 lg:pt-16"
         style={{
           backgroundColor: colours.subBackground,
         }}
@@ -58,48 +55,9 @@ function OrderSuccess() {
               borderColor: colours.border,
               backgroundColor: colours.background,
             }}
-          >
-            <div
-              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
-              style={{
-                backgroundColor: "rgba(191, 216, 189, 0.2)",
-              }}
-            >
-              <svg
-                className="h-8 w-8"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke={colours.accent}
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  pathLength="1"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </div>
+          >              
 
-            <h1
-              className="text-3xl font-semibold tracking-tight"
-              style={{
-                color: colours.text,
-                fontFamily: fonts.secondary,
-              }}
-            >
-              Thank you for your order!
-            </h1>
-
-            <p
-              className="mt-2 text-sm opacity-60"
-              style={{
-                color: colours.text,
-                fontFamily: fonts.secondary,
-              }}
-            >
-              Your payment has been verified, and your order is being processed.
-            </p>
+            
 
             <div className="mt-6 flex flex-col items-center gap-2">
               <div
@@ -272,47 +230,8 @@ function OrderSuccess() {
           {/* Action buttons */}
           <div className="mt-10 flex flex-wrap gap-4 justify-center no-print">
             <button
-              onClick={() => navigate("/collection")}
-              className="cursor-pointer px-6 py-3 text-xs font-bold tracking-[2px] uppercase border transition-all duration-200"
-              style={{
-                fontFamily: fonts.secondary,
-                borderColor: colours.accent,
-                color: colours.accent,
-                backgroundColor: "transparent",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = colours.accent;
-                e.currentTarget.style.color = colours.primary;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = colours.accent;
-              }}
-            >
-              Continue Shopping
-            </button>
-
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="cursor-pointer px-6 py-3 text-xs font-bold tracking-[2px] uppercase transition-all duration-200"
-              style={{
-                fontFamily: fonts.secondary,
-                backgroundColor: colours.secondary,
-                color: colours.primary,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = colours.accent;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = colours.secondary;
-              }}
-            >
-              Go to Dashboard
-            </button>
-
-            <button
               onClick={() => window.print()}
-              className="cursor-pointer px-6 py-3 text-xs font-bold tracking-[2px] uppercase transition-all duration-200"
+              className="cursor-pointer px-6 py-3 text-xs font-bold tracking-[2px] rounded-md uppercase transition-all duration-200"
               style={{
                 fontFamily: fonts.secondary,
                 backgroundColor: colours.accent,
@@ -350,4 +269,4 @@ function OrderSuccess() {
   );
 }
 
-export default OrderSuccess;
+export default AdminOrderInfo;

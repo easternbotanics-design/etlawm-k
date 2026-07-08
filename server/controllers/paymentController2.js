@@ -144,7 +144,63 @@ const validateOrder = async (req, res) => {
   }
 };
 
+const updatePaymentStatus = async (req, res) => {
+  try {
+    const { order_id, status } = req.body;
+
+    if (!order_id || !status) {
+      return res.status(400).json({
+        success: false,
+        message: "order_id and status are required.",
+      });
+    }
+
+    if (status !== "payment failed" && status !== "cart abandoned") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment status value.",
+      });
+    }
+
+    const { rows } = await db.orders.findById(order_id);
+    const order = rows[0];
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found.",
+      });
+    }
+
+    if (req.user && order.user_id !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to update this order.",
+      });
+    }
+
+    // Set order status based on payment status:
+    // "payment failed" -> "failed"
+    // "cart abandoned" -> "cancelled"
+    const orderStatus = status === "payment failed" ? "failed" : "cancelled";
+
+    await db.orders.updatePaymentFailedOrAbandoned(order.id, status, orderStatus);
+
+    return res.json({
+      success: true,
+      message: `Order payment status updated to ${status}.`,
+    });
+  } catch (err) {
+    console.error("[updatePaymentStatus error]", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update payment status.",
+    });
+  }
+};
+
 export {
   createOrder,
   validateOrder,
+  updatePaymentStatus,
 };

@@ -234,3 +234,20 @@ export async function startRazorpayPayment({
     razorpay.open();
   });
 }
+
+export async function updatePaymentStatus(orderId, status) {
+  if (!orderId || !status) {
+    throw new Error("orderId and status are required.");
+  }
+
+  const response = await fetch(`${getPaymentBase()}/update-status`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({
+      order_id: orderId,
+      status,
+    }),
+  });
+
+  return handleResponse(response, "Failed to update payment status");
+}

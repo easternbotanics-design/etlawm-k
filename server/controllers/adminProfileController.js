@@ -98,7 +98,7 @@ const getAdminSettings = async (req, res) => {
 }
 
 //patch
-const updateAdminSettings  = async (req, res) => {
+const updateAdminSettings = async (req, res) => {
   const settings = req.body;
   if (!settings || typeof settings !== "object") {
     return res.status(400).json({ success: false, message: "Invalid settings body." });
@@ -181,5 +181,24 @@ const removeAdmin = async (req, res) => {
   }
 }
 
+const getAdminCustomers = async (req, res) => {
+  try {
+    const { rows } = await db.users.findAll();
+    res.json({ success: true, customers: rows });
+  } catch (err) {
+    console.error("[get-admin-customers]", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+}
 
-export { getAdminProfile, updateAdminProfile, getAdminSettings, updateAdminSettings, makeAdmin, getAdmins, removeAdmin }
+const getAdminQuestions = async (req, res) => {
+  try {
+    const { rows } = await db.homepageQuestions.findAll();
+    res.json({ success: true, questions: rows });
+  } catch (err) {
+    console.error("[get-admin-questions]", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+}
+
+export { getAdminProfile, updateAdminProfile, getAdminSettings, updateAdminSettings, makeAdmin, getAdmins, removeAdmin, getAdminCustomers, getAdminQuestions }

@@ -14,6 +14,9 @@ import AdminCollectionProducts from "../Components/AdminPanel/AdminCollection/Ad
 import CMSIngredients from "../Components/AdminPanel/AdminContent/CMSIngredients.jsx";
 import CMSIngredientForm from "../Components/AdminPanel/AdminContent/CMSIngredientForm.jsx";
 import AdminOrders from "../Components/AdminPanel/AdminOrders.jsx";
+import AdminCarts from "../Components/AdminPanel/AdminCarts.jsx";
+import AdminCustomers from "../Components/AdminPanel/AdminCustomers.jsx";
+import AdminQuestions from "../Components/AdminPanel/AdminQuestions.jsx";
 import { colours, fonts } from "../theme/theme.js";
 
 
@@ -138,6 +141,7 @@ const AdminDashBoard = () => {
             <Route path="/content/ingredients" element={<CMSIngredients />} />
             <Route path="/content/ingredients/add" element={<CMSIngredientForm />} />
             <Route path="/content/ingredients/edit/:id" element={<CMSIngredientForm />} />
+            <Route path="/content/questions" element={<AdminQuestions />} />
 
 
             {/* Collections Group */}
@@ -148,8 +152,10 @@ const AdminDashBoard = () => {
   
             {/* Operations Group */}
             <Route path="operations/orders" element={<AdminOrders />} />
+            <Route path="operations/carts" element={<AdminCarts />} />
 
             {/* Profile & Settings routes */}
+            <Route path="customers" element={<AdminCustomers />} />
             <Route path="profile" element={<AdminProfile />} />
             <Route path="settings" element={<AdminSettings />} />
         </Routes>

@@ -16,7 +16,7 @@ import { colours, fonts } from "../theme/theme";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createOrder } from "../services/orderService";
-import { startRazorpayPayment } from "../services/paymentService";
+import { startRazorpayPayment, updatePaymentStatus } from "../services/paymentService";
 
 const CHECKOUT_STEPS = [
   {
@@ -243,7 +243,17 @@ function Cart() {
 
       navigate(`/orders/${paymentResult.payment?.order_id ?? paymentResult.order?.id ?? orderId}/success`);
     } catch (error) {
-      setPageError(error.message);
+      try {
+        if (error.message === "Payment cancelled by user.") {
+          setPageError("Payment cancelled. You can try again when you are ready.");
+        } else {
+          await updatePaymentStatus(orderId, "payment failed");
+          setPageError(error.message || "Payment failed. Please check your details and try again.");
+        }
+      } catch (updateErr) {
+        console.error("Failed to update payment status:", updateErr);
+        setPageError(error.message || "Payment failed.");
+      }
     } finally {
       setIsPlacingOrder(false);
     }

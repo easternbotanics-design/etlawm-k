@@ -190,8 +190,8 @@ const HomeQuestions = () => {
           </div>
 
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            
-              {/* Frontend only. Add your backend call inside `handleSubmit` when
+
+            {/* Frontend only. Add your backend call inside `handleSubmit` when
               the contact route is ready.*/}
 
             <button

@@ -1,20 +1,11 @@
 import { useEffect, useState } from "react";
 import { colours, fonts } from "../../theme/theme";
-import { getAllOrders } from "../../services/orderService";
+import { getAdminQuestions } from "../../services/adminService";
 
-export default function AdminOrders() {
-  const [orders, setOrders] = useState([]);
+export default function AdminQuestions() {
+  const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [copiedId, setCopiedId] = useState(null);
-
-  const handleCopy = (id) => {
-    navigator.clipboard.writeText(id);
-    setCopiedId(id);
-    setTimeout(() => {
-      setCopiedId(null);
-    }, 2000);
-  };
 
   // Filters & Pagination State
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,30 +15,27 @@ export default function AdminOrders() {
   const itemsPerPage = 50;
 
   useEffect(() => {
-    loadOrders();
+    loadQuestions();
   }, []);
 
-  const loadOrders = async () => {
+  const loadQuestions = async () => {
     try {
       setLoading(true);
       setError("");
-      const data = await getAllOrders();
-      setOrders(data.orders || []);
+      const data = await getAdminQuestions();
+      setQuestions(data.questions || []);
     } catch (err) {
-      setError(err.message || "Failed to load orders");
+      setError(err.message || "Failed to load questions.");
     } finally {
       setLoading(false);
     }
   };
 
-
-
-
-  const formatOrderDate = (dateStr) => {
+  const formatQuestionDate = (dateStr) => {
     if (!dateStr) return { date: "—", relative: "" };
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return { date: "—", relative: "" };
-
+    
     // Format: DD.MM.YYYY HH:mm
     const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -83,21 +71,21 @@ export default function AdminOrders() {
     if (range === "all") return true;
     const date = new Date(createdDateStr);
     const now = new Date();
-
+    
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterdayStart = new Date(todayStart);
     yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-
+    
     if (range === "today") {
       return date >= todayStart;
     }
     if (range === "yesterday") {
       return date >= yesterdayStart && date < todayStart;
     }
-
+    
     const diffTime = Math.abs(now - date);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+    
     if (range === "last7") {
       return diffDays <= 7;
     }
@@ -107,32 +95,26 @@ export default function AdminOrders() {
     return true;
   };
 
-  // Filtered & Sorted Orders
-  const filteredOrders = orders
-    .filter((order) => {
-      const shortId = order.id.slice(0, 8).toLowerCase();
+  // Filtered & Sorted Questions
+  const filteredQuestions = questions
+    .filter((q) => {
+      const name = (q.name || "").toLowerCase();
+      const email = (q.email || "").toLowerCase();
+      const phone = (q.phone_number || "").toLowerCase();
+      const subject = (q.subject || "").toLowerCase();
+      const message = (q.message || "").toLowerCase();
       const query = searchQuery.toLowerCase();
-      const name = (order.shipping_name || `${order.first_name || ""} ${order.last_name || ""}`).toLowerCase();
-      const phone = (order.phone_number || "").toLowerCase();
-      const address = `${order.shipping_line1} ${order.shipping_city}`.toLowerCase();
 
       const matchesSearch =
-        shortId.includes(query) ||
         name.includes(query) ||
+        email.includes(query) ||
         phone.includes(query) ||
-        address.includes(query);
+        subject.includes(query) ||
+        message.includes(query);
 
-      const matchesDate = matchesDateFilter(order.created_at, dateRange);
+      const matchesDate = matchesDateFilter(q.created_at, dateRange);
 
-      const isPaid = ["paid", "shipped", "delivered"].includes(order.status) ||
-        (order.razorpay_payment_id &&
-          order.razorpay_payment_id !== "payment failed" &&
-          order.razorpay_payment_id !== "cart abandoned");
-      const isFailed = order.status === "failed" || order.razorpay_payment_id === "payment failed";
-
-      const matchesPaymentFilter = isPaid || isFailed;
-
-      return matchesSearch && matchesDate && matchesPaymentFilter;
+      return matchesSearch && matchesDate;
     })
     .sort((a, b) => {
       const timeA = new Date(a.created_at).getTime();
@@ -140,17 +122,17 @@ export default function AdminOrders() {
       return sortOrder === "desc" ? timeB - timeA : timeA - timeB;
     });
 
-  // Paginated Orders
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  // Paginated Questions
+  const totalPages = Math.ceil(filteredQuestions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedQuestions = filteredQuestions.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="px-6 md:px-10 py-8 animate-in fade-in duration-300" style={{ fontFamily: fonts.secondary }}>
-      {/* Header and Search Filters */}
+      {/* Header and Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <h1 className="font-serif text-2xl md:text-3xl font-normal text-[#171715] tracking-wide" style={{ fontFamily: fonts.primary }}>
-          Orders
+          Homepage Questions
         </h1>
 
         <div className="flex items-center gap-3">
@@ -178,7 +160,7 @@ export default function AdminOrders() {
           {/* Search Field */}
           <input
             type="text"
-            placeholder="Search ID, name, phone number..."
+            placeholder="Search name, email, subject..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -197,7 +179,7 @@ export default function AdminOrders() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 animate-pulse">
           <div style={{ borderTopColor: colours.accent }} className="animate-spin rounded-full h-10 w-10 border-4 border-stone-200 mb-3"></div>
-          <p className="text-sm text-[#7C7770]">Loading orders...</p>
+          <p className="text-sm text-[#7C7770]">Loading questions...</p>
         </div>
       ) : error ? (
         <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded">
@@ -208,7 +190,7 @@ export default function AdminOrders() {
           className="overflow-hidden rounded-2xl border shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300"
           style={{
             borderColor: colours.border,
-            backgroundColor: colours.primary, // using primary color palette (#F7F3EC) for warm aesthetic
+            backgroundColor: colours.primary,
           }}
         >
           <div className="overflow-x-auto">
@@ -221,57 +203,78 @@ export default function AdminOrders() {
                     color: colours.mutedText,
                   }}
                 >
-                  <th className="px-6 py-4 font-bold w-[12%]">ID</th>
+                  <th className="px-6 py-4 font-bold w-[25%]">Submitter Details</th>
+                  <th className="px-6 py-4 font-bold w-[20%]">Subject</th>
+                  <th className="px-6 py-4 font-bold w-[35%]">Message</th>
                   <th
-                    className="px-6 py-4 font-bold w-[18%] cursor-pointer select-none group"
+                    className="px-6 py-4 font-bold w-[20%] cursor-pointer select-none group"
                     onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
                     title="Click to sort by date"
                   >
                     <div className="flex items-center gap-1">
-                      <span>Date</span>
+                      <span>Date Submitted</span>
                       <span className="text-[#7C7770] group-hover:text-[#171715] transition-colors font-mono">
                         {sortOrder === "desc" ? "↓" : "↑"}
                       </span>
                     </div>
                   </th>
-                  <th className="px-6 py-4 font-bold w-[25%]">Personal Details</th>
-                  <th className="px-6 py-4 font-bold w-[30%]">Shipping Details</th>
-                  <th className="px-6 py-4 font-bold w-[15%]">Payment ID</th>
                 </tr>
               </thead>
 
               <tbody>
-                {paginatedOrders.length > 0 ? (
-                  paginatedOrders.map((order) => {
-                    const dateInfo = formatOrderDate(order.created_at);
+                {paginatedQuestions.length > 0 ? (
+                  paginatedQuestions.map((q) => {
+                    const dateInfo = formatQuestionDate(q.created_at);
 
                     return (
                       <tr
-                        key={order.id}
+                        key={q.id}
                         className="border-b transition-colors duration-200 hover:bg-[#171715]/5"
                         style={{ borderColor: colours.border }}
                       >
-                        {/* ID */}
+                        {/* Submitter Details */}
                         <td className="px-6 py-5 align-top">
-                          <a
-                            href={`/orders/${order.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={order.id.toUpperCase()}
-                            className="font-mono text-xs md:text-sm font-semibold text-[#171715] block select-all hover:text-[#A77C6B] hover:underline"
-                          >
-                            #{order.id.slice(0, 8).toUpperCase()}...
-                          </a>
-                          {/* Price Tag underneath ID */}
-                          <span className="text-xs text-[#171715] font-semibold block mt-1">
-                            ₹{parseFloat(order.total).toLocaleString("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
+                          <span className="text-xs md:text-sm font-semibold text-[#171715] block">
+                            {q.name || "Anonymous Submitter"}
+                          </span>
+                          <div className="flex flex-col mt-1">
+                            {q.email && (
+                              <a
+                                href={`mailto:${q.email}`}
+                                className="text-[10px] md:text-xs text-[#7C7770] hover:text-[#A77C6B] underline transition-colors"
+                              >
+                                {q.email}
+                              </a>
+                            )}
+                            {q.phone_number && (
+                              <a
+                                href={`tel:${q.phone_number}`}
+                                className="text-[10px] md:text-xs text-[#7C7770] hover:text-[#A77C6B] underline mt-0.5 transition-colors"
+                              >
+                                {q.phone_number}
+                              </a>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Subject */}
+                        <td className="px-6 py-5 align-top">
+                          <span className="text-xs md:text-sm font-medium text-[#171715]">
+                            {q.subject || "—"}
                           </span>
                         </td>
 
-                        {/* Date */}
+                        {/* Message */}
+                        <td className="px-6 py-5 align-top max-w-sm">
+                          <span 
+                            title={q.message}
+                            className="text-xs md:text-sm text-[#171715]/90 block line-clamp-3 select-all cursor-help"
+                          >
+                            {q.message || "—"}
+                          </span>
+                        </td>
+
+                        {/* Date Submitted */}
                         <td className="px-6 py-5 align-top">
                           <div className="flex flex-col">
                             <span className="text-xs md:text-sm font-medium text-[#171715]">
@@ -282,95 +285,17 @@ export default function AdminOrders() {
                             </span>
                           </div>
                         </td>
-
-                        {/* Personal Details */}
-                        <td className="px-6 py-5 align-top">
-                          <div className="flex flex-col">
-                            <span className="text-xs md:text-sm font-medium text-[#171715]">
-                              {order.shipping_name ||
-                                `${order.first_name || ""} ${order.last_name || ""}`.trim() ||
-                                "Guest Customer"}
-                            </span>
-                            {order.email && (
-                              <a
-                                href={`mailto:${order.email}`}
-                                className="text-[10px] md:text-xs text-[#7C7770] hover:text-[#A77C6B] underline mt-0.5 tracking-tight transition-colors"
-                              >
-                                {order.email}
-                              </a>
-                            )}
-                            {order.phone_number && (
-                              <a
-                                href={`tel:${order.phone_number}`}
-                                className="text-[10px] md:text-xs text-[#7C7770] hover:text-[#A77C6B] underline mt-0.5 tracking-tight transition-colors"
-                              >
-                                {order.phone_number}
-                              </a>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Shipping Details */}
-                        <td className="px-6 py-5 align-top">
-                          <div className="flex flex-col text-xs md:text-sm text-[#171715]/90 max-w-[280px]">
-                            <span>{order.shipping_line1}</span>
-                            <span className="text-[#7C7770] text-xs mt-0.5">
-                              {order.shipping_city}, {order.shipping_state} {order.shipping_pincode}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Razorpay Payment ID Column */}
-                        <td className="px-6 py-5 align-top">
-                          {order.razorpay_payment_id ? (
-                            order.razorpay_payment_id === "payment failed" ? (
-                              <span className="text-[10px] md:text-xs font-semibold px-2.5 py-1 rounded-full border text-red-700 bg-red-50/80 border-red-200 inline-block">
-                                Payment Failed
-                              </span>
-                            ) : order.razorpay_payment_id === "cart abandoned" ? (
-                              <span className="text-[10px] md:text-xs font-semibold px-2.5 py-1 rounded-full border text-amber-700 bg-amber-50/80 border-amber-200 inline-block">
-                                Cart Abandoned
-                              </span>
-                            ) : (
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-mono text-xs md:text-sm font-semibold text-[#171715] select-all bg-[#FAF9F6]/85 border border-[#D8D2C8] px-2 py-1 rounded">
-                                  {order.razorpay_payment_id}
-                                </span>
-                                <button
-                                  onClick={() => handleCopy(order.razorpay_payment_id)}
-                                  className="p-1 rounded hover:bg-stone-200/60 transition-colors border-none cursor-pointer text-[#7C7770] flex items-center justify-center"
-                                  title="Copy Payment ID"
-                                >
-                                  {copiedId === order.razorpay_payment_id ? (
-                                    <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                  ) : (
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                    </svg>
-                                  )}
-                                </button>
-                              </div>
-                            )
-                          ) : (
-                            <span className="text-xs text-[#7C7770] italic">
-                              —
-                            </span>
-                          )}
-                        </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
                     <td
-                      colSpan="5"
+                      colSpan="4"
                       className="px-6 py-10 text-center text-sm"
                       style={{ color: colours.mutedText }}
                     >
-                      No orders found.
+                      No questions found.
                     </td>
                   </tr>
                 )}
@@ -387,7 +312,7 @@ export default function AdminOrders() {
             }}
           >
             <span className="text-xs text-[#7C7770]">
-              Showing {filteredOrders.length > 0 ? startIndex + 1 : 0}–{Math.min(startIndex + itemsPerPage, filteredOrders.length)} of {filteredOrders.length} entries
+              Showing {filteredQuestions.length > 0 ? startIndex + 1 : 0}–{Math.min(startIndex + itemsPerPage, filteredQuestions.length)} of {filteredQuestions.length} entries
             </span>
             <div className="flex items-center gap-2">
               <button

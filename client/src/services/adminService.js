@@ -272,3 +272,19 @@ export async function deleteAdminPhone(phoneNumber) {
     "Failed to delete admin phone",
   );
 }
+
+export async function getAdminCustomers() {
+  const response = await fetch(`${API}/api/admin/customers`, {
+    headers: getHeaders(false),
+  });
+
+  return handleResponse(response, "Failed to fetch customers");
+}
+
+export async function getAdminQuestions() {
+  const response = await fetch(`${API}/api/admin/questions`, {
+    headers: getHeaders(false),
+  });
+
+  return handleResponse(response, "Failed to fetch questions");
+}

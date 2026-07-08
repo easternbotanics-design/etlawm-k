@@ -15,14 +15,14 @@ const pool = process.env.DATABASE_URL
         ssl: {
             rejectUnauthorized: false
         }
-      })
+    })
     : new Pool({
         host: process.env.PG_HOST,
         port: parseInt(process.env.PG_PORT, 10),
         database: process.env.PG_DATABASE,
         user: process.env.PG_USER,
         password: process.env.PG_PASSWORD,
-      });
+    });
 
 pool.on('error', (err) => {
     console.error('[pgdb] Unexpected pool error:', err.message);
@@ -39,18 +39,18 @@ const connectPG = async () => {
 }
 
 const cmsReviews = {
-  create: ({
-    customer_name,
-    product_name,
-    product_link,
-    rating,
-    review,
-    status = "published",
-    sort_order = 0,
-    is_active = true,
-  }) =>
-    query(
-      `
+    create: ({
+        customer_name,
+        product_name,
+        product_link,
+        rating,
+        review,
+        status = "published",
+        sort_order = 0,
+        is_active = true,
+    }) =>
+        query(
+            `
       INSERT INTO cms_reviews (
         customer_name,
         product_name,
@@ -64,127 +64,127 @@ const cmsReviews = {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
       `,
-      [
-        customer_name,
-        product_name,
-        product_link ?? null,
-        rating,
-        review,
-        status,
-        sort_order,
-        is_active,
-      ]
-    ),
+            [
+                customer_name,
+                product_name,
+                product_link ?? null,
+                rating,
+                review,
+                status,
+                sort_order,
+                is_active,
+            ]
+        ),
 
-  findById: (id) =>
-    query(
-      `
+    findById: (id) =>
+        query(
+            `
       SELECT *
       FROM cms_reviews
       WHERE id = $1
       LIMIT 1
       `,
-      [id]
-    ),
-  
-  findAllAdmin: () =>
-    query(
-      `
+            [id]
+        ),
+
+    findAllAdmin: () =>
+        query(
+            `
       SELECT *
       FROM cms_reviews
       ORDER BY created_at DESC
       `
-    ),
+        ),
 
-  findPublished: () =>
-    query(
-      `
+    findPublished: () =>
+        query(
+            `
       SELECT *
       FROM cms_reviews
       WHERE status = 'published'
         AND is_active = true
       ORDER BY sort_order ASC, created_at DESC
       `
-    ),
+        ),
 
-  findByProductNameOrSlug: (value) =>
-    query(
-      `
+    findByProductNameOrSlug: (value) =>
+        query(
+            `
       SELECT *
       FROM cms_reviews
       WHERE LOWER(product_name) = LOWER($1)
          OR product_link ILIKE '%' || $1 || '%'
       ORDER BY created_at DESC
       `,
-      [value]
-    ),
+            [value]
+        ),
 
-  update: (id, fields) => {
-    const allowed = [
-      "customer_name",
-      "product_name",
-      "product_link",
-      "rating",
-      "review",
-      "status",
-      "sort_order",
-      "is_active",
-    ];
+    update: (id, fields) => {
+        const allowed = [
+            "customer_name",
+            "product_name",
+            "product_link",
+            "rating",
+            "review",
+            "status",
+            "sort_order",
+            "is_active",
+        ];
 
-    const sets = [];
-    const vals = [];
-    let i = 1;
+        const sets = [];
+        const vals = [];
+        let i = 1;
 
-    for (const key of allowed) {
-      if (fields[key] !== undefined) {
-        sets.push(`${key} = $${i++}`);
-        vals.push(fields[key]);
-      }
-    }
+        for (const key of allowed) {
+            if (fields[key] !== undefined) {
+                sets.push(`${key} = $${i++}`);
+                vals.push(fields[key]);
+            }
+        }
 
-    if (!sets.length) {
-      throw new Error("No valid fields to update");
-    }
+        if (!sets.length) {
+            throw new Error("No valid fields to update");
+        }
 
-    sets.push("updated_at = now()");
-    vals.push(id);
+        sets.push("updated_at = now()");
+        vals.push(id);
 
-    return query(
-      `
+        return query(
+            `
       UPDATE cms_reviews
       SET ${sets.join(", ")}
       WHERE id = $${i}
       RETURNING *
       `,
-      vals
-    );
-  },
+            vals
+        );
+    },
 
-  delete: (id) =>
-    query(
-      `
+    delete: (id) =>
+        query(
+            `
       DELETE FROM cms_reviews
       WHERE id = $1
       RETURNING *
       `,
-      [id]
-    ),
+            [id]
+        ),
 };
 
 const cmsIngredients = {
-  create: ({
-    name,
-    scientific_name,
-    image_url,
-    para1,
-    para2,
-    para3,
-    status = "published",
-    sort_order = 0,
-    is_active = true,
-  }) =>
-    query(
-      `
+    create: ({
+        name,
+        scientific_name,
+        image_url,
+        para1,
+        para2,
+        para3,
+        status = "published",
+        sort_order = 0,
+        is_active = true,
+    }) =>
+        query(
+            `
       INSERT INTO cms_ingredients (
         name,
         scientific_name,
@@ -199,147 +199,147 @@ const cmsIngredients = {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
       `,
-      [
-        name,
-        scientific_name ?? null,
-        image_url,
-        para1,
-        para2,
-        para3,
-        status,
-        sort_order,
-        is_active,
-      ]
-    ),
+            [
+                name,
+                scientific_name ?? null,
+                image_url,
+                para1,
+                para2,
+                para3,
+                status,
+                sort_order,
+                is_active,
+            ]
+        ),
 
-  findById: (id) =>
-    query(
-      `
+    findById: (id) =>
+        query(
+            `
       SELECT *
       FROM cms_ingredients
       WHERE id = $1
       LIMIT 1
       `,
-      [id]
-    ),
+            [id]
+        ),
 
-  findAllAdmin: () =>
-    query(
-      `
+    findAllAdmin: () =>
+        query(
+            `
       SELECT *
       FROM cms_ingredients
       ORDER BY created_at DESC
       `
-    ),
+        ),
 
-  findPublished: () =>
-    query(
-      `
+    findPublished: () =>
+        query(
+            `
       SELECT *
       FROM cms_ingredients
       WHERE status = 'published'
         AND is_active = true
       ORDER BY sort_order ASC, created_at DESC
       `
-    ),
+        ),
 
-  update: (id, fields) => {
-    const allowed = [
-      "name",
-      "scientific_name",
-      "image_url",
-      "para1",
-      "para2",
-      "para3",
-      "status",
-      "sort_order",
-      "is_active",
-    ];
+    update: (id, fields) => {
+        const allowed = [
+            "name",
+            "scientific_name",
+            "image_url",
+            "para1",
+            "para2",
+            "para3",
+            "status",
+            "sort_order",
+            "is_active",
+        ];
 
-    const sets = [];
-    const vals = [];
-    let i = 1;
+        const sets = [];
+        const vals = [];
+        let i = 1;
 
-    for (const key of allowed) {
-      if (fields[key] !== undefined) {
-        sets.push(`${key} = $${i++}`);
-        vals.push(fields[key]);
-      }
-    }
+        for (const key of allowed) {
+            if (fields[key] !== undefined) {
+                sets.push(`${key} = $${i++}`);
+                vals.push(fields[key]);
+            }
+        }
 
-    if (!sets.length) {
-      throw new Error("No valid fields to update");
-    }
+        if (!sets.length) {
+            throw new Error("No valid fields to update");
+        }
 
-    sets.push("updated_at = now()");
-    vals.push(id);
+        sets.push("updated_at = now()");
+        vals.push(id);
 
-    return query(
-      `
+        return query(
+            `
       UPDATE cms_ingredients
       SET ${sets.join(", ")}
       WHERE id = $${i}
       RETURNING *
       `,
-      vals
-    );
-  },
+            vals
+        );
+    },
 
-  delete: (id) =>
-    query(
-      `
+    delete: (id) =>
+        query(
+            `
       DELETE FROM cms_ingredients
       WHERE id = $1
       RETURNING *
       `,
-      [id]
-    ),
+            [id]
+        ),
 };
 
 const productIngredients = {
-  getByProductId: (productId) =>
-    query(
-      `SELECT i.*
+    getByProductId: (productId) =>
+        query(
+            `SELECT i.*
        FROM cms_ingredients i
        INNER JOIN products_ingredient pi ON pi.ingredient_id = i.id
        WHERE pi.product_id = $1
        ORDER BY i.sort_order ASC, i.name ASC`,
-      [productId]
-    ),
+            [productId]
+        ),
 
-  sync: async (productId, ingredientIds) => {
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
+    sync: async (productId, ingredientIds) => {
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
 
-      // Delete existing relations
-      await client.query(
-        `DELETE FROM products_ingredient
+            // Delete existing relations
+            await client.query(
+                `DELETE FROM products_ingredient
          WHERE product_id = $1`,
-        [productId]
-      );
+                [productId]
+            );
 
-      // Insert new relations
-      if (Array.isArray(ingredientIds) && ingredientIds.length > 0) {
-        for (const ingredientId of ingredientIds) {
-          await client.query(
-            `INSERT INTO products_ingredient (product_id, ingredient_id)
+            // Insert new relations
+            if (Array.isArray(ingredientIds) && ingredientIds.length > 0) {
+                for (const ingredientId of ingredientIds) {
+                    await client.query(
+                        `INSERT INTO products_ingredient (product_id, ingredient_id)
              VALUES ($1, $2)
              ON CONFLICT DO NOTHING`,
-            [productId, ingredientId]
-          );
-        }
-      }
+                        [productId, ingredientId]
+                    );
+                }
+            }
 
-      await client.query("COMMIT");
-      return true;
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    } finally {
-      client.release();
+            await client.query("COMMIT");
+            return true;
+        } catch (err) {
+            await client.query("ROLLBACK");
+            throw err;
+        } finally {
+            client.release();
+        }
     }
-  }
 };
 
 // helper function, just write query( -- sql query -- ) wherever in the code to access the database
@@ -354,17 +354,17 @@ const query = async (text, params = []) => {
 const users = {
     /** Create a new user with phone or email */
     create: ({
-      phone_number,
-      email,
-      password_hash,
-      first_name,
-      last_name,
-      phone_verified = false,
-      onboarding_step = 0,
-      is_admin = false,
+        phone_number,
+        email,
+        password_hash,
+        first_name,
+        last_name,
+        phone_verified = false,
+        onboarding_step = 0,
+        is_admin = false,
     }) =>
-      query(
-        `INSERT INTO users (
+        query(
+            `INSERT INTO users (
             phone_number,
             email,
             password_hash,
@@ -386,17 +386,17 @@ const users = {
             is_admin,
             whatsapp_opt_in,
             created_at`,
-        [
-          phone_number ?? null,
-          email ?? null,
-          password_hash ?? null,
-          first_name ?? null,
-          last_name ?? null,
-          phone_verified,
-          onboarding_step,
-          is_admin,
-        ],
-      ),
+            [
+                phone_number ?? null,
+                email ?? null,
+                password_hash ?? null,
+                first_name ?? null,
+                last_name ?? null,
+                phone_verified,
+                onboarding_step,
+                is_admin,
+            ],
+        ),
 
     findByPhone: (phone_number) =>
         query(`SELECT * FROM users WHERE phone_number = $1 LIMIT 1`, [phone_number]),
@@ -447,6 +447,13 @@ const users = {
 
     delete: (id) =>
         query(`DELETE FROM users WHERE id = $1`, [id]),
+
+    findAll: () =>
+        query(
+            `SELECT id, phone_number, email, first_name, last_name,
+                    onboarding_step, is_admin, is_active, last_login_at, created_at, whatsapp_opt_in
+             FROM users ORDER BY created_at DESC`
+        ),
 };
 
 // helper function to access the otp_codes table
@@ -950,7 +957,7 @@ const carts = {
              RETURNING *`,
             [user_id],
         ),
-    
+
     getOrCreateForGuest: (guest_id) =>
         query(
             `INSERT INTO carts (guest_id)
@@ -967,10 +974,10 @@ const carts = {
     /** Merge guest cart into user cart on login */
     mergeGuestToUser: async (guest_id, user_id) => {
         const client = await pool.connect();
-    
+
         try {
             await client.query("BEGIN");
-    
+
             let {
                 rows: [userCart],
             } = await client.query(
@@ -980,7 +987,7 @@ const carts = {
                  FOR UPDATE`,
                 [user_id],
             );
-    
+
             if (!userCart) {
                 const {
                     rows: [createdCart],
@@ -992,10 +999,10 @@ const carts = {
                      RETURNING *`,
                     [user_id],
                 );
-    
+
                 userCart = createdCart;
             }
-    
+
             const {
                 rows: [guestCart],
             } = await client.query(
@@ -1005,12 +1012,12 @@ const carts = {
                  FOR UPDATE`,
                 [guest_id],
             );
-    
+
             if (!guestCart) {
                 await client.query("COMMIT");
                 return { rows: [userCart] };
             }
-    
+
             await client.query(
                 `INSERT INTO cart_items (
                     cart_id,
@@ -1038,15 +1045,15 @@ const carts = {
                  )`,
                 [userCart.id, guestCart.id],
             );
-    
+
             await client.query(
                 `DELETE FROM carts
                  WHERE id = $1`,
                 [guestCart.id],
             );
-    
+
             await client.query("COMMIT");
-    
+
             return { rows: [userCart] };
         } catch (err) {
             await client.query("ROLLBACK");
@@ -1124,12 +1131,12 @@ const cartItems = {
         ),
 
     clearCart: (cart_id) =>
-      query(`DELETE FROM cart_items WHERE cart_id = $1`, [cart_id]
-    ),
+        query(`DELETE FROM cart_items WHERE cart_id = $1`, [cart_id]
+        ),
 
     applyCoupon: ({ cart_id, coupon_id }) =>
-      query(
-        `
+        query(
+            `
         UPDATE carts
         SET
           coupon_id = $2,
@@ -1137,12 +1144,12 @@ const cartItems = {
         WHERE id = $1
         RETURNING *
         `,
-        [cart_id, coupon_id],
-      ),
-    
+            [cart_id, coupon_id],
+        ),
+
     removeCoupon: (cart_id) =>
-      query(
-        `
+        query(
+            `
         UPDATE carts
         SET
           coupon_id = NULL,
@@ -1150,16 +1157,16 @@ const cartItems = {
         WHERE id = $1
         RETURNING *
         `,
-        [cart_id],
-      ),
+            [cart_id],
+        ),
 };
 
 //----Coupons--------------------------------------------------------------------
 
 export const coupons = {
-  findValidByCode: (code) =>
-    query(
-      `
+    findValidByCode: (code) =>
+        query(
+            `
       SELECT *
       FROM coupons
       WHERE UPPER(code) = UPPER($1)
@@ -1168,8 +1175,8 @@ export const coupons = {
         AND (expires_at IS NULL OR expires_at > NOW())
       LIMIT 1
       `,
-      [code],
-    ),
+            [code],
+        ),
 };
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
@@ -1284,6 +1291,17 @@ const orders = {
             `UPDATE orders SET razorpay_order_id = $1, updated_at = now()
              WHERE id = $2 RETURNING *`,
             [razorpay_order_id, order_id]
+        ),
+
+    updatePaymentFailedOrAbandoned: (order_id, razorpay_payment_id, status) =>
+        query(
+            `UPDATE orders 
+             SET razorpay_payment_id = $1, 
+                 status = $2, 
+                 updated_at = now()
+             WHERE id = $3 
+             RETURNING *`,
+            [razorpay_payment_id, status, order_id]
         ),
 
     markPaymentPaid: async ({
@@ -1431,29 +1449,47 @@ const customerComplaints = {
         )
 };
 
+// helper function to access the homepage_questions table
+const homepageQuestions = {
+    create: ({ name, email, phone_number, subject, message }) =>
+        query(
+            `INSERT INTO homepage_questions (name, email, phone_number, subject, message)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING *`,
+            [name, email, phone_number, subject, message]
+        ),
+
+    findAll: () =>
+        query(
+            `SELECT * FROM homepage_questions
+             ORDER BY created_at DESC`
+        )
+};
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 const db = {
-  cmsReviews,
-  cmsIngredients,
-  productIngredients,
-  pool,
-  query,
-  connectPG,
-  users,
-  otpCodes,
-  userSessions,
-  addresses,
-  categories,
-  products,
-  productImages,
-  inventory,
-  carts,
-  cartItems,
-  orders,
-  reviews,
-  adminPhones,
-  adminSettings,
-  customerComplaints,
+    cmsReviews,
+    cmsIngredients,
+    productIngredients,
+    pool,
+    query,
+    connectPG,
+    users,
+    otpCodes,
+    userSessions,
+    addresses,
+    categories,
+    products,
+    productImages,
+    inventory,
+    carts,
+    cartItems,
+    orders,
+    reviews,
+    adminPhones,
+    adminSettings,
+    customerComplaints,
+    homepageQuestions,
 };
 
 export default db;

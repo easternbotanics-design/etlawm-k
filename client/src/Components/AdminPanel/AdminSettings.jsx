@@ -30,7 +30,6 @@ const SCOPED_CSS = `
 const AdminSettings = () => {
   // System configurations state
   const [settings, setSettings] = useState({
-    store_name: "ETLAWM",
     support_email: "support@etlawm.com",
     low_stock_threshold: "5",
   });
@@ -226,22 +225,6 @@ const AdminSettings = () => {
             )}
 
             <div className="space-y-4">
-              {/* Store Name */}
-              <div className="space-y-2.5">
-                <label style={{ color: colours.mutedText }} className="text-xs font-bold uppercase tracking-wider">
-                  Store Name
-                </label>
-                <input
-                  type="text"
-                  name="store_name"
-                  value={settings.store_name}
-                  onChange={handleSettingChange}
-                  style={{ color: colours.text, borderColor: colours.border, backgroundColor: colours.primary + "20" }}
-                  className="settings-input w-full px-4 py-2.5 border rounded-xl focus:bg-white transition-all duration-200 outline-hidden"
-                  required
-                />
-              </div>
-
               {/* Support Email */}
               <div className="space-y-2.5">
                 <label style={{ color: colours.mutedText }} className="text-xs font-bold uppercase tracking-wider">

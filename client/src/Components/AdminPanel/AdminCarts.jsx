@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { colours, fonts } from "../../theme/theme";
 import { getAllOrders } from "../../services/orderService";
 
-export default function AdminOrders() {
+export default function AdminCarts() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -34,14 +34,11 @@ export default function AdminOrders() {
       const data = await getAllOrders();
       setOrders(data.orders || []);
     } catch (err) {
-      setError(err.message || "Failed to load orders");
+      setError(err.message || "Failed to load cart entries");
     } finally {
       setLoading(false);
     }
   };
-
-
-
 
   const formatOrderDate = (dateStr) => {
     if (!dateStr) return { date: "—", relative: "" };
@@ -107,7 +104,7 @@ export default function AdminOrders() {
     return true;
   };
 
-  // Filtered & Sorted Orders
+  // Filtered & Sorted Orders (All Rows, No Payment Filter)
   const filteredOrders = orders
     .filter((order) => {
       const shortId = order.id.slice(0, 8).toLowerCase();
@@ -124,15 +121,9 @@ export default function AdminOrders() {
 
       const matchesDate = matchesDateFilter(order.created_at, dateRange);
 
-      const isPaid = ["paid", "shipped", "delivered"].includes(order.status) ||
-        (order.razorpay_payment_id &&
-          order.razorpay_payment_id !== "payment failed" &&
-          order.razorpay_payment_id !== "cart abandoned");
-      const isFailed = order.status === "failed" || order.razorpay_payment_id === "payment failed";
+      const hasNullPaymentId = !order.razorpay_payment_id;
 
-      const matchesPaymentFilter = isPaid || isFailed;
-
-      return matchesSearch && matchesDate && matchesPaymentFilter;
+      return matchesSearch && matchesDate && hasNullPaymentId;
     })
     .sort((a, b) => {
       const timeA = new Date(a.created_at).getTime();
@@ -150,7 +141,7 @@ export default function AdminOrders() {
       {/* Header and Search Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <h1 className="font-serif text-2xl md:text-3xl font-normal text-[#171715] tracking-wide" style={{ fontFamily: fonts.primary }}>
-          Orders
+          Abandoned Carts
         </h1>
 
         <div className="flex items-center gap-3">
@@ -197,7 +188,7 @@ export default function AdminOrders() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 animate-pulse">
           <div style={{ borderTopColor: colours.accent }} className="animate-spin rounded-full h-10 w-10 border-4 border-stone-200 mb-3"></div>
-          <p className="text-sm text-[#7C7770]">Loading orders...</p>
+          <p className="text-sm text-[#7C7770]">Loading carts...</p>
         </div>
       ) : error ? (
         <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded">
@@ -208,7 +199,7 @@ export default function AdminOrders() {
           className="overflow-hidden rounded-2xl border shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300"
           style={{
             borderColor: colours.border,
-            backgroundColor: colours.primary, // using primary color palette (#F7F3EC) for warm aesthetic
+            backgroundColor: colours.primary,
           }}
         >
           <div className="overflow-x-auto">
@@ -221,9 +212,9 @@ export default function AdminOrders() {
                     color: colours.mutedText,
                   }}
                 >
-                  <th className="px-6 py-4 font-bold w-[12%]">ID</th>
+                  <th className="px-6 py-4 font-bold w-[15%]">ID</th>
                   <th
-                    className="px-6 py-4 font-bold w-[18%] cursor-pointer select-none group"
+                    className="px-6 py-4 font-bold w-[20%] cursor-pointer select-none group"
                     onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
                     title="Click to sort by date"
                   >
@@ -234,9 +225,8 @@ export default function AdminOrders() {
                       </span>
                     </div>
                   </th>
-                  <th className="px-6 py-4 font-bold w-[25%]">Personal Details</th>
-                  <th className="px-6 py-4 font-bold w-[30%]">Shipping Details</th>
-                  <th className="px-6 py-4 font-bold w-[15%]">Payment ID</th>
+                  <th className="px-6 py-4 font-bold w-[30%]">Personal Details</th>
+                  <th className="px-6 py-4 font-bold w-[35%]">Shipping Details</th>
                 </tr>
               </thead>
 
@@ -253,15 +243,12 @@ export default function AdminOrders() {
                       >
                         {/* ID */}
                         <td className="px-6 py-5 align-top">
-                          <a
-                            href={`/orders/${order.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <span
                             title={order.id.toUpperCase()}
-                            className="font-mono text-xs md:text-sm font-semibold text-[#171715] block select-all hover:text-[#A77C6B] hover:underline"
+                            className="font-mono text-xs md:text-sm font-semibold text-[#171715] block select-all cursor-pointer"
                           >
                             #{order.id.slice(0, 8).toUpperCase()}...
-                          </a>
+                          </span>
                           {/* Price Tag underneath ID */}
                           <span className="text-xs text-[#171715] font-semibold block mt-1">
                             ₹{parseFloat(order.total).toLocaleString("en-IN", {
@@ -319,58 +306,17 @@ export default function AdminOrders() {
                             </span>
                           </div>
                         </td>
-
-                        {/* Razorpay Payment ID Column */}
-                        <td className="px-6 py-5 align-top">
-                          {order.razorpay_payment_id ? (
-                            order.razorpay_payment_id === "payment failed" ? (
-                              <span className="text-[10px] md:text-xs font-semibold px-2.5 py-1 rounded-full border text-red-700 bg-red-50/80 border-red-200 inline-block">
-                                Payment Failed
-                              </span>
-                            ) : order.razorpay_payment_id === "cart abandoned" ? (
-                              <span className="text-[10px] md:text-xs font-semibold px-2.5 py-1 rounded-full border text-amber-700 bg-amber-50/80 border-amber-200 inline-block">
-                                Cart Abandoned
-                              </span>
-                            ) : (
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-mono text-xs md:text-sm font-semibold text-[#171715] select-all bg-[#FAF9F6]/85 border border-[#D8D2C8] px-2 py-1 rounded">
-                                  {order.razorpay_payment_id}
-                                </span>
-                                <button
-                                  onClick={() => handleCopy(order.razorpay_payment_id)}
-                                  className="p-1 rounded hover:bg-stone-200/60 transition-colors border-none cursor-pointer text-[#7C7770] flex items-center justify-center"
-                                  title="Copy Payment ID"
-                                >
-                                  {copiedId === order.razorpay_payment_id ? (
-                                    <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                  ) : (
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                    </svg>
-                                  )}
-                                </button>
-                              </div>
-                            )
-                          ) : (
-                            <span className="text-xs text-[#7C7770] italic">
-                              —
-                            </span>
-                          )}
-                        </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
                     <td
-                      colSpan="5"
+                      colSpan="4"
                       className="px-6 py-10 text-center text-sm"
                       style={{ color: colours.mutedText }}
                     >
-                      No orders found.
+                      No cart entries found.
                     </td>
                   </tr>
                 )}

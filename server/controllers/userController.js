@@ -8,9 +8,9 @@ const register = async (req, res) => {
 
   if (!first_name || !email || !password) {
     return res.status(400).json({
-        success: false,
-        message: "first_name, email and password are required.",
-      });
+      success: false,
+      message: "first_name, email and password are required.",
+    });
   }
 
   try {
@@ -56,7 +56,7 @@ const login = async (req, res) => {
     const user = rows[0];
 
     if (!user.password_hash) {
-      return res.status(400).json({success: false, message: "This account uses phone-number login.",});
+      return res.status(400).json({ success: false, message: "This account uses phone-number login.", });
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -150,7 +150,7 @@ const updateProfile = async (req, res) => {
     const fieldsToUpdate = {};
     if (first_name !== undefined) fieldsToUpdate.first_name = first_name.trim();
     if (last_name !== undefined) fieldsToUpdate.last_name = last_name.trim();
-    
+
     if (email !== undefined) {
       const emailTrimmed = email.trim().toLowerCase();
       if (emailTrimmed) {
@@ -314,4 +314,26 @@ const getPincodeDetails = async (req, res) => {
   }
 }
 
-export { getPincodeDetails, register, login, profile, addAddress, getAddress, updateProfile, updateAddress, deleteAddress, submitComplaint };
+const submitQuestion = async (req, res) => {
+  const { name, email, phone_number, subject, message } = req.body;
+
+  if (!name || !email || !phone_number || !subject || !message) {
+    return res.status(400).json({ success: false, message: "All fields are required." });
+  }
+
+  try {
+    const { rows } = await db.homepageQuestions.create({
+      name: name.trim(),
+      email: email.trim(),
+      phone_number: phone_number.trim(),
+      subject: subject.trim(),
+      message: message.trim()
+    });
+    res.status(201).json({ success: true, question: rows[0] });
+  } catch (err) {
+    console.error("[submit question]", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+}
+
+export { getPincodeDetails, register, login, profile, addAddress, getAddress, updateProfile, updateAddress, deleteAddress, submitComplaint, submitQuestion };
