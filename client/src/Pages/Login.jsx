@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { colours, fonts } from '../theme/theme.js';
 import CustomSelect from '../Components/CustomSelect';
+import { mergeGuestCart } from '../services/cartService';
 
 const API = import.meta.env.VITE_SERVER_API;
 
@@ -193,6 +194,7 @@ function StepDots({ step }) {
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, token, user, loading: authLoading, isAdmin } = useAuth();
 
   const [step, setStep] = useState(0);
@@ -209,11 +211,16 @@ export default function Login() {
 
   const digitRefs = useRef([]);
 
+  const searchParams = new URLSearchParams(location.search);
+  const redirect = searchParams.get('redirect');
+  const redirectPath = (redirect && redirect.startsWith('/')) ? redirect : null;
+
   useEffect(() => {
     if (!authLoading && token && user) {
-      navigate(isAdmin ? '/admin/dashboard' : '/dashboard', { replace: true });
+      const target = redirectPath || (isAdmin ? '/admin/dashboard' : '/dashboard');
+      navigate(target, { replace: true });
     }
-  }, [authLoading, token, user, isAdmin, navigate]);
+  }, [authLoading, token, user, isAdmin, navigate, redirectPath]);
 
   useEffect(() => {
     if (resend <= 0) return undefined;
@@ -342,7 +349,13 @@ export default function Login() {
       }
 
       login(data.token, data.user);
-      navigate(data.user.is_admin ? '/admin/dashboard' : '/dashboard', { replace: true });
+      try {
+        await mergeGuestCart();
+      } catch (err) {
+        console.error('Failed to merge guest cart:', err);
+      }
+      const target = redirectPath || (data.user.is_admin ? '/admin/dashboard' : '/dashboard');
+      navigate(target, { replace: true });
     } catch {
       showError('Could not reach the server.');
     } finally {
@@ -431,7 +444,13 @@ export default function Login() {
       }
 
       login(data.token, data.user);
-      navigate(data.user.is_admin ? '/admin/dashboard' : '/dashboard', { replace: true });
+      try {
+        await mergeGuestCart();
+      } catch (err) {
+        console.error('Failed to merge guest cart:', err);
+      }
+      const target = redirectPath || (data.user.is_admin ? '/admin/dashboard' : '/dashboard');
+      navigate(target, { replace: true });
     } catch {
       showError('Could not reach the server.');
     } finally {

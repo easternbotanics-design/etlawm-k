@@ -13,7 +13,7 @@ import {
 } from "../services/cartService";
 import Navbar from "../Components/NavBar2";
 import { colours, fonts } from "../theme/theme";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createOrder } from "../services/orderService";
 import { startRazorpayPayment } from "../services/paymentService";
@@ -45,6 +45,7 @@ const DEFAULT_ADDRESS_DETAILS = {
   deliveryType: "standard",
   orderNotes: "",
   pincodeVerified: false,
+  phoneVerified: false,
 };
 
 
@@ -68,6 +69,21 @@ function getSavedAddressDetails() {
 function Cart() {
   const { user } = useAuth();
   const [checkoutStep, setCheckoutStep] = useState("cart");
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const location = useLocation();
+
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const stepParam = searchParams.get("step");
+
+  useEffect(() => {
+    if (stepParam && CHECKOUT_STEPS.some((s) => s.key === stepParam)) {
+      if (stepParam === "cart") {
+        setCheckoutStep("cart");
+      } else if (stepParam === "address" && user) {
+        setCheckoutStep("address");
+      }
+    }
+  }, [stepParam, user]);
 
   const [items, setItems] = useState([]);
   const [coupon, setCoupon] = useState(null);
@@ -316,13 +332,20 @@ function Cart() {
     const hasRequiredFields = requiredFields.every((field) =>
       String(addressDetails[field] ?? "").trim(),
     );
+
+    const sanitizePhone = (ph) => String(ph || "").replace(/\D/g, "");
+    const isPhoneVerified = user && (
+      sanitizePhone(addressDetails.phoneNumber) === sanitizePhone(user.phone_number) ||
+      addressDetails.phoneVerified === true
+    );
   
     return (
       hasRequiredFields &&
       String(addressDetails.pincode || "").length === 6 &&
-      addressDetails.pincodeVerified === true
+      addressDetails.pincodeVerified === true &&
+      isPhoneVerified
     );
-  }, [addressDetails]);
+  }, [addressDetails, user]);
 
   const visibleSteps = useMemo(
     () =>
@@ -563,6 +586,11 @@ function Cart() {
       return;
     }
 
+    if (nextStep !== "cart" && !user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
     setPageError("");
     setCheckoutStep(nextStep);
   }
@@ -571,6 +599,11 @@ function Cart() {
     if (checkoutStep === "cart") {
       if (selectedItems.length === 0) {
         setPageError("Select at least one item before picking an address.");
+        return;
+      }
+
+      if (!user) {
+        setShowLoginPrompt(true);
         return;
       }
 
@@ -709,6 +742,109 @@ function Cart() {
           </div>
         </div>
       </main>
+
+      {showLoginPrompt && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div
+            style={{
+              backgroundColor: colours.background,
+              borderColor: colours.border,
+              fontFamily: fonts.secondary,
+              color: colours.text,
+            }}
+            className="w-full max-w-md rounded-2xl border p-8 shadow-2xl transition-all duration-300 transform scale-100 flex flex-col items-center text-center relative overflow-hidden animate-in zoom-in-95"
+          >
+            {/* Decorative background gradients */}
+            <div
+              className="absolute -right-16 -top-16 h-36 w-36 rounded-full opacity-30 blur-xl"
+              style={{ background: colours.accent }}
+            />
+            <div
+              className="absolute -left-16 -bottom-16 h-36 w-36 rounded-full opacity-30 blur-xl"
+              style={{ background: colours.hover }}
+            />
+
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setShowLoginPrompt(false)}
+              className="absolute right-4 top-4 text-stone-400 hover:text-stone-600 transition-colors bg-transparent border-none text-2xl p-0 cursor-pointer leading-none"
+            >
+              &times;
+            </button>
+
+            {/* User Icon */}
+            <div
+              className="mb-5 flex h-14 w-14 items-center justify-center rounded-full"
+              style={{
+                backgroundColor: `${colours.accent}15`,
+                color: colours.accent,
+              }}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+
+            {/* Title */}
+            <h3
+              style={{ fontFamily: fonts.primary }}
+              className="mb-3 text-2xl font-normal tracking-wide"
+            >
+              Login Required
+            </h3>
+
+            {/* Description */}
+            <p
+              className="mb-6 text-sm opacity-70 leading-relaxed max-w-[280px]"
+              style={{ color: colours.mutedText }}
+            >
+              Please sign in to your account to pick a delivery address and complete checkout.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex w-full flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLoginPrompt(false);
+                  navigate(`/login?redirect=${encodeURIComponent('/cart?step=address')}`);
+                }}
+                className="w-full cursor-pointer rounded-xl border py-3.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200 hover:opacity-90"
+                style={{
+                  background: colours.secondary,
+                  borderColor: colours.secondary,
+                  color: colours.background,
+                }}
+              >
+                Sign In / Log In
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowLoginPrompt(false)}
+                className="w-full cursor-pointer rounded-xl border py-3.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200 bg-transparent hover:bg-stone-50"
+                style={{
+                  borderColor: colours.border,
+                  color: colours.text,
+                }}
+              >
+                Continue Guest Shopping
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
