@@ -177,17 +177,12 @@ export default function Footer() {
             </div>
             <ul className="space-y-4">
               <li>
-                <a href="tel:+916239551893" className="flex items-center gap-3 text-sm text-gray-300 hover:text-white transition-colors">
+                <a href="tel:+918429121121" className="flex items-center gap-3 text-sm text-gray-300 hover:text-white transition-colors">
                   <PhoneIcon />
-                  +91 62395 51893
+                  +91 8429-121-121
                 </a>
               </li>
-              <li>
-                <a href="mailto:info@etlawm.com" className="flex items-center gap-3 text-sm text-gray-300 hover:text-white transition-colors">
-                  <MailIcon />
-                  info@etlawm.com
-                </a>
-              </li>
+              {/* for mail */}
               <li>
                 <span className="flex items-center gap-3 text-sm text-gray-300">
                   <LocationIcon />
@@ -209,9 +204,7 @@ export default function Footer() {
         {/* Social icons */}
         <div className="flex items-center gap-3">
           {[
-            { icon: <InstagramIcon />, href: "#" },
-            { icon: <FacebookIcon />, href: "#" },
-            { icon: <TwitterIcon />, href: "#" },
+            { icon: <InstagramIcon />, href: "https://www.instagram.com/etlawm" },
           ].map((social, i) => (
             <a
               key={i}
