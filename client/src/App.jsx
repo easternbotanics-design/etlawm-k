@@ -17,6 +17,8 @@ import Ritual from './Pages/Ritual.jsx';
 import AdminDashBoard from './Pages/AdminDashBoard.jsx';
 import OrderSuccess from './Pages/OrderSuccess.jsx';
 import AdminOrderInfo from './Components/AdminPanel/AdminOrderInfo.jsx';
+import OrderSuccess2 from './Pages/OrderSuccess2.jsx';
+import AdminOrderInfo2 from './Components/AdminPanel/AdminOrderInfo2.jsx';
 import { useAuth } from './context/AuthContext';
 import Loader from './Components/Loader';
 import FloatingCart from './Components/FloatingCart.jsx';
@@ -85,7 +87,7 @@ function AppRoutes() {
           path="/orders/:orderId/success"
           element={
             <ProtectedRoute>
-              <OrderSuccess />
+              <OrderSuccess2 />
             </ProtectedRoute>
           }
         />
@@ -93,7 +95,7 @@ function AppRoutes() {
           path="/orders/:orderId"
           element={
             <ProtectedRoute>
-              <AdminOrderInfo />
+              <AdminOrderInfo2 />
             </ProtectedRoute>
           }
         />

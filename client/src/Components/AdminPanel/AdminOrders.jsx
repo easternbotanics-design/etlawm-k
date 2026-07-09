@@ -269,6 +269,14 @@ export default function AdminOrders() {
                               maximumFractionDigits: 2,
                             })}
                           </span>
+                          {order.coupon_code && (
+                            <span className="flex items-center gap-1 mt-2 w-fit font-mono text-[10px] font-bold text-[#A77C6B] bg-[#FAF6F0] border border-[#EBE3D5] rounded-md px-2 py-0.5 uppercase tracking-wide" title="Applied Promo Code">
+                              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M21 10.75h.75V9A4.756 4.756 0 0 0 17 4.25H7A4.756 4.756 0 0 0 2.25 9v1.75H3a1.25 1.25 0 0 1 0 2.5h-.75V15A4.756 4.756 0 0 0 7 19.75h10A4.756 4.756 0 0 0 21.75 15v-1.75H21a1.25 1.25 0 0 1 0-2.5Zm-.75 3.9V15A3.254 3.254 0 0 1 17 18.25h-1.25V16a.75.75 0 0 0-1.5 0v2.25H7A3.254 3.254 0 0 1 3.75 15v-.354a2.75 2.75 0 0 0 0-5.292V9A3.254 3.254 0 0 1 7 5.75h7.25V8a.75.75 0 0 0 1.5 0V5.75H17A3.254 3.254 0 0 1 20.25 9v.354a2.75 2.75 0 0 0 0 5.292ZM15.75 11v2a.75.75 0 0 1-1.5 0v-2a.75.75 0 0 1 1.5 0Z" />
+                              </svg>
+                              {order.coupon_code}
+                            </span>
+                          )}
                         </td>
 
                         {/* Date */}

@@ -136,9 +136,23 @@ const UserOrders = () => {
 
                     <div>
                       <span className="block text-[9px] font-bold uppercase tracking-wider text-stone-400">Fulfillment</span>
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border mt-1 ${badge.bg}`}>
-                        {badge.text}
-                      </span>
+                      <div className="flex flex-col items-start gap-1 mt-1">
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${badge.bg}`}>
+                          {badge.text}
+                        </span>
+                        <a
+                          href={`/orders/${order.id}/success`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[10px] font-medium tracking-wide underline transition-all duration-200"
+                          style={{ color: colours.accent, fontFamily: fonts.secondary }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = colours.secondary}
+                          onMouseLeave={(e) => e.currentTarget.style.color = colours.accent}
+                        >
+                          View Receipt
+                        </a>
+                      </div>
                     </div>
 
                     <div>
@@ -166,7 +180,7 @@ const UserOrders = () => {
                       </div>
                     ) : details ? (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b" style={{ borderBottomColor: colours.border }}>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b" style={{ borderBottomColor: colours.border }}>
                           <div>
                             <span className="text-[9px] font-bold uppercase tracking-wider text-stone-400 block mb-1">Shipping Details</span>
                             <p className="text-xs font-semibold text-neutral-850">{details.shipping_name}</p>
@@ -175,12 +189,39 @@ const UserOrders = () => {
                             </p>
                           </div>
                           <div>
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-stone-400 block mb-1">Shipment Status</span>
+                            <div className="text-xs space-y-1">
+                              <p className="font-semibold text-neutral-850">
+                                {details.shipment_status === "packed" ? (
+                                  <span className="text-emerald-600 font-medium">Packed</span>
+                                ) : (
+                                  <span className="text-amber-600 font-medium">Processing</span>
+                                )}
+                              </p>
+                              {details.tracking_id ? (
+                                <p className="text-[11px] text-stone-600 mt-1.5">
+                                  Tracking ID: <span className="font-mono font-bold text-stone-850 bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200 select-all">{details.tracking_id}</span>
+                                </p>
+                              ) : (
+                                <p className="text-[11px] text-stone-400 italic mt-1.5">Awaiting carrier dispatch</p>
+                              )}
+                            </div>
+                          </div>
+                          <div>
                             <span className="text-[9px] font-bold uppercase tracking-wider text-stone-400 block mb-1">Billing Summary</span>
                             <div className="text-xs text-neutral-600 space-y-1">
                               <div className="flex justify-between">
                                 <span>Subtotal</span>
-                                <span className="font-semibold text-neutral-800">₹{parseFloat(details.total).toFixed(2)}</span>
+                                <span className="font-semibold text-neutral-850">
+                                  ₹{(Number(details.total) + Number(details.early_bird_discount_amount || 0)).toFixed(2)}
+                                </span>
                               </div>
+                              {Number(details.early_bird_discount_amount) > 0 && (
+                                <div className="flex justify-between text-emerald-700 font-medium">
+                                  <span>Discount {details.coupon_code ? `(${details.coupon_code})` : ""}</span>
+                                  <span>-₹{parseFloat(details.early_bird_discount_amount).toFixed(2)}</span>
+                                </div>
+                              )}
                               <div className="flex justify-between">
                                 <span>Delivery charge</span>
                                 <span className="text-emerald-700 font-bold uppercase text-[9px] tracking-wider mt-0.5">Free</span>
@@ -201,7 +242,7 @@ const UserOrders = () => {
                                 <div className="w-12 h-12 bg-white border rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                                   {item.image_url ? (
                                     <img 
-                                      src={`${API}${item.image_url}`} 
+                                      src={item.image_url.startsWith("http") ? item.image_url : `${API}${item.image_url}`} 
                                       alt={item.product_name} 
                                       className="w-full h-full object-cover"
                                     />

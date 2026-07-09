@@ -178,6 +178,7 @@ function normalizeCart(data) {
     ),
 
     items: rawItems.map(normalizeCartItem),
+    coupon: cart.coupon ?? null,
   };
 }
 

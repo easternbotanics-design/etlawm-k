@@ -288,3 +288,52 @@ export async function getAdminQuestions() {
 
   return handleResponse(response, "Failed to fetch questions");
 }
+
+// Early Bird Campaign Services
+export async function getAllEarlyBirdCampaigns() {
+  const response = await fetch(`${API}/api/early-bird-discount`, {
+    headers: getHeaders(false),
+  });
+  return handleResponse(response, "Failed to fetch early bird campaigns");
+}
+
+export async function createEarlyBirdCampaign(data) {
+  const response = await fetch(`${API}/api/early-bird-discount`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response, "Failed to create early bird campaign");
+}
+
+export async function updateEarlyBirdCampaign(id, data) {
+  const response = await fetch(`${API}/api/early-bird-discount/${id}`, {
+    method: "PATCH",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response, "Failed to update early bird campaign");
+}
+
+export async function deleteEarlyBirdCampaign(id) {
+  const response = await fetch(`${API}/api/early-bird-discount/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(false),
+  });
+  return handleResponse(response, "Failed to delete early bird campaign");
+}
+
+export async function getEarlyBirdDiscountConfigByCode(code) {
+  const response = await fetch(`${API}/api/early-bird-discount/code/${code}`, {
+    headers: getHeaders(false),
+  });
+  return handleResponse(response, "Failed to fetch coupon code details");
+}
+
+export async function relaunchEarlyBirdCampaign(id) {
+  const response = await fetch(`${API}/api/early-bird-discount/${id}/relaunch`, {
+    method: "POST",
+    headers: getHeaders(false),
+  });
+  return handleResponse(response, "Failed to relaunch coupon");
+}

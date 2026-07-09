@@ -86,3 +86,17 @@ export async function updateOrderStatus(orderId, status) {
 
   return handleResponse(response, "Failed to update order status");
 }
+
+export async function updateOrderShipment(orderId, { shipment_status, tracking_id }) {
+  if (!API) {
+    throw new Error("VITE_SERVER_API is missing.");
+  }
+
+  const response = await fetch(`${API}/api/orders/${orderId}/shipment`, {
+    method: "PATCH",
+    headers: getHeaders(true),
+    body: JSON.stringify({ shipment_status, tracking_id }),
+  });
+
+  return handleResponse(response, "Failed to update shipment status");
+}

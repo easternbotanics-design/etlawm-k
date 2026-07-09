@@ -46,6 +46,57 @@ const getCart = async (req, res) => {
       0,
     );
 
+    // Fetch applied coupon (regular or early bird)
+    let appliedCoupon = null;
+    if (cart.coupon_id) {
+      const { rows: [c] } = await db.query(
+        `SELECT * FROM coupons WHERE id = $1 LIMIT 1`,
+        [cart.coupon_id]
+      );
+      if (c) {
+        appliedCoupon = {
+          id: c.id,
+          code: c.code,
+          discount_type: c.discount_type,
+          discount_value: c.discount_value,
+        };
+      }
+    } else if (cart.early_bird_discount_id) {
+      const ebResult = await db.earlyBirdDiscount.findById(cart.early_bird_discount_id);
+      if (ebResult.rows.length > 0) {
+        const eb = ebResult.rows[0];
+        let isValid = eb.is_active && new Date() >= new Date(eb.starts_at) && eb.used_count < eb.user_limit;
+
+        if (isValid && req.user?.id) {
+          const userUsage = await db.query(
+            `SELECT EXISTS (
+                SELECT 1 FROM orders 
+                WHERE user_id = $1 
+                  AND early_bird_discount_id = $2 
+                  AND status IN ('paid', 'shipped', 'delivered')
+             ) AS has_used`,
+            [req.user.id, eb.id]
+          );
+          if (userUsage.rows[0].has_used) {
+            isValid = false;
+          }
+        }
+
+        if (isValid) {
+          appliedCoupon = {
+            id: eb.id,
+            code: eb.coupon_code,
+            discount_type: eb.discount_type,
+            discount_value: eb.discount_value,
+            is_early_bird: true,
+          };
+        } else {
+          // If no longer valid, automatically clear it from the cart
+          await db.earlyBirdDiscount.removeFromCart(cart.id);
+        }
+      }
+    }
+
     res.json({
       success: true,
       cart: {
@@ -54,6 +105,7 @@ const getCart = async (req, res) => {
         items,
         item_count: itemCount,
         subtotal,
+        coupon: appliedCoupon,
       },
     });
   } catch (err) {
@@ -377,10 +429,98 @@ const applyCartCoupon = async (req, res) => {
 
   try {
     const { cart, type } = await resolveCart(req);
+    const { rows: items } = await db.cartItems.findByCart(cart.id);
 
+    const subtotal = items.reduce(
+      (total, item) =>
+        total + Number(item.price) * Number(item.quantity),
+      0,
+    );
+
+    const codeUpper = code.trim().toUpperCase();
+
+    // 1. Try finding coupon in early_bird_discounts first
+    const ebResult = await db.earlyBirdDiscount.findByCode(codeUpper);
+    if (ebResult.rows.length > 0) {
+      const eb = ebResult.rows[0];
+
+      if (!eb.is_active || new Date() < new Date(eb.starts_at)) {
+        return res.status(400).json({
+          success: false,
+          message: "This coupon code is not active yet.",
+        });
+      }
+
+      if (eb.used_count >= eb.user_limit) {
+        return res.status(400).json({
+          success: false,
+          message: "This coupon code has reached its maximum redemption limit.",
+        });
+      }
+
+      if (!req.user?.id) {
+        return res.status(401).json({
+          success: false,
+          message: "Please log in to apply this discount.",
+        });
+      }
+
+      const userUsage = await db.query(
+        `SELECT EXISTS (
+            SELECT 1 FROM orders 
+            WHERE user_id = $1 
+              AND early_bird_discount_id = $2 
+              AND status IN ('paid', 'shipped', 'delivered')
+         ) AS has_used`,
+        [req.user.id, eb.id]
+      );
+
+      if (userUsage.rows[0].has_used) {
+        return res.status(400).json({
+          success: false,
+          message: "You have already successfully used this coupon.",
+        });
+      }
+
+      // Valid: Apply early bird coupon to cart (which resets coupon_id to NULL)
+      await db.earlyBirdDiscount.applyToCart({ cart_id: cart.id, early_bird_id: eb.id });
+
+      let discount = 0;
+      if (eb.discount_type === "percentage") {
+        discount = Math.floor(subtotal * (Number(eb.discount_value) / 100));
+      } else if (eb.discount_type === "fixed") {
+        discount = Number(eb.discount_value);
+      }
+      discount = Math.min(discount, subtotal);
+
+      return res.json({
+        success: true,
+        cart: {
+          id: cart.id,
+          type,
+          items,
+          item_count: items.reduce(
+            (total, item) => total + Number(item.quantity),
+            0,
+          ),
+          subtotal,
+          discount,
+          total: subtotal - discount,
+          coupon: {
+            id: eb.id,
+            code: eb.coupon_code,
+            discount_type: eb.discount_type,
+            discount_value: eb.discount_value,
+            is_early_bird: true,
+          },
+        },
+      });
+    }
+
+    // 2. Fallback to standard coupons
     const {
       rows: [coupon],
-    } = await db.coupons.findValidByCode(code.trim().toUpperCase());
+    } = await db.coupons.findValidByCode(codeUpper);
 
     if (!coupon) {
       return res.status(404).json({
@@ -388,16 +528,6 @@ const applyCartCoupon = async (req, res) => {
         message: "Invalid or expired coupon code.",
       });
     }
-
-    const { rows: items } =
-      await db.cartItems.findByCart(cart.id);
-
-    const subtotal = items.reduce(
-      (total, item) =>
-        total +
-        Number(item.price) * Number(item.quantity),
-      0,
-    );
 
     if (
       coupon.minimum_order_value &&
@@ -412,9 +542,10 @@ const applyCartCoupon = async (req, res) => {
     let discount = 0;
 
     if (coupon.discount_type === "percentage") {
-      discount =
+      discount = Math.floor(
         subtotal *
-        (Number(coupon.discount_value) / 100);
+        (Number(coupon.discount_value) / 100)
+      );
     } else if (coupon.discount_type === "fixed") {
       discount = Number(coupon.discount_value);
     }
@@ -428,10 +559,12 @@ const applyCartCoupon = async (req, res) => {
 
     discount = Math.min(discount, subtotal);
 
+    // Apply normal coupon (clears early_bird_discount_id)
     await db.carts.applyCoupon({
       cart_id: cart.id,
       coupon_id: coupon.id,
     });
+    await db.earlyBirdDiscount.removeFromCart(cart.id);
 
     return res.json({
       success: true,
@@ -469,7 +602,9 @@ const removeCartCoupon = async (req, res) => {
   try {
     const { cart, type } = await resolveCart(req);
 
+    // Clear both
     await db.carts.removeCoupon(cart.id);
+    await db.earlyBirdDiscount.removeFromCart(cart.id);
 
     const { rows: items } =
       await db.cartItems.findByCart(cart.id);

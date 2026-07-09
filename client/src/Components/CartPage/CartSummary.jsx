@@ -157,7 +157,7 @@ function CartSummary({
               />
 
               <PriceRow
-                label="Coupon discount"
+                label={coupon?.isEarlyBird ? "Launch discount" : "Coupon discount"}
                 value={
                   discount > 0
                     ? `-₹${discount.toFixed(2)}`

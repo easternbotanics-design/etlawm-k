@@ -15,7 +15,7 @@ import Navbar from "../Components/NavBar2";
 import { colours, fonts } from "../theme/theme";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createOrder } from "../services/orderService";
+import { createOrder, getOrderById } from "../services/orderService";
 import { startRazorpayPayment, updatePaymentStatus } from "../services/paymentService";
 
 const CHECKOUT_STEPS = [
@@ -117,6 +117,30 @@ function Cart() {
 
   useEffect(() => {
     loadCart();
+
+    // Check if the saved checkout order has already been paid
+    const savedOrder = sessionStorage.getItem("checkoutOrder");
+    if (savedOrder) {
+      try {
+        const parsed = JSON.parse(savedOrder);
+        if (parsed?.id) {
+          getOrderById(parsed.id)
+            .then((result) => {
+              const orderData = result.order ?? result.data?.order ?? result;
+              if (orderData && (orderData.status === "paid" || orderData.razorpay_payment_id)) {
+                sessionStorage.removeItem("checkoutCartItemIds");
+                sessionStorage.removeItem("checkoutAddressDetails");
+                sessionStorage.removeItem("checkoutOrder");
+                window.dispatchEvent(new Event("cart-updated"));
+                navigate(`/orders/${parsed.id}/success`);
+              }
+            })
+            .catch((err) => console.error("Failed to check checkout order status:", err));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }, []);
 
   const navigate = useNavigate();
@@ -244,6 +268,15 @@ function Cart() {
       navigate(`/orders/${paymentResult.payment?.order_id ?? paymentResult.order?.id ?? orderId}/success`);
     } catch (error) {
       try {
+        if (error.message && (error.message.includes("already paid") || error.message.includes("Already paid"))) {
+          sessionStorage.removeItem("checkoutCartItemIds");
+          sessionStorage.removeItem("checkoutAddressDetails");
+          sessionStorage.removeItem("checkoutOrder");
+          window.dispatchEvent(new Event("cart-updated"));
+          navigate(`/orders/${orderId}/success`);
+          return;
+        }
+
         if (error.message === "Payment cancelled by user.") {
           setPageError("Payment cancelled. You can try again when you are ready.");
         } else {
@@ -276,7 +309,18 @@ function Cart() {
         })),
       );
 
-      setCoupon(cart.coupon);
+      if (cart.coupon) {
+        setCoupon({
+          code: cart.coupon.code,
+          description: cart.coupon.description ?? "",
+          discountType: cart.coupon.discount_type ?? cart.coupon.discountType ?? "fixed",
+          discountValue: cart.coupon.discount_value ?? cart.coupon.discountValue ?? 0,
+          maxDiscount: cart.coupon.max_discount ?? cart.coupon.maxDiscount ?? null,
+          isEarlyBird: cart.coupon.is_early_bird ?? cart.coupon.isEarlyBird ?? false,
+        });
+      } else {
+        setCoupon(null);
+      }
     } catch (error) {
       setPageError(error.message);
     } finally {
@@ -308,7 +352,7 @@ function Cart() {
 
     if (coupon.discountType === "percentage") {
       const calculated =
-        subtotal * (Number(coupon.discountValue) / 100);
+        Math.floor(subtotal * (Number(coupon.discountValue) / 100));
 
       return coupon.maxDiscount
         ? Math.min(calculated, Number(coupon.maxDiscount))
@@ -550,6 +594,10 @@ function Cart() {
           data.coupon?.max_discount ??
           data.coupon?.maxDiscount ??
           null,
+        isEarlyBird:
+          data.coupon?.is_early_bird ??
+          data.coupon?.isEarlyBird ??
+          false,
       });
 
       setCouponCode("");
@@ -726,6 +774,7 @@ function Cart() {
                 addressDetails={addressDetails}
                 subtotal={subtotal}
                 discount={discount}
+                coupon={coupon}
                 deliveryCharge={deliveryCharge}
                 total={total}
                 onBack={() => setCheckoutStep("address")}
@@ -864,6 +913,7 @@ function CheckoutReview({
   addressDetails,
   subtotal,
   discount,
+  coupon,
   deliveryCharge,
   total,
   onBack,
@@ -1070,7 +1120,7 @@ function CheckoutReview({
             />
 
             <ReviewRow
-              label="Discount"
+              label={coupon?.isEarlyBird ? "Launch Discount" : "Discount"}
               value={
                 discount > 0
                   ? `-₹${discount.toFixed(2)}`

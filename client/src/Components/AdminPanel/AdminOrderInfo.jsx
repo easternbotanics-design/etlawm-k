@@ -85,6 +85,23 @@ function AdminOrderInfo() {
                   Payment ID: <span className="font-mono text-xs opacity-75">{order.razorpay_payment_id}</span>
                 </div>
               )}
+
+              {order?.coupon_code && (
+                <div
+                  className="inline-block rounded-xl px-4 py-2 text-sm font-semibold border animate-in fade-in duration-200"
+                  style={{
+                    borderColor: colours.border,
+                    backgroundColor: colours.primary,
+                    color: colours.secondary,
+                    fontFamily: fonts.secondary,
+                  }}
+                >
+                  Coupon Used: <span className="font-mono text-xs font-bold uppercase tracking-wider">{order.coupon_code}</span>
+                  {Number(order.early_bird_discount_amount) > 0 && (
+                    <span className="text-xs opacity-75 ml-1">(-₹{parseFloat(order.early_bird_discount_amount).toFixed(2)})</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

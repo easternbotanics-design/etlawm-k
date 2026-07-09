@@ -17,6 +17,8 @@ import AdminOrders from "../Components/AdminPanel/AdminOrders.jsx";
 import AdminCarts from "../Components/AdminPanel/AdminCarts.jsx";
 import AdminCustomers from "../Components/AdminPanel/AdminCustomers.jsx";
 import AdminQuestions from "../Components/AdminPanel/AdminQuestions.jsx";
+import AdminCoupons from "../Components/AdminPanel/AdminCoupons.jsx";
+import AdminShipments from "../Components/AdminPanel/AdminShipments.jsx";
 import { colours, fonts } from "../theme/theme.js";
 
 
@@ -153,6 +155,8 @@ const AdminDashBoard = () => {
             {/* Operations Group */}
             <Route path="operations/orders" element={<AdminOrders />} />
             <Route path="operations/carts" element={<AdminCarts />} />
+            <Route path="operations/coupons" element={<AdminCoupons />} />
+            <Route path="operations/shipments" element={<AdminShipments />} />
 
             {/* Profile & Settings routes */}
             <Route path="customers" element={<AdminCustomers />} />

@@ -1108,7 +1108,7 @@ const cartItems = {
 
     findByCart: (cart_id) =>
         query(
-            `SELECT ci.*, p.name AS product_name, p.price,
+            `SELECT ci.*, p.name AS product_name, p.price, p.stock_qty,
                     (SELECT image_url FROM product_images
                      WHERE product_id = ci.product_id AND is_primary = true LIMIT 1) AS image_url
              FROM cart_items ci
@@ -1191,16 +1191,78 @@ const orders = {
         try {
             await client.query('BEGIN');
             const total = items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
+
+            // Check if there is an early bird discount applied to the user's cart
+            let earlyBirdDiscountId = null;
+            let earlyBirdDiscountAmount = 0.00;
+            let couponCode = null;
+
+            const { rows: [cart] } = await client.query(
+                `SELECT early_bird_discount_id FROM carts WHERE user_id = $1 LIMIT 1`,
+                [user_id]
+            );
+
+            if (cart && cart.early_bird_discount_id) {
+                const { rows: [eb] } = await client.query(
+                    `SELECT * FROM early_bird_discounts WHERE id = $1 LIMIT 1`,
+                    [cart.early_bird_discount_id]
+                );
+
+                if (eb && eb.is_active && new Date() >= new Date(eb.starts_at)) {
+                    // Check if the user has already used this discount successfully
+                    const { rows: [userUsage] } = await client.query(
+                        `SELECT EXISTS (
+                            SELECT 1 FROM orders 
+                            WHERE user_id = $1 
+                              AND early_bird_discount_id = $2 
+                              AND status IN ('paid', 'shipped', 'delivered')
+                         ) AS has_used`,
+                        [user_id, eb.id]
+                    );
+
+                    if (userUsage && userUsage.has_used) {
+                        throw new Error(`You have already successfully used the early bird discount code: ${eb.coupon_code}`);
+                    }
+
+                    // Check global usage limit
+                    const { rows: [globalUsage] } = await client.query(
+                        `SELECT COUNT(*)::integer AS used_count FROM orders 
+                         WHERE early_bird_discount_id = $1 
+                           AND status IN ('paid', 'shipped', 'delivered')`,
+                        [eb.id]
+                    );
+
+                    if (globalUsage.used_count >= eb.user_limit) {
+                        throw new Error(`The early bird discount code ${eb.coupon_code} is no longer active as it has reached its redemption limit.`);
+                    }
+
+                    // Calculate discount amount
+                    if (eb.discount_type === 'percentage') {
+                        earlyBirdDiscountAmount = Math.floor(total * (Number(eb.discount_value) / 100));
+                    } else {
+                        earlyBirdDiscountAmount = Number(eb.discount_value);
+                    }
+                    earlyBirdDiscountAmount = Math.min(earlyBirdDiscountAmount, total);
+                    earlyBirdDiscountId = eb.id;
+                    couponCode = eb.coupon_code;
+                }
+            }
+
+            const finalTotal = Math.max(total - earlyBirdDiscountAmount, 0);
+
             const { rows: [order] } = await client.query(
                 `INSERT INTO orders
                     (user_id, shipping_name, shipping_line1, shipping_city,
-                     shipping_state, shipping_pincode, total)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+                     shipping_state, shipping_pincode, total, early_bird_discount_id, early_bird_discount_amount, coupon_code)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
                 [
                     user_id,
                     shipping.name, shipping.line1, shipping.city,
                     shipping.state, shipping.pincode,
-                    total.toFixed(2),
+                    finalTotal.toFixed(2),
+                    earlyBirdDiscountId,
+                    earlyBirdDiscountAmount.toFixed(2),
+                    couponCode
                 ]
             );
             for (const { product_id, quantity, unit_price } of items) {
@@ -1253,20 +1315,42 @@ const orders = {
 
     findAllAdmin: () =>
         query(
-            `SELECT o.*, u.email, u.phone_number, u.first_name, u.last_name
+            `SELECT o.*, u.email, u.phone_number, u.first_name, u.last_name, 
+                    COALESCE(o.coupon_code, eb.coupon_code) AS coupon_code
              FROM orders o
              LEFT JOIN users u ON u.id = o.user_id
+             LEFT JOIN early_bird_discounts eb ON eb.id = o.early_bird_discount_id
              ORDER BY o.created_at DESC`
         ),
 
     findByUser: (user_id) =>
         query(
-            `SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC`,
+            `SELECT o.*, COALESCE(o.coupon_code, eb.coupon_code) AS coupon_code
+             FROM orders o
+             LEFT JOIN early_bird_discounts eb ON eb.id = o.early_bird_discount_id
+             WHERE o.user_id = $1 
+             ORDER BY o.created_at DESC`,
             [user_id]
         ),
 
     findById: (id) =>
-        query(`SELECT * FROM orders WHERE id = $1 LIMIT 1`, [id]),
+        query(
+            `SELECT o.*, COALESCE(o.coupon_code, eb.coupon_code) AS coupon_code
+             FROM orders o
+             LEFT JOIN early_bird_discounts eb ON eb.id = o.early_bird_discount_id
+             WHERE o.id = $1 LIMIT 1`,
+            [id]
+        ),
+
+    updateShipment: (id, { shipment_status, tracking_id }) =>
+        query(
+            `UPDATE orders 
+             SET shipment_status = COALESCE($2, shipment_status), 
+                 tracking_id = COALESCE($3, tracking_id),
+                 updated_at = now()
+             WHERE id = $1 RETURNING *`,
+            [id, shipment_status, tracking_id]
+        ),
 
     getItems: (order_id) =>
         query(
@@ -1349,7 +1433,7 @@ const orders = {
                     }
 
                     await client.query(
-                        `UPDATE carts SET coupon_id = NULL WHERE id = $1`,
+                        `UPDATE carts SET coupon_id = NULL, early_bird_discount_id = NULL WHERE id = $1`,
                         [cart.id]
                     );
                 }
@@ -1466,6 +1550,123 @@ const homepageQuestions = {
         )
 };
 
+// ─── Early Bird Launch Discounts ──────────────────────────────────────────────
+const earlyBirdDiscount = {
+    findAll: () =>
+        query(
+            `SELECT e.*,
+                    (SELECT COUNT(*) FROM orders 
+                     WHERE early_bird_discount_id = e.id 
+                       AND status IN ('paid', 'shipped', 'delivered'))::integer AS used_count
+             FROM early_bird_discounts e
+             ORDER BY e.created_at DESC`
+        ),
+
+    findByCode: (code) =>
+        query(
+            `SELECT e.*,
+                    (SELECT COUNT(*) FROM orders 
+                     WHERE early_bird_discount_id = e.id 
+                       AND status IN ('paid', 'shipped', 'delivered'))::integer AS used_count
+             FROM early_bird_discounts e
+             WHERE UPPER(e.coupon_code) = UPPER($1)
+             LIMIT 1`,
+            [code]
+        ),
+
+    findById: (id) =>
+        query(
+            `SELECT e.*,
+                    (SELECT COUNT(*) FROM orders 
+                     WHERE early_bird_discount_id = e.id 
+                       AND status IN ('paid', 'shipped', 'delivered'))::integer AS used_count
+             FROM early_bird_discounts e
+             WHERE e.id = $1
+             LIMIT 1`,
+            [id]
+        ),
+
+    create: ({ coupon_code, discount_value, discount_type, user_limit, starts_at, is_active }) =>
+        query(
+            `INSERT INTO early_bird_discounts 
+                (coupon_code, discount_value, discount_type, user_limit, starts_at, is_active)
+             VALUES (UPPER($1), $2, $3, $4, $5, $6)
+             RETURNING *`,
+            [coupon_code, discount_value, discount_type, user_limit, starts_at, is_active ?? true]
+        ),
+
+    update: (id, fields) => {
+        const allowed = [
+            'is_active',
+            'coupon_code',
+            'discount_value',
+            'discount_type',
+            'user_limit',
+            'starts_at'
+        ];
+        const sets = [];
+        const vals = [];
+        let i = 1;
+        for (const key of allowed) {
+            if (fields[key] !== undefined) {
+                sets.push(`${key} = $${i++}`);
+                if (key === 'coupon_code') {
+                    vals.push(String(fields[key]).toUpperCase());
+                } else {
+                    vals.push(fields[key]);
+                }
+            }
+        }
+        if (!sets.length) throw new Error('No valid fields to update');
+        sets.push(`updated_at = now()`);
+        vals.push(id);
+        return query(
+            `UPDATE early_bird_discounts SET ${sets.join(', ')} WHERE id = $${i} RETURNING *`,
+            vals
+        );
+    },
+
+    delete: (id) =>
+        query(`DELETE FROM early_bird_discounts WHERE id = $1`, [id]),
+
+    relaunch: async (id) => {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            await client.query(
+                `UPDATE orders SET early_bird_discount_id = NULL WHERE early_bird_discount_id = $1`,
+                [id]
+            );
+            const { rows } = await client.query(
+                `UPDATE early_bird_discounts 
+                 SET is_active = true, starts_at = now(), updated_at = now() 
+                 WHERE id = $1 
+                 RETURNING *`,
+                [id]
+            );
+            await client.query('COMMIT');
+            return { rows };
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    },
+
+    applyToCart: ({ cart_id, early_bird_id }) =>
+        query(
+            `UPDATE carts SET early_bird_discount_id = $2, coupon_id = NULL, updated_at = now() WHERE id = $1 RETURNING *`,
+            [cart_id, early_bird_id]
+        ),
+
+    removeFromCart: (cart_id) =>
+        query(
+            `UPDATE carts SET early_bird_discount_id = NULL, updated_at = now() WHERE id = $1 RETURNING *`,
+            [cart_id]
+        )
+};
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 const db = {
     cmsReviews,
@@ -1490,6 +1691,8 @@ const db = {
     adminSettings,
     customerComplaints,
     homepageQuestions,
+    earlyBirdDiscount,
+    coupons,
 };
 
 export default db;

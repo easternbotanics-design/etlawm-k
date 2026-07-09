@@ -6,6 +6,7 @@ import {
   getOrderById,
   updateOrderStatus,
   getAllOrders,
+  updateOrderShipment,
 } from "../controllers/orderController.js";
 
 import {
@@ -31,6 +32,12 @@ orderRouter.patch(
   "/:id/status",
   requireAdmin,
   updateOrderStatus,
+);
+
+orderRouter.patch(
+  "/:id/shipment",
+  requireAdmin,
+  updateOrderShipment,
 );
 
 export default orderRouter;

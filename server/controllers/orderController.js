@@ -233,10 +233,46 @@ const getAllOrders = async (req, res) => {
   }
 };
 
+const updateOrderShipment = async (req, res) => {
+  const { shipment_status, tracking_id } = req.body;
+
+  if (shipment_status !== undefined && shipment_status !== "unpacked" && shipment_status !== "packed") {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid shipment status. Must be 'unpacked' or 'packed'.",
+    });
+  }
+
+  try {
+    const {
+      rows: [order],
+    } = await db.orders.updateShipment(req.params.id, { shipment_status, tracking_id });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      order,
+    });
+  } catch (err) {
+    console.error("[update order shipment]", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error.",
+    });
+  }
+};
+
 export {
   placeOrder,
   getUserOrders,
   getOrderById,
   updateOrderStatus,
   getAllOrders,
+  updateOrderShipment,
 };

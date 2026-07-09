@@ -11,7 +11,7 @@ cartRouter.patch("/items/:productId", optionalAuth, updateCartItemQuantity);
 cartRouter.delete("/items/:productId", optionalAuth, removeCartItem);
 cartRouter.delete("/", optionalAuth, clearCart);
 cartRouter.post("/merge", requireAuth, mergeGuestCart);
-cartRouter.post("/coupon", applyCartCoupon);
-cartRouter.delete("/coupon", removeCartCoupon);
+cartRouter.post("/coupon", optionalAuth, applyCartCoupon);
+cartRouter.delete("/coupon", optionalAuth, removeCartCoupon);
 
 export default cartRouter;
