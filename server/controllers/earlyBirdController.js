@@ -32,8 +32,8 @@ export const createCampaign = async (req, res) => {
   }
 
   const limit = Number(user_limit ?? 100);
-  if (isNaN(limit) || limit <= 0) {
-    return res.status(400).json({ success: false, message: "User limit must be a positive integer." });
+  if (isNaN(limit) || (limit <= 0 && limit !== -1)) {
+    return res.status(400).json({ success: false, message: "User limit must be a positive integer, or -1 for unlimited." });
   }
 
   try {
@@ -101,8 +101,8 @@ export const updateCampaign = async (req, res) => {
     }
     if (user_limit !== undefined) {
       const limit = Number(user_limit);
-      if (isNaN(limit) || limit <= 0) {
-        return res.status(400).json({ success: false, message: "User limit must be a positive integer." });
+      if (isNaN(limit) || (limit <= 0 && limit !== -1)) {
+        return res.status(400).json({ success: false, message: "User limit must be a positive integer, or -1 for unlimited." });
       }
       updateFields.user_limit = limit;
     }
@@ -188,6 +188,39 @@ export const relaunchCampaign = async (req, res) => {
     });
   } catch (err) {
     console.error("[relaunch-early-bird-campaign]", err);
+    return res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+// Public/Customer: Get the currently active campaign
+export const getActiveCampaign = async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT e.*,
+              (SELECT COUNT(*) FROM orders 
+               WHERE early_bird_discount_id = e.id 
+                 AND status IN ('paid', 'shipped', 'delivered'))::integer AS used_count
+       FROM early_bird_discounts e
+       WHERE e.is_active = true
+         AND e.starts_at <= NOW()
+         AND (e.user_limit = -1 OR 
+              (SELECT COUNT(*) FROM orders 
+               WHERE early_bird_discount_id = e.id 
+                 AND status IN ('paid', 'shipped', 'delivered')) < e.user_limit)
+       ORDER BY e.created_at DESC
+       LIMIT 1`
+    );
+
+    if (rows.length === 0) {
+      return res.json({ success: true, campaign: null });
+    }
+
+    return res.json({
+      success: true,
+      campaign: rows[0],
+    });
+  } catch (err) {
+    console.error("[get-active-campaign]", err);
     return res.status(500).json({ success: false, message: "Server error." });
   }
 };

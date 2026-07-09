@@ -1232,7 +1232,7 @@ const orders = {
                         [eb.id]
                     );
 
-                    if (globalUsage.used_count >= eb.user_limit) {
+                    if (eb.user_limit !== -1 && globalUsage.used_count >= eb.user_limit) {
                         throw new Error(`The early bird discount code ${eb.coupon_code} is no longer active as it has reached its redemption limit.`);
                     }
 

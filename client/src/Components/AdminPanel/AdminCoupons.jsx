@@ -153,8 +153,8 @@ export default function AdminCoupons() {
     }
 
     const limitNum = Number(formLimit);
-    if (isNaN(limitNum) || limitNum <= 0 || !Number.isInteger(limitNum)) {
-      setError("Redemption limit must be a positive integer.");
+    if (isNaN(limitNum) || (limitNum <= 0 && limitNum !== -1) || !Number.isInteger(limitNum)) {
+      setError("Redemption limit must be a positive integer, or -1 for unlimited.");
       return;
     }
 
@@ -280,7 +280,7 @@ export default function AdminCoupons() {
               <tbody>
                 {campaigns.length > 0 ? (
                   campaigns.map((camp) => {
-                    const isLimitReached = camp.used_count >= camp.user_limit;
+                    const isLimitReached = camp.user_limit !== -1 && camp.used_count >= camp.user_limit;
                     const isCampActive = camp.is_active && !isLimitReached;
 
                     return (
@@ -319,19 +319,21 @@ export default function AdminCoupons() {
                         <td className="px-6 py-5 align-middle">
                           <div className="flex flex-col">
                             <span className={`text-xs md:text-sm font-semibold ${isLimitReached ? "text-stone-400" : "text-[#171715]"}`}>
-                              {camp.used_count} / {camp.user_limit}
+                              {camp.used_count} / {camp.user_limit === -1 ? "∞" : camp.user_limit}
                             </span>
                             
                             {/* Simple Visual Progress Bar */}
-                            <div className="w-24 bg-stone-100 rounded-full h-1.5 mt-1.5 overflow-hidden border border-stone-200">
-                              <div
-                                className="h-full rounded-full transition-all duration-300"
-                                style={{
-                                  width: `${Math.min((camp.used_count / camp.user_limit) * 100, 100)}%`,
-                                  backgroundColor: isLimitReached ? '#D6D3D1' : colours.accent,
-                                }}
-                              />
-                            </div>
+                            {camp.user_limit !== -1 && (
+                              <div className="w-24 bg-stone-100 rounded-full h-1.5 mt-1.5 overflow-hidden border border-stone-200">
+                                <div
+                                  className="h-full rounded-full transition-all duration-300"
+                                  style={{
+                                    width: `${Math.min((camp.used_count / camp.user_limit) * 100, 100)}%`,
+                                    backgroundColor: isLimitReached ? '#D6D3D1' : colours.accent,
+                                  }}
+                                />
+                              </div>
+                            )}
                           </div>
                         </td>
 
@@ -490,7 +492,7 @@ export default function AdminCoupons() {
                   <input
                     type="number"
                     required
-                    min="1"
+                    min="-1"
                     step="1"
                     placeholder="100"
                     value={formLimit}

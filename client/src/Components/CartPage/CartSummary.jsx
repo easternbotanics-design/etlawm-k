@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { ArrowRight, Tag, X } from "lucide-react";
 import { colours, fonts } from "../../theme/theme";
 
@@ -18,6 +19,24 @@ function CartSummary({
   checkoutDisabled = false,
   checkoutHelperText = "",
 }) {
+  const [activeCampaign, setActiveCampaign] = useState(null);
+
+  useEffect(() => {
+    const fetchActiveCampaign = async () => {
+      try {
+        const API = import.meta.env.VITE_SERVER_API?.replace(/\/$/, "") || "http://localhost:5000";
+        const res = await fetch(`${API}/api/early-bird-discount/active`);
+        const data = await res.json();
+        if (data.success && data.campaign) {
+          setActiveCampaign(data.campaign);
+        }
+      } catch (err) {
+        console.error("Failed to fetch active coupon campaign:", err);
+      }
+    };
+    fetchActiveCampaign();
+  }, []);
+
   const isButtonDisabled =
     selectedItems.length === 0 || checkoutDisabled;
 
@@ -118,6 +137,29 @@ function CartSummary({
                 {isApplyingCoupon ? "Applying" : "Apply"}
               </button>
             </form>
+          )}
+
+          {activeCampaign && !coupon && (
+            <p
+              className="mt-2 text-xs tracking-wide flex items-center gap-1.5 flex-wrap"
+              style={{
+                color: colours.mutedText || '#7C7770',
+                fontFamily: fonts.secondary,
+              }}
+            >
+              <Tag size={12} className="text-stone-400" />
+              <span>Use coupon code </span>
+              <span className="font-mono font-bold text-[#171715] bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200 select-all uppercase">
+                {activeCampaign.coupon_code}
+              </span>
+              <span> to avail </span>
+              <span className="font-bold text-[#171715]">
+                {activeCampaign.discount_type === "percentage" 
+                  ? `${parseFloat(activeCampaign.discount_value)}%` 
+                  : `₹${parseFloat(activeCampaign.discount_value)}`}
+              </span>
+              <span> discount.</span>
+            </p>
           )}
         </section>
 

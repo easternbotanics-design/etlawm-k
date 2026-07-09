@@ -6,12 +6,14 @@ import {
   deleteCampaign,
   getCampaignByCode,
   relaunchCampaign,
+  getActiveCampaign,
 } from "../controllers/earlyBirdController.js";
 import { requireAdmin } from "../middleware/auth.js";
 
 const earlyBirdRouter = express.Router();
 
-// Public / customer endpoint to lookup a code details
+// Public / customer endpoints
+earlyBirdRouter.get("/active", getActiveCampaign);
 earlyBirdRouter.get("/code/:code", getCampaignByCode);
 
 // Admin-only endpoints

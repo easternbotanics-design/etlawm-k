@@ -65,7 +65,7 @@ const getCart = async (req, res) => {
       const ebResult = await db.earlyBirdDiscount.findById(cart.early_bird_discount_id);
       if (ebResult.rows.length > 0) {
         const eb = ebResult.rows[0];
-        let isValid = eb.is_active && new Date() >= new Date(eb.starts_at) && eb.used_count < eb.user_limit;
+        let isValid = eb.is_active && new Date() >= new Date(eb.starts_at) && (eb.user_limit === -1 || eb.used_count < eb.user_limit);
 
         if (isValid && req.user?.id) {
           const userUsage = await db.query(
@@ -451,7 +451,7 @@ const applyCartCoupon = async (req, res) => {
         });
       }
 
-      if (eb.used_count >= eb.user_limit) {
+      if (eb.user_limit !== -1 && eb.used_count >= eb.user_limit) {
         return res.status(400).json({
           success: false,
           message: "This coupon code has reached its maximum redemption limit.",
