@@ -15,5 +15,11 @@
       "destination": "/policies/shipping-policy",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
