@@ -337,3 +337,17 @@ export async function relaunchEarlyBirdCampaign(id) {
   });
   return handleResponse(response, "Failed to relaunch coupon");
 }
+
+export async function getDashboardStats() {
+  const response = await fetch(`${API}/api/admin/dashboard-stats`, {
+    headers: getHeaders(false),
+  });
+  return handleResponse(response, "Failed to fetch dashboard stats");
+}
+
+export async function getAdminShipments() {
+  const response = await fetch(`${API}/api/admin/shipments`, {
+    headers: getHeaders(false),
+  });
+  return handleResponse(response, "Failed to fetch shipments");
+}

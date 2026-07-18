@@ -201,4 +201,69 @@ const getAdminQuestions = async (req, res) => {
   }
 }
 
-export { getAdminProfile, updateAdminProfile, getAdminSettings, updateAdminSettings, makeAdmin, getAdmins, removeAdmin, getAdminCustomers, getAdminQuestions }
+const getDashboardStats = async (req, res) => {
+  try {
+    // 1. Get active products count
+    const { rows: activeProductsRows } = await db.query(
+      `SELECT COUNT(*)::int AS count FROM products WHERE is_active = true`
+    );
+    const activeProductsCount = activeProductsRows[0]?.count || 0;
+
+    // 2. Get pending orders count (status = 'unpacked' in shipment table)
+    const { rows: pendingOrdersRows } = await db.query(
+      `SELECT COUNT(*)::int AS count FROM shipment WHERE status = 'unpacked'`
+    );
+    const pendingOrdersCount = pendingOrdersRows[0]?.count || 0;
+
+    // 3. Get successful orders with their items and product names
+    const { rows: salesRows } = await db.query(
+      `SELECT o.id AS order_id, o.total, o.created_at,
+              oi.product_id, oi.quantity, p.name AS product_name
+       FROM orders o
+       JOIN order_items oi ON oi.order_id = o.id
+       JOIN products p ON p.id = oi.product_id
+       WHERE o.status IN ('paid', 'shipped', 'delivered')
+          OR (o.razorpay_payment_id IS NOT NULL AND o.razorpay_payment_id NOT IN ('payment failed', 'cart abandoned'))
+       ORDER BY o.created_at DESC`
+    );
+
+    // 4. Get all products with primary image URLs
+    const { rows: productsRows } = await db.query(
+      `SELECT p.id, p.name,
+              (SELECT image_url FROM product_images
+               WHERE product_id = p.id AND is_primary = true LIMIT 1) AS primary_image
+       FROM products p
+       ORDER BY p.name ASC`
+    );
+
+    res.json({
+      success: true,
+      activeProductsCount,
+      pendingOrdersCount,
+      sales: salesRows,
+      products: productsRows
+    });
+  } catch (err) {
+    console.error("[get-dashboard-stats]", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+const getAdminShipments = async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT * FROM shipment ORDER BY created_at DESC`
+    );
+    res.json({
+      success: true,
+      shipments: rows,
+    });
+  } catch (err) {
+    console.error("[get-admin-shipments]", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+export { getAdminProfile, updateAdminProfile, getAdminSettings, updateAdminSettings, makeAdmin, getAdmins, removeAdmin, getAdminCustomers, getAdminQuestions, getDashboardStats, getAdminShipments }
+
+

@@ -244,20 +244,20 @@ const updateOrderShipment = async (req, res) => {
   }
 
   try {
-    const {
-      rows: [order],
-    } = await db.orders.updateShipment(req.params.id, { shipment_status, tracking_id });
+    // Update orders table (keep in sync)
+    await db.orders.updateShipment(req.params.id, { shipment_status, tracking_id });
 
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found.",
-      });
-    }
+    // Update shipment table
+    await db.query(
+      `UPDATE shipment 
+       SET status = $1, tracking_id = $2, updated_at = now()
+       WHERE order_id = $3`,
+      [shipment_status, tracking_id, req.params.id]
+    );
 
     return res.json({
       success: true,
-      order,
+      message: "Shipment details saved successfully.",
     });
   } catch (err) {
     console.error("[update order shipment]", err);

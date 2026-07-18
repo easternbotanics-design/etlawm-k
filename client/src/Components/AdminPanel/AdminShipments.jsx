@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { colours, fonts } from "../../theme/theme";
-import { getAllOrders, updateOrderShipment } from "../../services/orderService";
+import { updateOrderShipment } from "../../services/orderService";
+import { getAdminShipments } from "../../services/adminService";
 
 export default function AdminShipments() {
   const [orders, setOrders] = useState([]);
@@ -28,23 +29,29 @@ export default function AdminShipments() {
     try {
       setLoading(true);
       setError("");
-      const data = await getAllOrders();
-      const fetchedOrders = (data.orders || []).filter(
-        (o) => o.razorpay_payment_id != null
-      );
-      setOrders(fetchedOrders);
+      const data = await getAdminShipments();
+      const fetchedShipments = (data.shipments || []).map(s => ({
+        id: s.order_id,
+        order_id: s.order_id,
+        name: s.name,
+        contact_details: s.contact_details,
+        delivery_address: s.delivery_address,
+        shipment_status: s.status,
+        tracking_id: s.tracking_id
+      }));
+      setOrders(fetchedShipments);
       
       // Initialize tracking and status inputs state
       const initialInputs = {};
       const initialStatus = {};
-      fetchedOrders.forEach(o => {
-        initialInputs[o.id] = o.tracking_id || "";
-        initialStatus[o.id] = o.shipment_status || "unpacked";
+      fetchedShipments.forEach(s => {
+        initialInputs[s.id] = s.tracking_id || "";
+        initialStatus[s.id] = s.shipment_status || "unpacked";
       });
       setTrackingInputs(initialInputs);
       setStatusInputs(initialStatus);
     } catch (err) {
-      setError(err.message || "Failed to load orders");
+      setError(err.message || "Failed to load shipments");
     } finally {
       setLoading(false);
     }
@@ -70,7 +77,7 @@ export default function AdminShipments() {
       } : o));
       
       setSavedTracking(prev => ({ ...prev, [orderId]: true }));
-      setSuccess(`Shipment details for order #${orderId.slice(0, 8).toUpperCase()} saved.`);
+      setSuccess(`Shipment details saved.`);
       setTimeout(() => {
         setSavedTracking(prev => ({ ...prev, [orderId]: false }));
         setSuccess("");
@@ -90,11 +97,11 @@ export default function AdminShipments() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const shortId = o.id.slice(0, 8).toLowerCase();
-      const name = (o.shipping_name || `${o.first_name || ""} ${o.last_name || ""}`).toLowerCase();
-      const phone = (o.phone_number || "").toLowerCase();
-      const address = `${o.shipping_line1} ${o.shipping_city}`.toLowerCase();
+      const name = (o.name || "").toLowerCase();
+      const contact = (o.contact_details || "").toLowerCase();
+      const address = (o.delivery_address || "").toLowerCase();
       
-      return shortId.includes(q) || name.includes(q) || phone.includes(q) || address.includes(q);
+      return shortId.includes(q) || name.includes(q) || contact.includes(q) || address.includes(q);
     }
 
     return true;
@@ -198,7 +205,7 @@ export default function AdminShipments() {
               <tbody>
                 {filteredOrders.length > 0 ? (
                   filteredOrders.map((order) => {
-                    const customerName = order.shipping_name || `${order.first_name || ""} ${order.last_name || ""}`.trim() || "Guest Customer";
+                    const customerName = order.name || "Guest Customer";
                     const isSaving = updatingRow === order.id;
 
                     return (
@@ -228,30 +235,14 @@ export default function AdminShipments() {
 
                         {/* Contact Details */}
                         <td className="px-6 py-5 align-middle text-xs md:text-sm">
-                          <div className="flex flex-col">
-                            {order.email ? (
-                              <a href={`mailto:${order.email}`} className="text-stone-600 hover:text-accent underline">
-                                {order.email}
-                              </a>
-                            ) : (
-                              <span className="text-stone-400 italic">No email</span>
-                            )}
-                            {order.phone_number && (
-                              <a href={`tel:${order.phone_number}`} className="text-stone-600 hover:text-accent underline mt-0.5">
-                                {order.phone_number}
-                              </a>
-                            )}
-                          </div>
+                          <span className="text-stone-600">{order.contact_details}</span>
                         </td>
 
                         {/* Delivery Address */}
                         <td className="px-6 py-5 align-middle text-xs md:text-sm">
-                          <div className="flex flex-col text-stone-600 max-w-[280px]">
-                            <span>{order.shipping_line1}</span>
-                            <span className="text-[11px] text-[#7C7770]">
-                              {order.shipping_city}, {order.shipping_state} {order.shipping_pincode}
-                            </span>
-                          </div>
+                          <span className="text-stone-600 leading-tight block max-w-[280px]">
+                            {order.delivery_address}
+                          </span>
                         </td>
 
                         {/* Status (Dropdown) */}

@@ -1,3 +1,4 @@
+import { useState, useEffect, useMemo } from "react";
 import { Route, Routes } from "react-router-dom";
 import HomepageContent from "../Components/AdminPanel/AdminContent/CMSHomePage.jsx";
 import CMSHomepageReviews from "../Components/AdminPanel/AdminContent/CMSHomepageReviews.jsx";
@@ -20,9 +21,107 @@ import AdminQuestions from "../Components/AdminPanel/AdminQuestions.jsx";
 import AdminCoupons from "../Components/AdminPanel/AdminCoupons.jsx";
 import AdminShipments from "../Components/AdminPanel/AdminShipments.jsx";
 import { colours, fonts } from "../theme/theme.js";
+import { getDashboardStats } from "../services/adminService.js";
 
 
 const AdminHome = () => {
+  const [stats, setStats] = useState({
+    activeProductsCount: 0,
+    pendingOrdersCount: 0,
+    sales: [],
+    products: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [timeframe, setTimeframe] = useState("all"); // "today" | "last7" | "last30" | "year" | "all"
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        setLoading(true);
+        setError("");
+        const data = await getDashboardStats();
+        if (data.success) {
+          setStats({
+            activeProductsCount: data.activeProductsCount,
+            pendingOrdersCount: data.pendingOrdersCount,
+            sales: data.sales || [],
+            products: data.products || [],
+          });
+        } else {
+          setError(data.message || "Failed to load stats");
+        }
+      } catch (err) {
+        setError(err.message || "Failed to load stats");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
+
+  const aggregatedData = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const filteredSales = (stats.sales || []).filter((sale) => {
+      if (timeframe === "all") return true;
+      const saleDate = new Date(sale.created_at);
+
+      if (timeframe === "today") {
+        return saleDate >= todayStart;
+      }
+
+      const diffTime = Math.abs(now - saleDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (timeframe === "last7") {
+        return diffDays <= 7;
+      }
+      if (timeframe === "last30") {
+        return diffDays <= 30;
+      }
+      if (timeframe === "year") {
+        return diffDays <= 365;
+      }
+      return true;
+    });
+
+    const distinctOrders = {};
+    const productQuantities = {};
+
+    // Initialize all products count to 0
+    (stats.products || []).forEach((p) => {
+      productQuantities[p.id] = 0;
+    });
+
+    filteredSales.forEach((sale) => {
+      if (distinctOrders[sale.order_id] === undefined) {
+        distinctOrders[sale.order_id] = parseFloat(sale.total) || 0;
+      }
+
+      if (productQuantities[sale.product_id] !== undefined) {
+        productQuantities[sale.product_id] += parseInt(sale.quantity, 10);
+      } else {
+        productQuantities[sale.product_id] = parseInt(sale.quantity, 10);
+      }
+    });
+
+    const totalRevenue = Object.values(distinctOrders).reduce((sum, val) => sum + val, 0);
+    const salesCount = Object.keys(distinctOrders).length;
+
+    // Map all products to their image and quantity sold
+    const productsSold = (stats.products || []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      image_url: p.primary_image,
+      quantity: productQuantities[p.id] || 0,
+    })).sort((a, b) => b.quantity - a.quantity);
+
+    return { totalRevenue, salesCount, productsSold };
+  }, [stats.sales, stats.products, timeframe]);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-300" style={{ fontFamily: fonts.secondary }}>
       <div>
@@ -35,15 +134,52 @@ const AdminHome = () => {
 
       {/* Analytics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white border border-stone-200/80 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200" style={{ fontFamily: fonts.secondary }}>
-          <div className="flex justify-between items-center text-stone-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">Total Sales</span>
-            <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.5 4.5 8.25-8.25" />
-            </svg>
+        <div className="bg-white border border-stone-200/80 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between" style={{ fontFamily: fonts.secondary }}>
+          <div>
+            <div className="flex justify-between items-center text-stone-400">
+              <span className="text-xs font-semibold uppercase tracking-wider text-stone-400">Total Sales</span>
+              <select
+                value={timeframe}
+                onChange={(e) => setTimeframe(e.target.value)}
+                className="px-1.5 py-0.5 text-[10px] rounded border bg-stone-50 border-stone-200 text-stone-600 cursor-pointer outline-none focus:ring-1 focus:ring-accent transition-all duration-200"
+                style={{ fontFamily: fonts.secondary, borderColor: colours.border }}
+              >
+                <option value="today">Today</option>
+                <option value="last7">Last 7 Days</option>
+                <option value="last30">30 Days</option>
+                <option value="year">Year</option>
+                <option value="all">All Time</option>
+              </select>
+            </div>
+            {loading ? (
+              <div className="flex items-center gap-2 py-4 animate-pulse">
+                <div style={{ borderTopColor: colours.accent }} className="animate-spin rounded-full h-4 w-4 border-2 border-stone-200"></div>
+                <span className="text-xs text-stone-400">Loading...</span>
+              </div>
+            ) : error ? (
+              <div className="text-xs text-red-500 mt-2">{error}</div>
+            ) : (
+              <>
+                <div className="text-2xl text-stone-850 font-semibold mt-2" style={{ fontFamily: fonts.primary }}>
+                  ₹{aggregatedData.totalRevenue.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </div>
+                <div className="text-[11px] text-emerald-600 font-medium mt-1 mb-3">
+                  {aggregatedData.salesCount} {aggregatedData.salesCount === 1 ? "sale" : "sales"} made
+                </div>
+                
+                <button
+                  onClick={() => setIsDetailsOpen(true)}
+                  className="w-full py-1.5 px-3 text-xs font-semibold bg-stone-50 hover:bg-stone-100 hover:text-stone-900 border border-stone-200 rounded-lg text-stone-700 transition-colors duration-150 cursor-pointer"
+                  style={{ fontFamily: fonts.secondary, borderColor: colours.border }}
+                >
+                  Details
+                </button>
+              </>
+            )}
           </div>
-          <div className="text-2xl text-stone-850 font-semibold mt-2" style={{ fontFamily: fonts.primary }}>xyx</div>
-          <div className="text-[11px] text-emerald-600 font-medium mt-1">xyz</div>
         </div>
 
         <div className="bg-white border border-stone-200/80 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200" style={{ fontFamily: fonts.secondary }}>
@@ -53,7 +189,9 @@ const AdminHome = () => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4" />
             </svg>
           </div>
-          <div className="text-2xl text-stone-850 font-semibold mt-2" style={{ fontFamily: fonts.primary }}>n</div>
+          <div className="text-2xl text-stone-850 font-semibold mt-2" style={{ fontFamily: fonts.primary }}>
+            {loading ? "..." : stats.activeProductsCount}
+          </div>
           <div className="text-[11px] text-stone-400 mt-1">Catalog items listed</div>
         </div>
 
@@ -64,10 +202,85 @@ const AdminHome = () => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <div className="text-2xl text-stone-850 font-semibold mt-2" style={{ fontFamily: fonts.primary }}>n</div>
+          <div className="text-2xl text-stone-850 font-semibold mt-2" style={{ fontFamily: fonts.primary }}>
+            {loading ? "..." : stats.pendingOrdersCount}
+          </div>
           <div className="text-[11px] text-amber-600 font-medium mt-1">Awaiting dispatch</div>
         </div>
       </div>
+
+      {/* Details Popup Modal */}
+      {isDetailsOpen && (
+        <div className="fixed inset-0 bg-black/40 z-[999] flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl border border-stone-200 max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col shadow-2xl mx-4 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex justify-between items-center px-6 py-4 border-b border-stone-100">
+              <div>
+                <h3 className="text-lg font-semibold text-stone-850" style={{ fontFamily: fonts.primary }}>Sales Details</h3>
+                <p className="text-[11px] text-stone-400">Timeframe: <span className="capitalize font-semibold text-accent" style={{ color: colours.accent }}>{timeframe.replace("last", "last ")}</span></p>
+              </div>
+              <button
+                onClick={() => setIsDetailsOpen(false)}
+                className="p-1.5 rounded-full hover:bg-stone-100 transition-colors cursor-pointer text-stone-400 hover:text-stone-700 border-none bg-transparent"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-3" data-lenis-prevent>
+              {aggregatedData.productsSold.length === 0 ? (
+                <div className="text-center py-8 text-sm text-stone-400 italic">No products listed.</div>
+              ) : (
+                aggregatedData.productsSold.map((product) => (
+                  <div key={product.id} className="flex items-center justify-between p-2.5 rounded-xl border border-stone-100/80 hover:bg-stone-50/50 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* Product Photo */}
+                      <div className="w-12 h-12 rounded-lg bg-stone-50 border border-stone-200/60 overflow-hidden flex items-center justify-center shrink-0">
+                        {product.image_url ? (
+                          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <svg className="w-6 h-6 text-stone-300" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                          </svg>
+                        )}
+                      </div>
+                      {/* Product Name */}
+                      <span className="text-xs font-semibold text-stone-700 leading-tight truncate pr-4">
+                        {product.name}
+                      </span>
+                    </div>
+                    {/* Quantity Sold */}
+                    <span
+                      className="text-xs font-bold px-2.5 py-1 rounded-md shrink-0 border"
+                      style={{
+                        backgroundColor: product.quantity > 0 ? `${colours.accent}15` : '#faf9f6',
+                        borderColor: product.quantity > 0 ? `${colours.accent}30` : colours.border,
+                        color: product.quantity > 0 ? colours.accent : '#8c8c8c'
+                      }}
+                    >
+                      Sold: {product.quantity}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-stone-100 bg-stone-50 flex justify-between items-center text-xs text-stone-500 font-medium">
+              <span>Total products listed: {aggregatedData.productsSold.length}</span>
+              <button
+                onClick={() => setIsDetailsOpen(false)}
+                className="py-1.5 px-4 bg-stone-700 hover:bg-stone-800 text-white font-semibold rounded-lg transition-colors cursor-pointer border-none"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Links Section */}
       <div className="bg-stone-50 border border-stone-200/60 rounded-2xl p-6 md:p-8" style={{ fontFamily: fonts.secondary }}>
