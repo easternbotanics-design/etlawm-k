@@ -29,7 +29,9 @@ export default function AdminShipments() {
       setLoading(true);
       setError("");
       const data = await getAllOrders();
-      const fetchedOrders = data.orders || [];
+      const fetchedOrders = (data.orders || []).filter(
+        (o) => o.razorpay_payment_id != null
+      );
       setOrders(fetchedOrders);
       
       // Initialize tracking and status inputs state
