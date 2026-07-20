@@ -72,6 +72,7 @@ function AppRoutes() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/ritual" element={<Ritual />} />
         <Route path="/ingredients" element={<Ingredients />} />
+        <Route path="/ingredient/:slug" element={<Ingredients />} />
         <Route path="/science" element={<Science />} />
 
         {/* Protected — redirects to /login if not authenticated */}

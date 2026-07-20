@@ -41,6 +41,18 @@ const ingredientService = {
     return handleResponse(res);
   },
 
+  // Get ingredients linked to a specific product ID
+  getProductIngredients: async (productId) => {
+    const res = await fetch(`${API}/api/product/${productId}/ingredients`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return handleResponse(res);
+  },
+
   // Admin CMS ingredients
   getAdminIngredients: async () => {
     const res = await fetch(`${API}/api/admin/ingredients`, {
