@@ -8,6 +8,7 @@ import {
   deleteCategory,
 } from "../../../services/categoryService";
 import CategoryFormModal from "./CategoryForm";
+import AdminCard from "../AdminCard";
 
 const EditButton = ({ name, onClick }) => {
   return (
@@ -40,125 +41,7 @@ const EditButton = ({ name, onClick }) => {
   );
 };
 
-const EditIcon = () => (
-  <svg
-    width="17"
-    height="17"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M12 20h9" />
-    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-  </svg>
-);
-
-const DeleteIcon = () => (
-  <svg
-    width="17"
-    height="17"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M3 6h18" />
-    <path d="M8 6V4h8v2" />
-    <path d="M19 6l-1 14H6L5 6" />
-    <path d="M10 11v5" />
-    <path d="M14 11v5" />
-  </svg>
-);
-
-const CategoryCard = ({
-  category,
-  editMode,
-  onOpen,
-  onEdit,
-  onDelete,
-}) => {
-  return (
-    <div
-      onClick={onOpen}
-      className="group relative flex h-28 cursor-pointer flex-col justify-between rounded-2xl border p-6 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-      style={{
-        backgroundColor: colours.background,
-        borderColor: colours.border,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = colours.accent;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = colours.border;
-      }}
-    >
-      {editMode && (
-        <div className="absolute right-4 top-4 flex gap-2">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(category);
-            }}
-            className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5"
-            style={{
-              borderColor: colours.border,
-              color: colours.accent,
-              backgroundColor: colours.background,
-            }}
-          >
-            <EditIcon />
-          </button>
-
-          {category.slug !== "all-products" && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(category);
-              }}
-              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5"
-              style={{
-                borderColor: colours.border,
-                color: "#A44A3F",
-                backgroundColor: colours.background,
-              }}
-            >
-              <DeleteIcon />
-            </button>
-          )}
-        </div>
-      )}
-
-      <div>
-        <h3
-          className="pr-20 text-2xl font-semibold"
-          style={{
-            color: colours.text,
-            fontFamily: fonts.primary,
-          }}
-        >
-          {category.name}
-        </h3>
-
-        <p
-          className="mt-4 text-sm"
-          style={{
-            color: colours.mutedText,
-            fontFamily: fonts.secondary,
-          }}
-        >
-          {category.description}
-        </p>
-      </div>
-    </div>
-  );
-};
+// Removed local EditIcon, DeleteIcon, and CategoryCard to use global AdminCard instead.
 
 const PlusIcon = () => (
   <svg
@@ -298,7 +181,7 @@ const AdminCollection = () => {
 
   return (
     <div
-      className="px-10 py-8"
+      className="px-6 py-8"
       style={{
         backgroundColor: colours.background,
         fontFamily: fonts.secondary,
@@ -350,17 +233,18 @@ const AdminCollection = () => {
       {!loading && !error && (
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {categories.map((category) => (
-            <CategoryCard
+            <AdminCard
               key={category.id}
-              category={category}
+              title={category.name}
               editMode={editMode}
-              onOpen={() => {
+              onClick={() => {
                 if (!editMode) {
                   navigate(`/admin/collection/${category.slug}`);
                 }
               }}
-              onEdit={handleEditCategory}
-              onDelete={handleDeleteCategory}
+              onEdit={() => handleEditCategory(category)}
+              onDelete={() => handleDeleteCategory(category)}
+              showDelete={category.slug !== "all-products"}
             />
           ))}
 

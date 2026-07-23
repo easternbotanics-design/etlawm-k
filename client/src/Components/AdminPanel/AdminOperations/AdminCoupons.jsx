@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { colours, fonts } from "../../theme/theme";
+import { colours, fonts } from "../../../theme/theme";
 import {
   getAllEarlyBirdCampaigns,
   createEarlyBirdCampaign,
   updateEarlyBirdCampaign,
   deleteEarlyBirdCampaign,
   relaunchEarlyBirdCampaign,
-} from "../../services/adminService";
+} from "../../../services/adminService";
 
 export default function AdminCoupons() {
   const [campaigns, setCampaigns] = useState([]);
@@ -203,11 +203,10 @@ export default function AdminCoupons() {
       minute: "2-digit",
     });
   };
-
   return (
-    <div className="px-6 md:px-10 py-8 animate-in fade-in duration-300" style={{ fontFamily: fonts.secondary }}>
+    <div className="px-6 py-8 animate-in fade-in duration-300" style={{ fontFamily: fonts.secondary }}>
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
         <div>
           <h1 className="font-serif text-2xl md:text-3xl font-normal text-[#171715] tracking-wide" style={{ fontFamily: fonts.primary }}>
             Coupons & Launch Discounts
@@ -219,7 +218,7 @@ export default function AdminCoupons() {
 
         <button
           onClick={handleOpenCreateModal}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider text-white hover:opacity-90 transition-opacity duration-200 cursor-pointer self-start sm:self-center"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider text-white hover:opacity-90 transition-opacity duration-200 cursor-pointer w-full lg:w-auto justify-center lg:justify-start"
           style={{
             backgroundColor: colours.accent,
             fontFamily: fonts.secondary,

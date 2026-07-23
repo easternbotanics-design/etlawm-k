@@ -95,7 +95,7 @@ const AdminCollectionProducts = () => {
 
   return (
     <div
-      className="px-10 py-8"
+      className="px-6 py-8"
       style={{
         backgroundColor: colours.background,
         fontFamily: fonts.secondary,

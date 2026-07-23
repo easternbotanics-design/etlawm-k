@@ -14,12 +14,12 @@ import AdminSettings from "../Components/AdminPanel/AdminSettings.jsx";
 import AdminCollectionProducts from "../Components/AdminPanel/AdminCollection/AdminCollectionProducts.jsx";
 import CMSIngredients from "../Components/AdminPanel/AdminContent/CMSIngredients.jsx";
 import CMSIngredientForm from "../Components/AdminPanel/AdminContent/CMSIngredientForm.jsx";
-import AdminOrders from "../Components/AdminPanel/AdminOrders.jsx";
-import AdminCarts from "../Components/AdminPanel/AdminCarts.jsx";
+import AdminOrders from "../Components/AdminPanel/AdminOperations/AdminOrders.jsx";
+import AdminCarts from "../Components/AdminPanel/AdminOperations/AdminCarts.jsx";
 import AdminCustomers from "../Components/AdminPanel/AdminCustomers.jsx";
 import AdminQuestions from "../Components/AdminPanel/AdminQuestions.jsx";
-import AdminCoupons from "../Components/AdminPanel/AdminCoupons.jsx";
-import AdminShipments from "../Components/AdminPanel/AdminShipments.jsx";
+import AdminCoupons from "../Components/AdminPanel/AdminOperations/AdminCoupons.jsx";
+import AdminShipments from "../Components/AdminPanel/AdminOperations/AdminShipments.jsx";
 import { colours, fonts } from "../theme/theme.js";
 import { getDashboardStats } from "../services/adminService.js";
 
@@ -339,9 +339,9 @@ const AdminDashBoard = () => {
       <AdminSidebar />
 
       {/* Main Area */}
-      <main className="flex-1 p-4 md:p-8 flex flex-col gap-6">
+      <main className="flex-1 flex flex-col min-w-0">
         <AdminTopBar />
-        <div className="flex-1">
+        <div className="flex-1 p-4 md:p-8">
           <Routes>
           {/* Dashboard */}
             <Route path="/dashboard" element={<AdminHome />} />

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import SectionCard from "../../SectionCard";
+import AdminCard from "../AdminCard";
 import { getProducts } from "../../../services/productService";
 
 const ReviewContent = () => {
@@ -30,7 +30,7 @@ const ReviewContent = () => {
   }, []);
 
   return (
-    <div className="px-10 py-8">
+    <div className="px-6 py-8">
       <h1 className="font-serif text-2xl font-semibold text-[#171715]">
         Product Reviews
       </h1>
@@ -63,10 +63,9 @@ const ReviewContent = () => {
       {!loading && !error && (
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {products.map((product) => (
-            <SectionCard
+            <AdminCard
               key={product.id}
               title={product.name}
-              description={`Customer Reviews on ${product.name}`}
               onClick={() => navigate(`/admin/content/reviews/${product.slug}`)}
             />
           ))}

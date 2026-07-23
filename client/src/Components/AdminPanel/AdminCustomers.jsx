@@ -156,14 +156,14 @@ export default function AdminCustomers() {
   const paginatedCustomers = filteredCustomers.slice(startIndex, startIndex + itemsPerPage);
 
   return (
-    <div className="px-6 md:px-10 py-8 animate-in fade-in duration-300" style={{ fontFamily: fonts.secondary }}>
+    <div className="px-6 py-8 animate-in fade-in duration-300" style={{ fontFamily: fonts.secondary }}>
       {/* Header and Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
         <h1 className="font-serif text-2xl md:text-3xl font-normal text-[#171715] tracking-wide" style={{ fontFamily: fonts.primary }}>
           Customers
         </h1>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col-reverse md:flex-row md:flex-wrap items-stretch md:items-center gap-3 w-full lg:w-auto shrink">
           {/* Role Filter */}
           <select
             value={roleFilter}
@@ -171,7 +171,7 @@ export default function AdminCustomers() {
               setRoleFilter(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-3 py-2 text-xs md:text-sm rounded-lg border bg-white cursor-pointer outline-none focus:ring-1 focus:ring-accent transition-all duration-200"
+            className="px-3 py-2 text-xs md:text-sm rounded-lg border bg-white cursor-pointer outline-none focus:ring-1 focus:ring-accent transition-all duration-200 w-full md:w-auto shrink-0"
             style={{
               borderColor: colours.border,
               color: colours.secondary,
@@ -190,7 +190,7 @@ export default function AdminCustomers() {
               setStatusFilter(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-3 py-2 text-xs md:text-sm rounded-lg border bg-white cursor-pointer outline-none focus:ring-1 focus:ring-accent transition-all duration-200"
+            className="px-3 py-2 text-xs md:text-sm rounded-lg border bg-white cursor-pointer outline-none focus:ring-1 focus:ring-accent transition-all duration-200 w-full md:w-auto shrink-0"
             style={{
               borderColor: colours.border,
               color: colours.secondary,
@@ -209,7 +209,7 @@ export default function AdminCustomers() {
               setLoginFilter(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-3 py-2 text-xs md:text-sm rounded-lg border bg-white cursor-pointer outline-none focus:ring-1 focus:ring-accent transition-all duration-200"
+            className="px-3 py-2 text-xs md:text-sm rounded-lg border bg-white cursor-pointer outline-none focus:ring-1 focus:ring-accent transition-all duration-200 w-full md:w-auto shrink-0"
             style={{
               borderColor: colours.border,
               color: colours.secondary,
@@ -233,7 +233,7 @@ export default function AdminCustomers() {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-4 py-2 text-xs md:text-sm rounded-lg border outline-none bg-white placeholder-stone-400 focus:ring-1 focus:ring-[#A77C6B] transition-all duration-200 w-56 md:w-64"
+            className="px-4 py-2 text-xs md:text-sm rounded-lg border outline-none bg-white placeholder-stone-400 focus:ring-1 focus:ring-[#A77C6B] transition-all duration-200 w-full md:w-48 lg:w-64 min-w-[120px] shrink"
             style={{
               borderColor: colours.border,
               color: colours.secondary,

@@ -14,6 +14,14 @@ const SCOPED_CSS = `
   }
 `;
 
+const formatSegment = (segment) => {
+  if (!segment) return "";
+  return segment
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 const AdminTopBar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -50,17 +58,44 @@ const AdminTopBar = () => {
   const fullName = `${firstName} ${lastName}`.trim();
   const initials = `${firstName.charAt(0)}${lastName ? lastName.charAt(0) : ""}`.toUpperCase();
 
-  // Dynamic breadcrumb generation
+  // Helper to map parent/non-navigable routes to their first subpages
+  const getNavigablePath = (path) => {
+    const p = path.toLowerCase();
+    if (p === "/admin/operations") {
+      return "/admin/operations/orders";
+    }
+    if (p === "/admin/content") {
+      return "/admin/content/homepage";
+    }
+    return path;
+  };
+
+  // Dynamic breadcrumb generation with paths
   const pathSegments = location.pathname.split("/").filter(Boolean);
-  const section = pathSegments[1]
-    ? pathSegments[1].charAt(0).toUpperCase() + pathSegments[1].slice(1).replace("-", " ")
-    : "Overview";
-  const subSection = pathSegments[2]
-    ? ` / ${pathSegments[2].charAt(0).toUpperCase() + pathSegments[2].slice(1).replace("-", " ")}`
-    : "";
+  const relativeSegments = pathSegments.slice(1);
+
+  const crumbs = [{ label: "Dashboard", path: "/admin/dashboard" }];
+
+  if (relativeSegments.length > 0 && relativeSegments[0].toLowerCase() !== "dashboard") {
+    relativeSegments.forEach((segment, index) => {
+      const constructedPath = "/admin/" + relativeSegments.slice(0, index + 1).join("/");
+      crumbs.push({
+        label: formatSegment(segment),
+        path: getNavigablePath(constructedPath),
+      });
+    });
+  } else if (relativeSegments.length > 1) {
+    relativeSegments.slice(1).forEach((segment, index) => {
+      const constructedPath = "/admin/dashboard/" + relativeSegments.slice(1, index + 2).join("/");
+      crumbs.push({
+        label: formatSegment(segment),
+        path: getNavigablePath(constructedPath),
+      });
+    });
+  }
 
   return (
-    <div>
+    <div className="w-full">
       <style>{SCOPED_CSS}</style>
       <header
         style={{
@@ -69,17 +104,38 @@ const AdminTopBar = () => {
           borderColor: colours.border,
           color: colours.text,
         }}
-        className="border rounded-2xl px-6 py-3 flex items-center justify-between shadow-sm animate-in fade-in duration-200"
+        className="w-full border-b px-6 py-4 flex items-center justify-between shadow-xs animate-in fade-in duration-200"
       >
         {/* Left: Breadcrumbs */}
-        <div className="flex items-center gap-2">
-          <span style={{ color: colours.mutedText }} className="text-[11px] font-semibold uppercase tracking-widest">
-            Console
-          </span>
-          <span style={{ color: colours.border }} className="text-[11px]">•</span>
-          <span style={{ color: colours.accent }} className="text-[11px] font-semibold uppercase tracking-widest">
-            {section}{subSection}
-          </span>
+        <div className="flex items-center gap-1.5 sm:gap-2 select-none">
+          {crumbs.map((crumb, index) => {
+            const isLast = index === crumbs.length - 1;
+            return (
+              <div key={index} className="flex items-center gap-1.5 sm:gap-2">
+                {index > 0 && (
+                  <span style={{ color: colours.border }} className="text-[11px] font-semibold">
+                    &gt;
+                  </span>
+                )}
+                {!isLast ? (
+                  <Link
+                    to={crumb.path}
+                    style={{ color: colours.mutedText }}
+                    className="text-[11px] font-semibold uppercase tracking-widest hover:text-[#A77C6B] transition-colors duration-200 no-underline cursor-pointer"
+                  >
+                    {crumb.label}
+                  </Link>
+                ) : (
+                  <span
+                    style={{ color: colours.accent }}
+                    className="text-[11px] font-semibold uppercase tracking-widest"
+                  >
+                    {crumb.label}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Right: Profile Dropdown */}

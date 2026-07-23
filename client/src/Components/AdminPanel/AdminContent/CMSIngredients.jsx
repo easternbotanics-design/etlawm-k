@@ -85,7 +85,7 @@ export default function CMSIngredients() {
   };
 
   return (
-    <div className="px-10 py-8" style={{ fontFamily: fonts.secondary }}>
+    <div className="px-6 py-8" style={{ fontFamily: fonts.secondary }}>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-serif text-2xl font-semibold text-[#171715]" style={{ fontFamily: fonts.primary }}>
