@@ -359,11 +359,11 @@ export async function getAdminInventory() {
   return handleResponse(response, "Failed to fetch inventory");
 }
 
-export async function addAdminInventoryStock(updates) {
+export async function addAdminInventoryStock(absoluteUpdates, additionUpdates) {
   const response = await fetch(`${API}/api/admin/inventory/add-stock`, {
     method: "POST",
     headers: getHeaders(),
-    body: JSON.stringify({ updates }),
+    body: JSON.stringify({ absoluteUpdates, additionUpdates }),
   });
   return handleResponse(response, "Failed to update stock");
 }

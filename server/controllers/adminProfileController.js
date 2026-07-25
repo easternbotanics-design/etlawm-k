@@ -340,17 +340,17 @@ const addAdminInventoryStock = async (req, res) => {
   }
 };
 
-export { 
-  getAdminProfile, 
-  updateAdminProfile, 
-  getAdminSettings, 
-  updateAdminSettings, 
-  makeAdmin, 
-  getAdmins, 
-  removeAdmin, 
-  getAdminCustomers, 
-  getAdminQuestions, 
-  getDashboardStats, 
+export {
+  getAdminProfile,
+  updateAdminProfile,
+  getAdminSettings,
+  updateAdminSettings,
+  makeAdmin,
+  getAdmins,
+  removeAdmin,
+  getAdminCustomers,
+  getAdminQuestions,
+  getDashboardStats,
   getAdminShipments,
   getAdminInventory,
   addAdminInventoryStock

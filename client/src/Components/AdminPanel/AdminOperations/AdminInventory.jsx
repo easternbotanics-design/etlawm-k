@@ -12,6 +12,7 @@ export default function AdminInventory() {
 
   // Popup state
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [absoluteUpdates, setAbsoluteUpdates] = useState({}); // { [productId]: currentStockValue }
   const [updates, setUpdates] = useState({}); // { [productId]: quantityToAdd }
   const [popupSearchQuery, setPopupSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -56,6 +57,14 @@ export default function AdminInventory() {
 
   const handleOpenPopup = () => {
     setUpdates({});
+    
+    // Prefill absolute stock values with original stock
+    const initialAbsolute = {};
+    products.forEach((p) => {
+      initialAbsolute[p.id] = p.stock_qty;
+    });
+    setAbsoluteUpdates(initialAbsolute);
+    
     setPopupSearchQuery("");
     setPopupError("");
     setSuccessMessage("");
@@ -66,6 +75,13 @@ export default function AdminInventory() {
     if (!submitting) {
       setIsPopupOpen(false);
     }
+  };
+
+  const handleAbsoluteChange = (productId, val) => {
+    setAbsoluteUpdates((prev) => ({
+      ...prev,
+      [productId]: val,
+    }));
   };
 
   const handleUpdateChange = (productId, val) => {
@@ -80,26 +96,40 @@ export default function AdminInventory() {
     setPopupError("");
     setSuccessMessage("");
 
-    // Filter out empty or 0 inputs, keep only positive integers
-    const finalUpdates = {};
+    const finalAbsolute = {};
+    const finalAdditions = {};
     let hasValidUpdate = false;
 
+    // Filter absolute updates that have actually changed
+    Object.entries(absoluteUpdates).forEach(([prodId, val]) => {
+      const parsedVal = parseInt(val, 10);
+      const originalProduct = products.find((p) => p.id === prodId);
+      
+      if (originalProduct && !isNaN(parsedVal) && parsedVal >= 0) {
+        if (parsedVal !== originalProduct.stock_qty) {
+          finalAbsolute[prodId] = parsedVal;
+          hasValidUpdate = true;
+        }
+      }
+    });
+
+    // Filter addition updates
     Object.entries(updates).forEach(([prodId, val]) => {
-      const parsed = parseInt(val, 10);
-      if (!isNaN(parsed) && parsed > 0) {
-        finalUpdates[prodId] = parsed;
+      const parsedVal = parseInt(val, 10);
+      if (!isNaN(parsedVal) && parsedVal > 0) {
+        finalAdditions[prodId] = parsedVal;
         hasValidUpdate = true;
       }
     });
 
     if (!hasValidUpdate) {
-      setPopupError("Please enter a value greater than 0 for at least one product.");
+      setPopupError("No changes detected to stock levels.");
       return;
     }
 
     try {
       setSubmitting(true);
-      const res = await addAdminInventoryStock(finalUpdates);
+      const res = await addAdminInventoryStock(finalAbsolute, finalAdditions);
       if (res.success) {
         setSuccessMessage("Stock updated successfully!");
         // Reload inventory data
@@ -111,6 +141,7 @@ export default function AdminInventory() {
           setIsPopupOpen(false);
           setSuccessMessage("");
           setUpdates({});
+          setAbsoluteUpdates({});
         }, 1500);
       } else {
         setPopupError(res.message || "Failed to update stock");
@@ -157,8 +188,8 @@ export default function AdminInventory() {
       <div className="mb-4">
         <button
           onClick={handleOpenPopup}
-          className="px-4 py-2.5 bg-[#A77C6B] hover:bg-[#A77C6B]/90 text-black text-xs md:text-sm font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 cursor-pointer border-none flex items-center gap-2"
-          style={{ fontFamily: fonts.text }}
+          className="px-4 py-2.5 bg-[#A77C6B] hover:bg-[#A77C6B]/90 text-white text-xs md:text-sm font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 cursor-pointer border-none flex items-center gap-2"
+          style={{ fontFamily: fonts.secondary }}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -324,7 +355,7 @@ export default function AdminInventory() {
       {isPopupOpen && (
         <div className="fixed inset-0 bg-black/40 z-[999] flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="bg-white rounded-2xl border border-stone-200 max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl mx-4 animate-in fade-in zoom-in-95 duration-200"
+            className="bg-white rounded-2xl border border-stone-200 max-w-xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl mx-4 animate-in fade-in zoom-in-95 duration-200"
             style={{ fontFamily: fonts.secondary }}
           >
             {/* Modal Header */}
@@ -333,7 +364,7 @@ export default function AdminInventory() {
                 <h3 className="text-lg font-semibold text-[#171715]" style={{ fontFamily: fonts.primary }}>
                   Add Product Stock
                 </h3>
-                <p className="text-[11px] text-[#7C7770]">Input stock quantity to add for each item</p>
+                <p className="text-[11px] text-[#7C7770]">Edit current stock directly or enter additions to stock levels</p>
               </div>
               <button
                 type="button"
@@ -360,14 +391,14 @@ export default function AdminInventory() {
             </div>
 
             {/* Modal Body (Scrollable Container with data-lenis-prevent) */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4" data-lenis-prevent>
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col" data-lenis-prevent>
               {popupError && (
-                <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs rounded font-medium">
+                <div className="p-3 mb-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs rounded font-medium">
                   {popupError}
                 </div>
               )}
               {successMessage && (
-                <div className="p-3 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 text-xs rounded font-medium">
+                <div className="p-3 mb-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 text-xs rounded font-medium">
                   {successMessage}
                 </div>
               )}
@@ -375,53 +406,70 @@ export default function AdminInventory() {
               {filteredPopupProducts.length === 0 ? (
                 <div className="text-center py-8 text-xs text-stone-400 italic">No matching products found.</div>
               ) : (
-                <div className="space-y-3">
-                  {filteredPopupProducts.map((product) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center justify-between p-3 rounded-xl border border-stone-100 hover:bg-stone-50/30 transition-colors gap-4"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        {/* Thumbnail */}
-                        <div className="w-10 h-10 rounded-lg bg-white border border-[#D8D2C8] overflow-hidden flex items-center justify-center shrink-0">
-                          {product.primary_image ? (
-                            <img
-                              src={product.primary_image}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <svg className="w-5 h-5 text-stone-300" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                            </svg>
-                          )}
-                        </div>
-                        {/* Name and Stock Info */}
-                        <div className="flex flex-col min-w-0">
+                <div className="flex-1 flex flex-col">
+                  {/* Column Headers */}
+                  <div className="grid grid-cols-[1fr_96px_96px] items-center text-[10px] uppercase font-bold text-stone-400 px-3 mb-2 gap-4">
+                    <div>Product</div>
+                    <div className="text-center">Current Stock</div>
+                    <div className="text-center">Add Stock</div>
+                  </div>
+
+                  {/* Scrollable list */}
+                  <div className="space-y-3">
+                    {filteredPopupProducts.map((product) => (
+                      <div
+                        key={product.id}
+                        className="grid grid-cols-[1fr_96px_96px] items-center p-3 rounded-xl border border-stone-100 hover:bg-stone-50/30 transition-colors gap-4"
+                      >
+                        {/* Column 1: Product Thumbnail & Name */}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-lg bg-white border border-[#D8D2C8] overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
+                            {product.primary_image ? (
+                              <img
+                                src={product.primary_image}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <svg className="w-5 h-5 text-stone-300" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                              </svg>
+                            )}
+                          </div>
                           <span className="text-xs font-semibold text-stone-750 truncate leading-normal">
                             {product.name}
                           </span>
-                          <span className="text-[10px] text-stone-400 mt-0.5">
-                            Current Stock: <span className="font-semibold text-stone-600">{product.stock_qty}</span>
-                          </span>
+                        </div>
+
+                        {/* Column 2: Current Stock (can be edited directly) */}
+                        <div className="w-24">
+                          <input
+                            type="number"
+                            min="0"
+                            value={absoluteUpdates[product.id] ?? ""}
+                            onChange={(e) => handleAbsoluteChange(product.id, e.target.value)}
+                            disabled={submitting}
+                            className="w-full text-center px-2 py-1.5 text-xs rounded-lg border outline-none bg-stone-50 hover:bg-stone-100/50 focus:bg-white focus:ring-1 focus:ring-[#A77C6B] transition-all font-semibold"
+                            style={{ borderColor: colours.border }}
+                          />
+                        </div>
+
+                        {/* Column 3: Add Stock (defaults to empty/0) */}
+                        <div className="w-24">
+                          <input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            value={updates[product.id] || ""}
+                            onChange={(e) => handleUpdateChange(product.id, e.target.value)}
+                            disabled={submitting}
+                            className="w-full text-center px-2 py-1.5 text-xs rounded-lg border outline-none bg-white focus:ring-1 focus:ring-[#A77C6B] transition-all font-semibold"
+                            style={{ borderColor: colours.border }}
+                          />
                         </div>
                       </div>
-
-                      {/* Empty input box opposite each item (defaults to 0 if left empty) */}
-                      <div className="shrink-0 w-24">
-                        <input
-                          type="number"
-                          placeholder="0"
-                          min="0"
-                          value={updates[product.id] || ""}
-                          onChange={(e) => handleUpdateChange(product.id, e.target.value)}
-                          disabled={submitting}
-                          className="w-full text-center px-2 py-1.5 text-xs rounded-lg border outline-none bg-white focus:ring-1 focus:ring-[#A77C6B] transition-all font-semibold"
-                          style={{ borderColor: colours.border }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -440,7 +488,7 @@ export default function AdminInventory() {
                 type="button"
                 onClick={handleStockUp}
                 disabled={submitting}
-                className="px-5 py-2 bg-[#A77C6B] hover:bg-[#A77C6B]/90 text-black text-xs font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 cursor-pointer border-none flex items-center gap-2 disabled:opacity-50"
+                className="px-5 py-2 bg-[#A77C6B] hover:bg-[#A77C6B]/90 text-white text-xs font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 cursor-pointer border-none flex items-center gap-2 disabled:opacity-50"
               >
                 {submitting ? (
                   <>
