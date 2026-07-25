@@ -20,6 +20,7 @@ import AdminCustomers from "../Components/AdminPanel/AdminCustomers.jsx";
 import AdminQuestions from "../Components/AdminPanel/AdminQuestions.jsx";
 import AdminCoupons from "../Components/AdminPanel/AdminOperations/AdminCoupons.jsx";
 import AdminShipments from "../Components/AdminPanel/AdminOperations/AdminShipments.jsx";
+import AdminInventory from "../Components/AdminPanel/AdminOperations/AdminInventory.jsx";
 import { colours, fonts } from "../theme/theme.js";
 import { getDashboardStats } from "../services/adminService.js";
 
@@ -370,6 +371,7 @@ const AdminDashBoard = () => {
             <Route path="operations/carts" element={<AdminCarts />} />
             <Route path="operations/coupons" element={<AdminCoupons />} />
             <Route path="operations/shipments" element={<AdminShipments />} />
+            <Route path="operations/inventory" element={<AdminInventory />} />
 
             {/* Profile & Settings routes */}
             <Route path="customers" element={<AdminCustomers />} />

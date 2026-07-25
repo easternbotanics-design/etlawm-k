@@ -1,7 +1,7 @@
 import express from 'express';
 import { upload, uploadImage, addProduct, updateProduct, deleteProduct, addProductImage, setProductImagePrimary, deleteProductImage, syncProductIngredients } from '../controllers/productController.js';
 import { addCategory, updateCategory, deleteCategory } from '../controllers/categoryController.js';
-import { getAdminProfile, updateAdminProfile, getAdminSettings, updateAdminSettings, makeAdmin, getAdmins, removeAdmin, getAdminCustomers, getAdminQuestions, getDashboardStats, getAdminShipments } from '../controllers/adminProfileController.js';
+import { getAdminProfile, updateAdminProfile, getAdminSettings, updateAdminSettings, makeAdmin, getAdmins, removeAdmin, getAdminCustomers, getAdminQuestions, getDashboardStats, getAdminShipments, getAdminInventory, addAdminInventoryStock } from '../controllers/adminProfileController.js';
 import {
   createCmsReview,
   getAdminCmsReviews,
@@ -38,6 +38,8 @@ adminRouter.get('/customers', getAdminCustomers);
 adminRouter.get('/questions', getAdminQuestions);
 adminRouter.get('/dashboard-stats', getDashboardStats);
 adminRouter.get('/shipments', getAdminShipments);
+adminRouter.get('/inventory', getAdminInventory);
+adminRouter.post('/inventory/add-stock', addAdminInventoryStock);
 
 adminRouter.post('/categories', addCategory);
 adminRouter.patch('/categories/:id', updateCategory);

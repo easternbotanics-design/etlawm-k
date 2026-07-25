@@ -264,6 +264,96 @@ const getAdminShipments = async (req, res) => {
   }
 };
 
-export { getAdminProfile, updateAdminProfile, getAdminSettings, updateAdminSettings, makeAdmin, getAdmins, removeAdmin, getAdminCustomers, getAdminQuestions, getDashboardStats, getAdminShipments }
+const getAdminInventory = async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT 
+          p.id, 
+          p.name, 
+          p.price, 
+          p.stock_qty,
+          p.is_active,
+          (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = true LIMIT 1) AS primary_image,
+          COALESCE(
+              (SELECT SUM(oi.quantity)::int 
+               FROM order_items oi
+               JOIN orders o ON o.id = oi.order_id
+               WHERE oi.product_id = p.id
+                 AND (o.status IN ('paid', 'shipped', 'delivered')
+                      OR (o.razorpay_payment_id IS NOT NULL AND o.razorpay_payment_id NOT IN ('payment failed', 'cart abandoned')))
+              ), 0
+          ) AS items_sold
+      FROM products p
+      ORDER BY p.name ASC`
+    );
+
+    res.json({
+      success: true,
+      products: rows,
+    });
+  } catch (err) {
+    console.error("[getAdminInventory]", err);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+const addAdminInventoryStock = async (req, res) => {
+  const { updates } = req.body; // updates: { [productId]: quantityToAdd }
+  if (!updates || typeof updates !== "object") {
+    return res.status(400).json({ success: false, message: "Invalid updates format." });
+  }
+
+  const client = await db.pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    for (const [productId, quantityToAdd] of Object.entries(updates)) {
+      const qty = parseInt(quantityToAdd, 10);
+      if (isNaN(qty) || qty <= 0) continue;
+
+      // Update product stock_qty
+      await client.query(
+        `UPDATE products 
+         SET stock_qty = stock_qty + $1, updated_at = now() 
+         WHERE id = $2`,
+        [qty, productId]
+      );
+
+      // Update inventory table
+      await client.query(
+        `INSERT INTO inventory (product_id, quantity_available, quantity_reserved, updated_at)
+         VALUES ($2, $1, 0, now())
+         ON CONFLICT (product_id)
+         DO UPDATE SET quantity_available = inventory.quantity_available + EXCLUDED.quantity_available, updated_at = now()`,
+        [qty, productId]
+      );
+    }
+
+    await client.query("COMMIT");
+    res.json({ success: true, message: "Stock updated successfully." });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("[addAdminInventoryStock]", err);
+    res.status(500).json({ success: false, message: "Server error updating stock." });
+  } finally {
+    client.release();
+  }
+};
+
+export { 
+  getAdminProfile, 
+  updateAdminProfile, 
+  getAdminSettings, 
+  updateAdminSettings, 
+  makeAdmin, 
+  getAdmins, 
+  removeAdmin, 
+  getAdminCustomers, 
+  getAdminQuestions, 
+  getDashboardStats, 
+  getAdminShipments,
+  getAdminInventory,
+  addAdminInventoryStock
+};
 
 

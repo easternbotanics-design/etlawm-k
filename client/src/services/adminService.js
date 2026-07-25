@@ -351,3 +351,19 @@ export async function getAdminShipments() {
   });
   return handleResponse(response, "Failed to fetch shipments");
 }
+
+export async function getAdminInventory() {
+  const response = await fetch(`${API}/api/admin/inventory`, {
+    headers: getHeaders(false),
+  });
+  return handleResponse(response, "Failed to fetch inventory");
+}
+
+export async function addAdminInventoryStock(updates) {
+  const response = await fetch(`${API}/api/admin/inventory/add-stock`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ updates }),
+  });
+  return handleResponse(response, "Failed to update stock");
+}
