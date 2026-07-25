@@ -408,7 +408,7 @@ export default function AdminInventory() {
               ) : (
                 <div className="flex-1 flex flex-col">
                   {/* Column Headers */}
-                  <div className="grid grid-cols-[1fr_96px_96px] items-center text-[10px] uppercase font-bold text-stone-400 px-3 mb-2 gap-4">
+                  <div className="hidden md:grid md:grid-cols-[1fr_96px_96px] items-center text-[10px] uppercase font-bold text-stone-400 px-3 mb-2 gap-4">
                     <div>Product</div>
                     <div className="text-center">Current Stock</div>
                     <div className="text-center">Add Stock</div>
@@ -419,10 +419,10 @@ export default function AdminInventory() {
                     {filteredPopupProducts.map((product) => (
                       <div
                         key={product.id}
-                        className="grid grid-cols-[1fr_96px_96px] items-center p-3 rounded-xl border border-stone-100 hover:bg-stone-50/30 transition-colors gap-4"
+                        className="flex flex-col md:grid md:grid-cols-[1fr_96px_96px] md:items-center p-3 rounded-xl border border-stone-100 hover:bg-stone-50/30 transition-colors gap-3 md:gap-4"
                       >
                         {/* Column 1: Product Thumbnail & Name */}
-                        <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex items-center gap-3 min-w-0 w-full md:w-auto">
                           <div className="w-10 h-10 rounded-lg bg-white border border-[#D8D2C8] overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
                             {product.primary_image ? (
                               <img
@@ -436,36 +436,41 @@ export default function AdminInventory() {
                               </svg>
                             )}
                           </div>
-                          <span className="text-xs font-semibold text-stone-750 truncate leading-normal">
+                          <span className="text-xs font-semibold text-stone-750 md:truncate leading-normal">
                             {product.name}
                           </span>
                         </div>
 
-                        {/* Column 2: Current Stock (can be edited directly) */}
-                        <div className="w-24">
-                          <input
-                            type="number"
-                            min="0"
-                            value={absoluteUpdates[product.id] ?? ""}
-                            onChange={(e) => handleAbsoluteChange(product.id, e.target.value)}
-                            disabled={submitting}
-                            className="w-full text-center px-2 py-1.5 text-xs rounded-lg border outline-none bg-stone-50 hover:bg-stone-100/50 focus:bg-white focus:ring-1 focus:ring-[#A77C6B] transition-all font-semibold"
-                            style={{ borderColor: colours.border }}
-                          />
-                        </div>
+                        {/* Inputs Container - on mobile side-by-side, on desktop direct grid columns */}
+                        <div className="grid grid-cols-2 gap-3 w-full md:contents">
+                          {/* Column 2: Current Stock (can be edited directly) */}
+                          <div className="flex flex-col md:block">
+                            <label className="text-[9px] uppercase font-bold text-stone-400 mb-1 md:hidden">Current Stock</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={absoluteUpdates[product.id] ?? ""}
+                              onChange={(e) => handleAbsoluteChange(product.id, e.target.value)}
+                              disabled={submitting}
+                              className="w-full text-center px-2 py-1.5 text-xs rounded-lg border outline-none bg-stone-50 hover:bg-stone-100/50 focus:bg-white focus:ring-1 focus:ring-[#A77C6B] transition-all font-semibold md:w-24"
+                              style={{ borderColor: colours.border }}
+                            />
+                          </div>
 
-                        {/* Column 3: Add Stock (defaults to empty/0) */}
-                        <div className="w-24">
-                          <input
-                            type="number"
-                            placeholder="0"
-                            min="0"
-                            value={updates[product.id] || ""}
-                            onChange={(e) => handleUpdateChange(product.id, e.target.value)}
-                            disabled={submitting}
-                            className="w-full text-center px-2 py-1.5 text-xs rounded-lg border outline-none bg-white focus:ring-1 focus:ring-[#A77C6B] transition-all font-semibold"
-                            style={{ borderColor: colours.border }}
-                          />
+                          {/* Column 3: Add Stock (defaults to empty/0) */}
+                          <div className="flex flex-col md:block">
+                            <label className="text-[9px] uppercase font-bold text-stone-400 mb-1 md:hidden">Add Stock</label>
+                            <input
+                              type="number"
+                              placeholder="0"
+                              min="0"
+                              value={updates[product.id] || ""}
+                              onChange={(e) => handleUpdateChange(product.id, e.target.value)}
+                              disabled={submitting}
+                              className="w-full text-center px-2 py-1.5 text-xs rounded-lg border outline-none bg-white focus:ring-1 focus:ring-[#A77C6B] transition-all font-semibold md:w-24"
+                              style={{ borderColor: colours.border }}
+                            />
+                          </div>
                         </div>
                       </div>
                     ))}
