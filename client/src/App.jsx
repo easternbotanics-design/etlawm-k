@@ -15,10 +15,9 @@ import Ingredients from './Pages/Ingredients.jsx';
 import DashBoard from './Pages/DashBoard.jsx';
 import Ritual from './Pages/Ritual.jsx';
 import AdminDashBoard from './Pages/AdminDashBoard.jsx';
-import OrderSuccess from './Pages/OrderSuccess.jsx';
-import AdminOrderInfo from './Components/AdminPanel/AdminOrderInfo.jsx';
 import OrderSuccess2 from './Pages/OrderSuccess2.jsx';
-import AdminOrderInfo2 from './Components/AdminPanel/AdminOrderInfo2.jsx';
+import AdminOrderInfo from './Components/AdminPanel/AdminOrderInfo2.jsx';
+import AdminCartInfo from './Components/AdminPanel/AdminCartInfo.jsx';
 import { useAuth } from './context/AuthContext';
 import Loader from './Components/Loader';
 import FloatingCart from './Components/FloatingCart.jsx';
@@ -96,12 +95,30 @@ function AppRoutes() {
           path="/orders/:orderId"
           element={
             <ProtectedRoute>
-              <AdminOrderInfo2 />
+              <AdminOrderInfo />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/cart/:cartId"
+          element={
+            <ProtectedRoute>
+              <AdminOrderInfo />
             </ProtectedRoute>
           }
         />
 
         {/* Admin Routes */}
+
+        <Route
+          path="/admin/operations/carts/:orderId"
+          element={
+            <AdminRoute>
+              <AdminCartInfo />
+            </AdminRoute>
+          }
+        />
 
         <Route
           path="/admin/*"

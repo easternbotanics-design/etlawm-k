@@ -243,12 +243,15 @@ export default function AdminCarts() {
                       >
                         {/* ID */}
                         <td className="px-6 py-5 align-top">
-                          <span
+                          <a
+                            href={`/admin/operations/carts/${order.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             title={order.id.toUpperCase()}
-                            className="font-mono text-xs md:text-sm font-semibold text-[#171715] block select-all cursor-pointer"
+                            className="font-mono text-xs md:text-sm font-semibold text-[#171715] block select-all hover:text-[#A77C6B] hover:underline"
                           >
                             #{order.id.slice(0, 8).toUpperCase()}...
-                          </span>
+                          </a>
                           {/* Price Tag underneath ID */}
                           <span className="text-xs text-[#171715] font-semibold block mt-1">
                             ₹{parseFloat(order.total).toLocaleString("en-IN", {
