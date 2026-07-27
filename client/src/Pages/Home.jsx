@@ -11,6 +11,7 @@ import HomePathways from "../Components/HomePage/HomePathways.jsx";
 import HomeInsights from "../Components/HomePage/HomeInsights.jsx";
 import HomeFinalCTA from "../Components/HomePage/HomeFinalCTA.jsx";
 import HomeFooter from "../Components/HomePage/HomeFooter.jsx";
+import HomeHeroCarousel from "../Components/HomePage/HomeHeroCarousel.jsx";
 
 const Home = () => {
   return (
@@ -18,7 +19,8 @@ const Home = () => {
       <NavBar />
 
       <main>
-        <HomeHero />
+        <HomeHeroCarousel />
+        {/* <HomeHero />*/}
         {/* <HomeDirections />*/}
         {/* <HomePathways />*/}
         <ProductPanel />

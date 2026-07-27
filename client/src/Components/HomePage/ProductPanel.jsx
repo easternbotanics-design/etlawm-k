@@ -160,7 +160,7 @@ const ProductPanel = ({ limit = 4 }) => {
 
   return (
     <section
-      className="relative overflow-hidden px-5 py-24 md:px-10 lg:px-16"
+      className="relative overflow-hidden px-5 py-16 md:py-24 md:px-10 lg:px-16"
       style={{
         background: colours.primary,
         color: colours.text,
@@ -200,7 +200,7 @@ const ProductPanel = ({ limit = 4 }) => {
         </div>
 
         {loading && (
-          <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:gap-7 lg:grid-cols-4">
             {Array.from({ length: limit }).map((_, index) => (
               <div key={index} className="flex flex-col gap-4">
                 <div
@@ -257,7 +257,7 @@ const ProductPanel = ({ limit = 4 }) => {
         )}
 
         {!loading && !error && visibleProducts.length > 0 && (
-          <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:gap-7 lg:grid-cols-4">
             {visibleProducts.map((product) => (
               <CollectionProductCard key={product.id} product={product} />
             ))}

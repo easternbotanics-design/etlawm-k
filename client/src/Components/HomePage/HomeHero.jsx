@@ -2,15 +2,6 @@ import { Link } from "react-router-dom";
 import hero from "../../assets/heroBanner2.png";
 import { colours, fonts } from "../../theme/theme.js";
 
-const MiniLogo = () => {
-  return (
-    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-white">
-      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: colours.accent }} />
-      <span style={{ fontFamily: fonts.secondary }}>ETLAWM</span>
-    </div>
-  );
-};
-
 const HomeHero = () => {
   return (
     <section className="relative min-h-screen min-h-[100svh] w-full overflow-hidden" style={{ backgroundColor: colours.secondary }}>

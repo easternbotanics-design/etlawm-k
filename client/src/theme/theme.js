@@ -14,8 +14,6 @@ export const colours = {
   green: '#bfd8bd'
 }
 
-export const colors = colours;
-
 export const fonts = {
   // logo: " 'Libertinus Sans', sans-serif",
   logo: "'Sen', sans-serif",
@@ -24,4 +22,6 @@ export const fonts = {
   font3: "'Bigshot One', serif",
   primary: "'Montaga', serif",
   secondary: "'Montserrat', sans-serif",
+  limelight: "'Limelight'",
+  sail: "'Sail'"
 };
