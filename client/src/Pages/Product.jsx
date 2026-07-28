@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import NavBar from "../Components/NavBar2.jsx";
+import NavBar from "../Components/NavBar.jsx";
 import Footer from "../Components/Footer.jsx";
 import { getProductBySlug } from "../services/productService.js";
 import { colours, fonts } from "../theme/theme.js";

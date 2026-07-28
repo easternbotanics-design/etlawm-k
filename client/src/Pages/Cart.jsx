@@ -11,7 +11,7 @@ import {
   removeSelectedCartItems,
   updateCartItemQuantity,
 } from "../services/cartService";
-import Navbar from "../Components/NavBar2";
+import Navbar from "../Components/NavBar";
 import { colours, fonts } from "../theme/theme";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";

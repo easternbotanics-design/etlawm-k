@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import NavBar from "../Components/NavBar2.jsx";
+import NavBar from "../Components/NavBar.jsx";
 import Footer from "../Components/Footer.jsx";
 import IngredientsProductGrid from "../Components/Ingredients/IngredientsProductGrid.jsx";
 import IngredientDetailView from "../Components/Ingredients/IngredientDetailView.jsx";

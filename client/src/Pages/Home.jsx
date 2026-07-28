@@ -1,4 +1,4 @@
-import NavBar from "../Components/NavBar2.jsx";
+import NavBar from "../Components/NavBar.jsx";
 import HomeHero from "../Components/HomePage/HomeHero.jsx";
 import HomePrinciples from "../Components/HomePage/HomePrinciples.jsx";
 import HomeSupport from "../Components/HomePage/HomeSupport.jsx";

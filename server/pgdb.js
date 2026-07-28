@@ -1667,8 +1667,223 @@ const earlyBirdDiscount = {
         )
 };
 
+const rituals = {
+    create: async ({
+        product_id,
+        image_url,
+        title,
+        description,
+        status = "published",
+        is_active = true,
+        whys = [],
+        hows = [],
+        tips = [],
+    }) => {
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
+            const res = await client.query(
+                `INSERT INTO rituals (product_id, image_url, title, description, status, is_active)
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 RETURNING *`,
+                [product_id, image_url ?? null, title ?? null, description ?? null, status, is_active]
+            );
+            const ritual = res.rows[0];
+            const ritual_id = ritual.id;
+
+            if (Array.isArray(whys) && whys.length > 0) {
+                for (let i = 0; i < whys.length; i++) {
+                    if (whys[i] && whys[i].trim()) {
+                        await client.query(
+                            `INSERT INTO rituals_why (ritual_id, whys, sort_order) VALUES ($1, $2, $3)`,
+                            [ritual_id, whys[i].trim(), i]
+                        );
+                    }
+                }
+            }
+
+            if (Array.isArray(hows) && hows.length > 0) {
+                for (let i = 0; i < hows.length; i++) {
+                    if (hows[i] && hows[i].trim()) {
+                        await client.query(
+                            `INSERT INTO ritual_how (ritual_id, hows, sort_order) VALUES ($1, $2, $3)`,
+                            [ritual_id, hows[i].trim(), i]
+                        );
+                    }
+                }
+            }
+
+            if (Array.isArray(tips) && tips.length > 0) {
+                for (let i = 0; i < tips.length; i++) {
+                    if (tips[i] && tips[i].trim()) {
+                        await client.query(
+                            `INSERT INTO ritual_tips (ritual_id, tips, sort_order) VALUES ($1, $2, $3)`,
+                            [ritual_id, tips[i].trim(), i]
+                        );
+                    }
+                }
+            }
+
+            await client.query("COMMIT");
+            return ritual;
+        } catch (err) {
+            await client.query("ROLLBACK");
+            throw err;
+        } finally {
+            client.release();
+        }
+    },
+
+    findById: async (id) => {
+        const ritualRes = await query(
+            `SELECT r.*, p.name AS product_name, p.slug AS product_slug
+             FROM rituals r
+             LEFT JOIN products p ON p.id = r.product_id
+             WHERE r.id = $1`,
+            [id]
+        );
+        if (ritualRes.rows.length === 0) return null;
+        const ritual = ritualRes.rows[0];
+
+        const whysRes = await query(`SELECT whys FROM rituals_why WHERE ritual_id = $1 ORDER BY sort_order ASC`, [id]);
+        const howsRes = await query(`SELECT hows FROM ritual_how WHERE ritual_id = $1 ORDER BY sort_order ASC`, [id]);
+        const tipsRes = await query(`SELECT tips FROM ritual_tips WHERE ritual_id = $1 ORDER BY sort_order ASC`, [id]);
+
+        ritual.whys = whysRes.rows.map(row => row.whys);
+        ritual.hows = howsRes.rows.map(row => row.hows);
+        ritual.tips = tipsRes.rows.map(row => row.tips);
+
+        return ritual;
+    },
+
+    findAllAdmin: () =>
+        query(
+            `SELECT r.*, p.name AS product_name
+             FROM rituals r
+             LEFT JOIN products p ON p.id = r.product_id
+             ORDER BY r.created_at DESC`
+        ),
+
+    update: async (id, fields) => {
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
+
+            const allowed = ["product_id", "image_url", "title", "description", "status", "is_active"];
+            const sets = [];
+            const vals = [];
+            let paramIdx = 1;
+            for (const key of allowed) {
+                if (fields[key] !== undefined) {
+                    sets.push(`${key} = $${paramIdx++}`);
+                    vals.push(fields[key]);
+                }
+            }
+
+            let ritual;
+            if (sets.length > 0) {
+                sets.push("updated_at = now()");
+                vals.push(id);
+                const res = await client.query(
+                    `UPDATE rituals SET ${sets.join(", ")} WHERE id = $${paramIdx} RETURNING *`,
+                    vals
+                );
+                ritual = res.rows[0];
+            } else {
+                const res = await client.query(`SELECT * FROM rituals WHERE id = $1`, [id]);
+                ritual = res.rows[0];
+            }
+
+            if (!ritual) {
+                throw new Error("Ritual not found");
+            }
+
+            if (fields.whys !== undefined) {
+                await client.query(`DELETE FROM rituals_why WHERE ritual_id = $1`, [id]);
+                if (Array.isArray(fields.whys) && fields.whys.length > 0) {
+                    for (let i = 0; i < fields.whys.length; i++) {
+                        if (fields.whys[i] && fields.whys[i].trim()) {
+                            await client.query(
+                                `INSERT INTO rituals_why (ritual_id, whys, sort_order) VALUES ($1, $2, $3)`,
+                                [id, fields.whys[i].trim(), i]
+                            );
+                        }
+                    }
+                }
+            }
+
+            if (fields.hows !== undefined) {
+                await client.query(`DELETE FROM ritual_how WHERE ritual_id = $1`, [id]);
+                if (Array.isArray(fields.hows) && fields.hows.length > 0) {
+                    for (let i = 0; i < fields.hows.length; i++) {
+                        if (fields.hows[i] && fields.hows[i].trim()) {
+                            await client.query(
+                                `INSERT INTO ritual_how (ritual_id, hows, sort_order) VALUES ($1, $2, $3)`,
+                                [id, fields.hows[i].trim(), i]
+                            );
+                        }
+                    }
+                }
+            }
+
+            if (fields.tips !== undefined) {
+                await client.query(`DELETE FROM ritual_tips WHERE ritual_id = $1`, [id]);
+                if (Array.isArray(fields.tips) && fields.tips.length > 0) {
+                    for (let i = 0; i < fields.tips.length; i++) {
+                        if (fields.tips[i] && fields.tips[i].trim()) {
+                            await client.query(
+                                `INSERT INTO ritual_tips (ritual_id, tips, sort_order) VALUES ($1, $2, $3)`,
+                                [id, fields.tips[i].trim(), i]
+                            );
+                        }
+                    }
+                }
+            }
+
+            await client.query("COMMIT");
+            return ritual;
+        } catch (err) {
+            await client.query("ROLLBACK");
+            throw err;
+        } finally {
+            client.release();
+        }
+    },
+
+    delete: (id) =>
+        query(
+            `DELETE FROM rituals
+             WHERE id = $1
+             RETURNING *`,
+            [id]
+        ),
+
+    findPublished: async () => {
+        const res = await query(
+            `SELECT r.*, p.name AS product_name, p.slug AS product_slug,
+                    (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = true LIMIT 1) AS primary_product_image
+             FROM rituals r
+             LEFT JOIN products p ON p.id = r.product_id
+             WHERE r.status = 'published' AND r.is_active = true
+             ORDER BY r.created_at DESC`
+        );
+        const ritualsList = res.rows;
+        for (const ritual of ritualsList) {
+            const whysRes = await query(`SELECT whys FROM rituals_why WHERE ritual_id = $1 ORDER BY sort_order ASC`, [ritual.id]);
+            const howsRes = await query(`SELECT hows FROM ritual_how WHERE ritual_id = $1 ORDER BY sort_order ASC`, [ritual.id]);
+            const tipsRes = await query(`SELECT tips FROM ritual_tips WHERE ritual_id = $1 ORDER BY sort_order ASC`, [ritual.id]);
+
+            ritual.whys = whysRes.rows.map(row => row.whys);
+            ritual.hows = howsRes.rows.map(row => row.hows);
+            ritual.tips = tipsRes.rows.map(row => row.tips);
+        }
+        return { rows: ritualsList };
+    },
+};
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 const db = {
+    rituals,
     cmsReviews,
     cmsIngredients,
     productIngredients,

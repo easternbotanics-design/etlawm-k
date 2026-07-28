@@ -19,6 +19,13 @@ import {
   updateIngredient,
   deleteIngredient
 } from '../controllers/ingredientController.js';
+import {
+  createRitual,
+  getAdminRituals,
+  getRitualById,
+  updateRitual,
+  deleteRitual
+} from '../controllers/ritualController.js';
 
 
 const adminRouter = express.Router();
@@ -68,6 +75,12 @@ adminRouter.post("/ingredients", createIngredient);
 adminRouter.get("/ingredients/:id", getIngredientById);
 adminRouter.patch("/ingredients/:id", updateIngredient);
 adminRouter.delete("/ingredients/:id", deleteIngredient);
+
+adminRouter.get("/rituals", getAdminRituals);
+adminRouter.post("/rituals", createRitual);
+adminRouter.get("/rituals/:id", getRitualById);
+adminRouter.patch("/rituals/:id", updateRitual);
+adminRouter.delete("/rituals/:id", deleteRitual);
 
 
 export default adminRouter;

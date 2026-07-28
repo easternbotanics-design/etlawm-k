@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getOrderById } from "../services/orderService";
-import Navbar from "../Components/NavBar2";
+import Navbar from "../Components/NavBar";
 import { colours, fonts } from "../theme/theme";
 import Loader from "../Components/Loader";
 
