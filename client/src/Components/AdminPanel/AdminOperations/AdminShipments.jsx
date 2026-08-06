@@ -18,7 +18,7 @@ export default function AdminShipments() {
   const [savedTracking, setSavedTracking] = useState({});
 
   // Filters & Search
-  const [statusFilter, setStatusFilter] = useState("unpacked"); // "unpacked" | "packed"
+  const [statusFilter, setStatusFilter] = useState("unpacked"); // "unpacked" | "dispatched" | "delivered"
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -121,7 +121,7 @@ export default function AdminShipments() {
         </div>
 
         <div className="flex flex-col-reverse md:flex-row items-stretch md:items-center gap-3 w-full lg:w-auto shrink">
-          {/* Unpacked / Packed Toggle Filters */}
+          {/* Unpacked / Dispatched / Delivered Toggle Filters */}
           <div className="flex bg-stone-100 p-1 rounded-xl border border-stone-200 w-full md:w-auto shrink-0">
             <button
               onClick={() => setStatusFilter("unpacked")}
@@ -134,14 +134,24 @@ export default function AdminShipments() {
               Unpacked
             </button>
             <button
-              onClick={() => setStatusFilter("packed")}
+              onClick={() => setStatusFilter("dispatched")}
               className={`flex-1 md:flex-none px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
-                statusFilter === "packed"
+                statusFilter === "dispatched"
                   ? "bg-white text-stone-900 shadow-sm"
                   : "text-[#7C7770] hover:text-stone-900"
               }`}
             >
-              Packed
+              Dispatched
+            </button>
+            <button
+              onClick={() => setStatusFilter("delivered")}
+              className={`flex-1 md:flex-none px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
+                statusFilter === "delivered"
+                  ? "bg-white text-stone-900 shadow-sm"
+                  : "text-[#7C7770] hover:text-stone-900"
+              }`}
+            >
+              Delivered
             </button>
           </div>
 
@@ -255,7 +265,8 @@ export default function AdminShipments() {
                             style={{ borderColor: colours.border }}
                           >
                             <option value="unpacked">Unpacked</option>
-                            <option value="packed">Packed</option>
+                            <option value="dispatched">Dispatched</option>
+                            <option value="delivered">Delivered</option>
                           </select>
                         </td>
 

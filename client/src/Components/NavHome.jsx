@@ -5,6 +5,7 @@ import BurgerMenu from "./BurgerMenu";
 
 const NavHome = ({
   isHomePage = false,
+  isDarkPage = false,
   isScrolled = false,
   atTop = true,
   isHidden = false,
@@ -13,7 +14,9 @@ const NavHome = ({
   onMenuOpen,
 }) => {
   const useSolidNavbar = isScrolled && !isHidden;
-  const foregroundColor = isHomePage && !useSolidNavbar ? "#ffffff" : "#171717";
+  const isWhiteTextPage = (isHomePage || isDarkPage) && !useSolidNavbar;
+  const foregroundColor = isWhiteTextPage ? "#ffffff" : "#171717";
+
 
   // Only animate the background when going white → transparent (returning to top).
   // Transparent → white (scrolling down) snaps instantly.

@@ -28,7 +28,7 @@ async function handleResponse(response, fallbackMessage) {
 }
 
 // Upload an image file to Supabase through the backend
-export async function uploadImage(file) {
+export async function uploadImage(file, bucket) {
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -37,8 +37,15 @@ export async function uploadImage(file) {
 
   const formData = new FormData();
   formData.append("image", file);
+  if (bucket) {
+    formData.append("bucket", bucket);
+  }
 
-  const response = await fetch(`${API}/api/admin/upload`, {
+  const url = bucket
+    ? `${API}/api/admin/upload?bucket=${encodeURIComponent(bucket)}`
+    : `${API}/api/admin/upload`;
+
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,

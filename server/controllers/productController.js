@@ -59,10 +59,10 @@ const upload = multer({
   },
 
   fileFilter: (req, file, cb) => {
-    const allowedTypes = [ "image/jpeg", "image/png", "image/webp" ];
+    const allowedTypes = [ "image/jpeg", "image/png", "image/webp", "image/svg+xml" ];
 
     if (!allowedTypes.includes(file.mimetype)) {
-      return cb(new Error("Only JPEG, PNG and WebP images are allowed."));
+      return cb(new Error("Only JPEG, PNG, WebP and SVG images are allowed."));
     }
 
     cb(null, true);
@@ -101,12 +101,15 @@ const uploadImage = async (req, res) => {
       ".jpeg",
       ".png",
       ".webp",
+      ".svg",
     ];
 
     const extension = allowedExtensions.includes(
       originalExtension,
     )
       ? originalExtension
+      : originalExtension === ".svg" || req.file.mimetype === "image/svg+xml"
+      ? ".svg"
       : `.${req.file.mimetype.split("/")[1]}`;
 
     const prefix = bucketName === "category-images" ? "category" : "product";

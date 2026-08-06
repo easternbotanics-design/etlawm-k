@@ -26,6 +26,13 @@ import {
   updateRitual,
   deleteRitual
 } from '../controllers/ritualController.js';
+import {
+  createScience,
+  getAdminScience,
+  getScienceById,
+  updateScience,
+  deleteScience
+} from '../controllers/scienceController.js';
 
 
 const adminRouter = express.Router();
@@ -81,6 +88,12 @@ adminRouter.post("/rituals", createRitual);
 adminRouter.get("/rituals/:id", getRitualById);
 adminRouter.patch("/rituals/:id", updateRitual);
 adminRouter.delete("/rituals/:id", deleteRitual);
+
+adminRouter.get("/science", getAdminScience);
+adminRouter.post("/science", createScience);
+adminRouter.get("/science/:id", getScienceById);
+adminRouter.patch("/science/:id", updateScience);
+adminRouter.delete("/science/:id", deleteScience);
 
 
 export default adminRouter;

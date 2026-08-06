@@ -10,6 +10,7 @@ const HIDE_START_THRESHOLD = 10;
 const NavBar = () => {
   const location = useLocation();
   const isHomePage = location.pathname === "/";
+  const isDarkPage = location.pathname === "/science";
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [atTop, setAtTop] = useState(() => window.scrollY <= 20);
@@ -102,7 +103,9 @@ const NavBar = () => {
     <>
       <NavHome
         isHomePage={isHomePage}
+        isDarkPage={isDarkPage}
         isScrolled={isScrolled}
+
         atTop={atTop}
         isHidden={isHidden}
         translateY={translateY}

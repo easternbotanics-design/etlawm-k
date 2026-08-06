@@ -17,6 +17,7 @@ import paymentRouter from './routes/paymentRoute.js';
 import ingredientRouter from './routes/ingredientRoute.js';
 import earlyBirdRouter from './routes/earlyBirdRoute.js';
 import ritualRouter from './routes/ritualRoute.js';
+import scienceRouter from './routes/scienceRoute.js';
 
 
 const app = express();
@@ -85,6 +86,8 @@ app.use("/api/payment", paymentRouter);
 app.use("/api/ingredients", ingredientRouter);
 app.use("/api/early-bird-discount", earlyBirdRouter);
 app.use("/api/rituals", ritualRouter);
+app.use("/api/science", scienceRouter);
+
 
 
 app.get("/", (req, res) => { res.send("API working") });

@@ -236,10 +236,11 @@ const getAllOrders = async (req, res) => {
 const updateOrderShipment = async (req, res) => {
   const { shipment_status, tracking_id } = req.body;
 
-  if (shipment_status !== undefined && shipment_status !== "unpacked" && shipment_status !== "packed") {
+  const validStatuses = ["unpacked", "dispatched", "delivered"];
+  if (shipment_status !== undefined && !validStatuses.includes(shipment_status)) {
     return res.status(400).json({
       success: false,
-      message: "Invalid shipment status. Must be 'unpacked' or 'packed'.",
+      message: "Invalid shipment status. Must be 'unpacked', 'dispatched', or 'delivered'.",
     });
   }
 

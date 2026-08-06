@@ -192,10 +192,12 @@ const UserOrders = () => {
                             <span className="text-[9px] font-bold uppercase tracking-wider text-stone-400 block mb-1">Shipment Status</span>
                             <div className="text-xs space-y-1">
                               <p className="font-semibold text-neutral-850">
-                                {details.shipment_status === "packed" ? (
-                                  <span className="text-emerald-600 font-medium">Packed</span>
+                                {details.shipment_status === "delivered" ? (
+                                  <span className="text-emerald-600 font-medium">Delivered</span>
+                                ) : details.shipment_status === "dispatched" || details.shipment_status === "packed" ? (
+                                  <span className="text-blue-600 font-medium">Dispatched</span>
                                 ) : (
-                                  <span className="text-amber-600 font-medium">Processing</span>
+                                  <span className="text-amber-600 font-medium">Unpacked (Processing)</span>
                                 )}
                               </p>
                               {details.tracking_id ? (

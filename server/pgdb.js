@@ -296,6 +296,119 @@ const cmsIngredients = {
         ),
 };
 
+const cmsScience = {
+    create: ({
+        name,
+        descriptions = [],
+        image_url = null,
+        status = "published",
+        sort_order = 0,
+        is_active = true,
+    }) =>
+        query(
+            `
+      INSERT INTO cms_science (
+        name,
+        descriptions,
+        image_url,
+        status,
+        sort_order,
+        is_active
+      )
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+      `,
+            [
+                name,
+                descriptions && descriptions.length ? descriptions : null,
+                image_url ?? null,
+                status,
+                sort_order,
+                is_active,
+            ]
+        ),
+
+    findById: (id) =>
+        query(
+            `
+      SELECT *
+      FROM cms_science
+      WHERE id = $1
+      LIMIT 1
+      `,
+            [id]
+        ),
+
+    findAllAdmin: () =>
+        query(
+            `
+      SELECT *
+      FROM cms_science
+      ORDER BY created_at DESC
+      `
+        ),
+
+    findPublished: () =>
+        query(
+            `
+      SELECT *
+      FROM cms_science
+      WHERE status = 'published'
+        AND is_active = true
+      ORDER BY sort_order ASC, created_at DESC
+      `
+        ),
+
+    update: (id, fields) => {
+        const allowed = [
+            "name",
+            "descriptions",
+            "image_url",
+            "status",
+            "sort_order",
+            "is_active",
+        ];
+
+        const sets = [];
+        const vals = [];
+        let i = 1;
+
+        for (const key of allowed) {
+            if (fields[key] !== undefined) {
+                sets.push(`${key} = $${i++}`);
+                vals.push(fields[key]);
+            }
+        }
+
+        if (!sets.length) {
+            throw new Error("No valid fields to update");
+        }
+
+        sets.push("updated_at = now()");
+        vals.push(id);
+
+        return query(
+            `
+      UPDATE cms_science
+      SET ${sets.join(", ")}
+      WHERE id = $${i}
+      RETURNING *
+      `,
+            vals
+        );
+    },
+
+    delete: (id) =>
+        query(
+            `
+      DELETE FROM cms_science
+      WHERE id = $1
+      RETURNING *
+      `,
+            [id]
+        ),
+};
+
 const productIngredients = {
     getByProductId: (productId) =>
         query(
@@ -344,10 +457,10 @@ const productIngredients = {
 
 // helper function, just write query( -- sql query -- ) wherever in the code to access the database
 const query = async (text, params = []) => {
-    const start = Date.now();
-    const res = await pool.query(text, params);
-    console.log(`[pgdb] (${Date.now() - start}ms)`, text.slice(0, 80));
-    return res;
+  const start = Date.now();
+  const res = await pool.query(text, params);
+  console.log(`[pgdb] (${Date.now() - start}ms)`, text.slice(0, 80));
+  return res;
 }
 
 // helper function to access the users table
@@ -1883,6 +1996,7 @@ const rituals = {
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
 const db = {
+    cmsScience,
     rituals,
     cmsReviews,
     cmsIngredients,

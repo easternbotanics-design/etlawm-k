@@ -23,5 +23,6 @@ export const fonts = {
   primary: "'Montaga', serif",
   secondary: "'Montserrat', sans-serif",
   limelight: "'Limelight'",
-  sail: "'Sail'"
+  sail: "'Sail'",
+  federo: "'Federo'"
 };
