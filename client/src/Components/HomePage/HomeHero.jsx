@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 // import hero from "../../assets/homehero.webp";
-import hero from "../../assets/herobanner5.png"
+import hero from "../../assets/herobanner.webp"
 import { colours, fonts } from "../../theme/theme.js";
 
 const HomeHero = () => {

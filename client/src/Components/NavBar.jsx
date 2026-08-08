@@ -102,7 +102,7 @@ const NavBar = () => {
   return (
     <>
       <NavHome
-        isHomePage={isHomePage}
+        // isHomePage={isHomePage}
         isDarkPage={isDarkPage}
         isScrolled={isScrolled}
 
