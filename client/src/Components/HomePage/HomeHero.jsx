@@ -21,7 +21,7 @@ const HomeHero = () => {
           <div className="flex h-full w-full max-w-2xl flex-col justify-between pb-4 md:h-auto md:justify-start md:pb-0 text-left">
             <div>
               <h1
-                className="mt-2 sm:-mt-5 md:-mt-36 md:mb-8 flex flex-row items-baseline flex-nowrap whitespace-nowrap gap-1.5 sm:gap-2 md:gap-3 text-xl min-[380px]:text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-normal leading-[0.95] lg:leading-[0.92] tracking-[-0.03em] lg:tracking-[-0.04em] drop-shadow-[0_10px_40px_rgba(0,0,0,0.45)]"
+                className="mt-12 sm:-mt-5 md:-mt-28 md:mb-8 flex flex-row items-baseline flex-nowrap whitespace-nowrap gap-1.5 sm:gap-2 md:gap-3 text-xl min-[380px]:text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-normal leading-[0.95] lg:leading-[0.92] tracking-[-0.03em] lg:tracking-[-0.04em] drop-shadow-[0_10px_40px_rgba(0,0,0,0.45)]"
                 style={{ fontFamily: fonts.betania, color: "#55433b" }}
               >
                 <p className="inline">Nature</p>, <p className="inline">refined through</p>{" "}
@@ -39,7 +39,7 @@ const HomeHero = () => {
               </p>
             </div>
       
-            <div className="mt-auto md:mt-8 flex flex-row items-center gap-2 sm:gap-3">
+            <div className="mt-auto md:mt-36 flex flex-row items-center gap-2 sm:gap-3">
               <Link
                 to="/collection"
                 className="inline-block text-center rounded-full px-3 py-1.5 sm:px-6 sm:py-3 text-[9px] min-[375px]:text-[10px] sm:text-xs font-semibold uppercase tracking-[0.1em] min-[375px]:tracking-[0.14em] sm:tracking-[0.18em] shadow-[0_12px_30px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5"
