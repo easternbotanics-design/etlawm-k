@@ -1994,8 +1994,60 @@ const rituals = {
     },
 };
 
+const websiteVisits = {
+    record: ({ visitor_id, path, user_agent }) =>
+        query(
+            `INSERT INTO website_visits (visitor_id, path, user_agent)
+             VALUES ($1, $2, $3)
+             RETURNING id, visitor_id, path, created_at`,
+            [visitor_id, path, user_agent ?? null]
+        ),
+
+    getStats: async () => {
+        const { rows: totalRows } = await query(
+            `SELECT COUNT(*)::bigint AS count FROM website_visits`
+        );
+        const { rows: uniqueRows } = await query(
+            `SELECT COUNT(DISTINCT visitor_id)::bigint AS count FROM website_visits`
+        );
+        const { rows: todayRows } = await query(
+            `SELECT COUNT(*)::bigint AS count FROM website_visits WHERE created_at >= CURRENT_DATE`
+        );
+        const { rows: yesterdayRows } = await query(
+            `SELECT COUNT(*)::bigint AS count FROM website_visits WHERE created_at >= CURRENT_DATE - INTERVAL '1 day' AND created_at < CURRENT_DATE`
+        );
+        const { rows: weekRows } = await query(
+            `SELECT COUNT(*)::bigint AS count FROM website_visits WHERE created_at >= date_trunc('week', NOW())`
+        );
+        const { rows: monthRows } = await query(
+            `SELECT COUNT(*)::bigint AS count FROM website_visits WHERE created_at >= date_trunc('month', NOW())`
+        );
+        const { rows: pageRows } = await query(
+            `SELECT path, COUNT(*)::bigint AS visits
+             FROM website_visits
+             GROUP BY path
+             ORDER BY visits DESC
+             LIMIT 50`
+        );
+
+        return {
+            totalVisits: parseInt(totalRows[0]?.count || 0, 10),
+            uniqueVisitors: parseInt(uniqueRows[0]?.count || 0, 10),
+            todayVisits: parseInt(todayRows[0]?.count || 0, 10),
+            yesterdayVisits: parseInt(yesterdayRows[0]?.count || 0, 10),
+            thisWeekVisits: parseInt(weekRows[0]?.count || 0, 10),
+            thisMonthVisits: parseInt(monthRows[0]?.count || 0, 10),
+            pageVisits: pageRows.map(r => ({
+                path: r.path,
+                visits: parseInt(r.visits, 10)
+            }))
+        };
+    }
+};
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 const db = {
+    websiteVisits,
     cmsScience,
     rituals,
     cmsReviews,

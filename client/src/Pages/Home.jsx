@@ -19,8 +19,8 @@ const Home = () => {
       <NavBar />
 
       <main>
+        <HomeHero />
         <HomeHeroCarousel />
-        {/* <HomeHero />*/}
         {/* <HomeDirections />*/}
         {/* <HomePathways />*/}
         <ProductPanel />

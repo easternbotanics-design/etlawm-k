@@ -22,10 +22,12 @@ import { useAuth } from './context/AuthContext';
 import Loader from './Components/Loader';
 import FloatingCart from './Components/FloatingCart.jsx';
 import Science from './Pages/Science.jsx';
-
+import usePageTracking from './hooks/usePageTracking.js';
 
 function AppRoutes() {
   const { loading } = useAuth();
+  usePageTracking();
+
 
   useEffect(() => {
     const lenis = new Lenis({
@@ -60,6 +62,7 @@ function AppRoutes() {
     <>
       <ScrollToTop />
       <Routes>
+        
         <Route path="/" element={<Home />} />
         {/* <Route path="/login"                    element={<Login />} />*/}
         <Route path="/login" element={<Login />} />

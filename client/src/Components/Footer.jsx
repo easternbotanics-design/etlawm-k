@@ -209,6 +209,8 @@ export default function Footer() {
             <a
               key={i}
               href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
               className="w-9 h-9 rounded-full border border-[#2a2a2a] flex items-center justify-center text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
             >
               {social.icon}

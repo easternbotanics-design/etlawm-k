@@ -20,9 +20,13 @@ export const fonts = {
   font2: " 'Handlee', sans-serif",
   // primary: "'Crimson Text', Georgia, serif",
   font3: "'Bigshot One', serif",
-  primary: "'Montaga', serif",
+  primary: "'Noto Serif'",
+  // primary: "'Montaga'",
   secondary: "'Montserrat', sans-serif",
   limelight: "'Limelight'",
   sail: "'Sail'",
-  federo: "'Federo'"
+  federo: "'Federo'",
+  alegreya: "'Alegreya SC'",
+  molle: "'Molle'",
+  betania:"'Betania Patmos'"
 };

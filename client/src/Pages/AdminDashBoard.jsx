@@ -26,7 +26,7 @@ import AdminCoupons from "../Components/AdminPanel/AdminOperations/AdminCoupons.
 import AdminShipments from "../Components/AdminPanel/AdminOperations/AdminShipments.jsx";
 import AdminInventory from "../Components/AdminPanel/AdminOperations/AdminInventory.jsx";
 import { colours, fonts } from "../theme/theme.js";
-import { getDashboardStats } from "../services/adminService.js";
+import { getDashboardStats, getAdminAnalytics } from "../services/adminService.js";
 
 
 const AdminHome = () => {
@@ -36,7 +36,17 @@ const AdminHome = () => {
     sales: [],
     products: [],
   });
+  const [analytics, setAnalytics] = useState({
+    totalVisits: 0,
+    uniqueVisitors: 0,
+    todayVisits: 0,
+    yesterdayVisits: 0,
+    thisWeekVisits: 0,
+    thisMonthVisits: 0,
+    pageVisits: [],
+  });
   const [loading, setLoading] = useState(true);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [error, setError] = useState("");
   const [timeframe, setTimeframe] = useState("all"); // "today" | "last7" | "last30" | "year" | "all"
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -63,8 +73,25 @@ const AdminHome = () => {
         setLoading(false);
       }
     }
+
+    async function fetchAnalyticsData() {
+      try {
+        setAnalyticsLoading(true);
+        const data = await getAdminAnalytics();
+        if (data.success && data.analytics) {
+          setAnalytics(data.analytics);
+        }
+      } catch (err) {
+        console.error("Failed to load website analytics:", err);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    }
+
     fetchStats();
+    fetchAnalyticsData();
   }, []);
+
 
   const aggregatedData = useMemo(() => {
     const now = new Date();
@@ -287,8 +314,130 @@ const AdminHome = () => {
         </div>
       )}
 
+      {/* Website Analytics Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl md:text-2xl text-stone-800 font-normal tracking-wide" style={{ fontFamily: fonts.primary }}>
+            Website Analytics
+          </h2>
+          <span className="text-xs text-stone-400 font-medium">Real-time Visitor Metrics</span>
+        </div>
+
+        {/* Analytics Stat Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="bg-white border border-stone-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between" style={{ fontFamily: fonts.secondary }}>
+            <div className="flex justify-between items-center text-stone-400">
+              <span className="text-[11px] font-semibold uppercase tracking-wider">Total Visits</span>
+              <svg className="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div className="text-2xl text-stone-850 font-semibold mt-2" style={{ fontFamily: fonts.primary }}>
+              {analyticsLoading ? "..." : (analytics.totalVisits || 0).toLocaleString("en-US")}
+            </div>
+            <div className="text-[11px] text-stone-400 mt-1">All recorded page views</div>
+          </div>
+
+          <div className="bg-white border border-stone-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between" style={{ fontFamily: fonts.secondary }}>
+            <div className="flex justify-between items-center text-stone-400">
+              <span className="text-[11px] font-semibold uppercase tracking-wider">Unique Visitors</span>
+              <svg className="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.647-6.374-1.765a4.125 4.125 0 017.898-2.072M12 9a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5zm7.5 3.75a3 3 0 100-6 3 3 0 000 6z" />
+              </svg>
+            </div>
+            <div className="text-2xl text-stone-850 font-semibold mt-2" style={{ fontFamily: fonts.primary }}>
+              {analyticsLoading ? "..." : (analytics.uniqueVisitors || 0).toLocaleString("en-US")}
+            </div>
+            <div className="text-[11px] text-stone-400 mt-1">Distinct visitor IDs</div>
+          </div>
+
+          <div className="bg-white border border-stone-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between" style={{ fontFamily: fonts.secondary }}>
+            <div className="flex justify-between items-center text-stone-400">
+              <span className="text-[11px] font-semibold uppercase tracking-wider">Visits Today</span>
+              <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="text-2xl text-stone-850 font-semibold mt-2" style={{ fontFamily: fonts.primary }}>
+              {analyticsLoading ? "..." : (analytics.todayVisits || 0).toLocaleString("en-US")}
+            </div>
+            <div className="text-[11px] text-emerald-600 font-medium mt-1">Since 00:00 today</div>
+          </div>
+
+          <div className="bg-white border border-stone-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between" style={{ fontFamily: fonts.secondary }}>
+            <div className="flex justify-between items-center text-stone-400">
+              <span className="text-[11px] font-semibold uppercase tracking-wider">Visits This Week</span>
+              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+              </svg>
+            </div>
+            <div className="text-2xl text-stone-850 font-semibold mt-2" style={{ fontFamily: fonts.primary }}>
+              {analyticsLoading ? "..." : (analytics.thisWeekVisits || 0).toLocaleString("en-US")}
+            </div>
+            <div className="text-[11px] text-stone-400 mt-1">Current calendar week</div>
+          </div>
+
+          <div className="bg-white border border-stone-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between" style={{ fontFamily: fonts.secondary }}>
+            <div className="flex justify-between items-center text-stone-400">
+              <span className="text-[11px] font-semibold uppercase tracking-wider">Visits This Month</span>
+              <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+              </svg>
+            </div>
+            <div className="text-2xl text-stone-850 font-semibold mt-2" style={{ fontFamily: fonts.primary }}>
+              {analyticsLoading ? "..." : (analytics.thisMonthVisits || 0).toLocaleString("en-US")}
+            </div>
+            <div className="text-[11px] text-stone-400 mt-1">Current calendar month</div>
+          </div>
+        </div>
+
+        {/* Page Visit Breakdown Card */}
+        <div className="bg-white border border-stone-200/80 rounded-2xl p-6 shadow-sm" style={{ fontFamily: fonts.secondary }}>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h3 className="text-base text-stone-850 font-semibold" style={{ fontFamily: fonts.primary }}>Top Page Visits</h3>
+              <p className="text-xs text-stone-400">Page-level visit breakdown sorted by popularity</p>
+            </div>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-stone-100 text-stone-600">
+              {(analytics.pageVisits || []).length} routes tracked
+            </span>
+          </div>
+
+          {analyticsLoading ? (
+            <div className="py-6 text-center text-xs text-stone-400 animate-pulse">Loading page visits breakdown...</div>
+          ) : (analytics.pageVisits || []).length === 0 ? (
+            <div className="py-6 text-center text-xs text-stone-400 italic">No page visits recorded yet.</div>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1" data-lenis-prevent>
+              {(analytics.pageVisits || []).map((pv, idx) => (
+                <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl border border-stone-100 hover:bg-stone-50/60 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0 pr-4">
+                    <span className="text-xs font-bold text-stone-300 w-5 shrink-0 text-right">#{idx + 1}</span>
+                    <span className="text-xs font-mono font-medium text-stone-800 truncate bg-stone-50 px-2 py-0.5 rounded border border-stone-200/60">
+                      {pv.path}
+                    </span>
+                  </div>
+                  <span
+                    className="text-xs font-bold px-2.5 py-1 rounded-md shrink-0 border"
+                    style={{
+                      backgroundColor: `${colours.accent}12`,
+                      borderColor: `${colours.accent}25`,
+                      color: colours.accent,
+                    }}
+                  >
+                    {pv.visits.toLocaleString("en-US")} {pv.visits === 1 ? "visit" : "visits"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Quick Links Section */}
       <div className="bg-stone-50 border border-stone-200/60 rounded-2xl p-6 md:p-8" style={{ fontFamily: fonts.secondary }}>
+
         <h3 className="text-lg text-stone-800 font-semibold mb-4" style={{ fontFamily: fonts.primary }}>Quick Management Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <a href="/admin/collection" className="bg-white hover:bg-stone-100/50 border border-stone-200/80 p-4 rounded-xl flex items-center gap-4 transition-colors">

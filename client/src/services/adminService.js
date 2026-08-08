@@ -374,3 +374,10 @@ export async function addAdminInventoryStock(absoluteUpdates, additionUpdates) {
   });
   return handleResponse(response, "Failed to update stock");
 }
+
+export async function getAdminAnalytics() {
+  const response = await fetch(`${API}/api/admin/analytics`, {
+    headers: getHeaders(false),
+  });
+  return handleResponse(response, "Failed to fetch analytics");
+}

@@ -1,0 +1,10 @@
+<svg width="200" height="140" viewBox="0 0 200 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Frame 29" clip-path="url(#clip0_106_33)">
+<path id="Union" d="M50 0C77.6142 0 100 22.3858 100 50C100 77.6142 77.6142 100 50 100V140H32C14.3269 140 0 125.673 0 108V50C0 22.3858 22.3858 0 50 0ZM150 0C177.614 0 200 22.3858 200 50C200 77.6142 177.614 100 150 100V140H132C114.327 140 100 125.673 100 108V50C100 22.3858 122.386 0 150 0Z" fill="#A77C6B" fill-opacity="0.8"/>
+</g>
+<defs>
+<clipPath id="clip0_106_33">
+<rect width="200" height="140" fill="white"/>
+</clipPath>
+</defs>
+</svg>

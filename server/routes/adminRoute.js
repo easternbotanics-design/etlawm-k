@@ -33,6 +33,7 @@ import {
   updateScience,
   deleteScience
 } from '../controllers/scienceController.js';
+import { getAdminAnalytics } from '../controllers/analyticsController.js';
 
 
 const adminRouter = express.Router();
@@ -51,7 +52,9 @@ adminRouter.delete('/admins/:phone_number', removeAdmin);
 adminRouter.get('/customers', getAdminCustomers);
 adminRouter.get('/questions', getAdminQuestions);
 adminRouter.get('/dashboard-stats', getDashboardStats);
+adminRouter.get('/analytics', getAdminAnalytics);
 adminRouter.get('/shipments', getAdminShipments);
+
 adminRouter.get('/inventory', getAdminInventory);
 adminRouter.post('/inventory/add-stock', addAdminInventoryStock);
 
