@@ -16,17 +16,17 @@ export const colours = {
 
 export const fonts = {
   // logo: " 'Libertinus Sans', sans-serif",
-  logo: "'Sen', sans-serif",
-  font2: " 'Handlee', sans-serif",
+  logo: "'Sen', system-ui, -apple-system, sans-serif",
+  font2: "'Handlee', cursive, sans-serif",
   // primary: "'Crimson Text', Georgia, serif",
-  font3: "'Bigshot One', serif",
-  primary: "'Noto Serif'",
+  font3: "'Bigshot One', Georgia, serif",
+  primary: "'Noto Serif', 'Noto Serif Display', 'Montaga', Georgia, serif",
   // primary: "'Montaga'",
-  secondary: "'Montserrat', sans-serif",
-  limelight: "'Limelight'",
-  sail: "'Sail'",
-  federo: "'Federo'",
-  alegreya: "'Alegreya SC'",
-  molle: "'Molle'",
-  betania:"'Betania Patmos'"
+  secondary: "'Montserrat', system-ui, -apple-system, sans-serif",
+  limelight: "'Limelight', cursive, Georgia, serif",
+  sail: "'Sail', cursive, Georgia, serif",
+  federo: "'Federo', system-ui, -apple-system, sans-serif",
+  alegreya: "'Alegreya SC', Georgia, serif",
+  molle: "'Molle', cursive, Georgia, serif",
+  betania: "'Betania Patmos', cursive, Georgia, serif"
 };

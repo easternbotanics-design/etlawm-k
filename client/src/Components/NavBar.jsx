@@ -78,16 +78,15 @@ const NavBar = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
     if (isMenuOpen) {
       document.body.style.overflow = "hidden";
       setTranslateY(0);
       setIsHidden(false);
     } else {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = "";
     };
   }, [isMenuOpen]);
 

@@ -130,11 +130,10 @@ const OpenMenu = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (!isOpen) return undefined;
 
-    const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     return () => {
-      document.body.style.overflow = originalOverflow;
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 

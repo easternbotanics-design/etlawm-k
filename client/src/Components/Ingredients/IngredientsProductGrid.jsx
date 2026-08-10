@@ -114,7 +114,7 @@ export default function IngredientsProductGrid() {
           </div>
 
           {/* Category Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
+          <div data-lenis-prevent className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
             <button
               type="button"
               onClick={() => setSelectedCategory("all")}
