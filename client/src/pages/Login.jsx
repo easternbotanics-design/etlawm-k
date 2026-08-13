@@ -3,7 +3,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { colours, fonts } from '../theme/theme.js';
-import CustomSelect from '../Components/CustomSelect';
+import CustomSelect from '../components/CustomSelect.jsx';
 import { mergeGuestCart } from '../services/cartService';
 
 const API = import.meta.env.VITE_SERVER_API;

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import CartItemsSection from "../Components/CartPage/CartItemsSection";
-import CartSummary from "../Components/CartPage/CartSummary";
-import CheckoutSteps from "../Components/CartPage/CheckoutSteps";
-import AddressAndDetails from "../Components/CartPage/AddressAndDetails";
+import CartItemsSection from "../components/CartPage/CartItemsSection";
+import CartSummary from "../components/CartPage/CartSummary";
+import CheckoutSteps from "../components/CartPage/CheckoutSteps";
+import AddressAndDetails from "../components/CartPage/AddressAndDetails";
 import {
   applyCartCoupon,
   getCart,
@@ -11,7 +11,7 @@ import {
   removeSelectedCartItems,
   updateCartItemQuantity,
 } from "../services/cartService";
-import Navbar from "../Components/NavBar";
+import Navbar from "../components/NavBar";
 import { colours, fonts } from "../theme/theme";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";

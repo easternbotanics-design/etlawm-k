@@ -22,6 +22,9 @@ const pool = process.env.DATABASE_URL
         database: process.env.PG_DATABASE,
         user: process.env.PG_USER,
         password: process.env.PG_PASSWORD,
+        ...(process.env.PG_HOST?.includes('supabase') || process.env.PG_SSL === 'true'
+            ? { ssl: { rejectUnauthorized: false } }
+            : {}),
     });
 
 pool.on('error', (err) => {

@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import NavBar from "../Components/NavBar.jsx";
-import Footer from "../Components/Footer.jsx";
-import CategoryCard from "../Components/Collection/CategoryCard.jsx";
+import NavBar from "../components/NavBar.jsx";
+import Footer from "../components/Footer.jsx";
+import CategoryCard from "../components/Collection/CategoryCard.jsx";
 import ProductsCollection from "./ProductsCollection.jsx";
 import { getProducts } from "../services/productService.js";
 import { getCategories } from "../services/categoryService.js";

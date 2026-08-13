@@ -1,28 +1,29 @@
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
-import ScrollToTop from './Components/ScrollToTop.jsx';
+import ScrollToTop from './components/ScrollToTop.jsx';
 import Lenis from 'lenis';
-import './App.css';
 import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './Components/ProtectedRoute';
-import AdminRoute from './Components/AdminPanel/AdminRoute';
-import Home from './Pages/Home.jsx';
-import Login from './Pages/Login.jsx';
-import Collection from './Pages/Collection.jsx';
-import Cart from './Pages/Cart.jsx';
-import Product from './Pages/Product.jsx';
-import Ingredients from './Pages/Ingredients.jsx';
-import DashBoard from './Pages/DashBoard.jsx';
-import Ritual from './Pages/Ritual.jsx';
-import AdminDashBoard from './Pages/AdminDashBoard.jsx';
-import OrderSuccess2 from './Pages/OrderSuccess2.jsx';
-import AdminOrderInfo from './Components/AdminPanel/AdminOrderInfo2.jsx';
-import AdminCartInfo from './Components/AdminPanel/AdminCartInfo.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import AdminRoute from './components/AdminPanel/AdminRoute.jsx';
+import Home from './pages/Home.jsx';
+import Login from './pages/Login.jsx';
+import Collection from './pages/Collection.jsx';
+import Cart from './pages/Cart.jsx';
+// import Product from './pages/Product2.jsx';
+import Product from './pages/Product.jsx';
+import Ingredients from './pages/Ingredients.jsx';
+import DashBoard from './pages/DashBoard.jsx';
+import Ritual from './pages/Ritual.jsx';
+import AdminDashBoard from './pages/AdminDashBoard.jsx';
+import OrderSuccess2 from './pages/OrderSuccess2.jsx';
+import AdminOrderInfo from './components/AdminPanel/AdminOrderInfo2.jsx';
+import AdminCartInfo from './components/AdminPanel/AdminCartInfo.jsx';
 import { useAuth } from './context/AuthContext';
-import Loader from './Components/Loader';
-import FloatingCart from './Components/FloatingCart.jsx';
-import Science from './Pages/Science.jsx';
+import Loader from './components/LoaderHamster.jsx';
+import FloatingCart from './components/FloatingCart.jsx';
+import Science from './pages/Science.jsx';
 import usePageTracking from './hooks/usePageTracking.js';
+// import Scrap from './Scrap.jsx';
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -64,6 +65,7 @@ function AppRoutes() {
       <Routes>
         
         <Route path="/" element={<Home />} />
+        {/* <Route path="/scrap" element={<Scrap />} />*/}
         {/* <Route path="/login"                    element={<Login />} />*/}
         <Route path="/login" element={<Login />} />
         {/* Collection routes */}

@@ -20,13 +20,17 @@ export const fonts = {
   font2: "'Handlee', cursive, sans-serif",
   // primary: "'Crimson Text', Georgia, serif",
   font3: "'Bigshot One', Georgia, serif",
-  primary: "'Noto Serif', 'Noto Serif Display', 'Montaga', Georgia, serif",
+  primary: "'Poltawski Nowy'",
   // primary: "'Montaga'",
-  secondary: "'Montserrat', system-ui, -apple-system, sans-serif",
+  secondary: "'Montserrat'",
   limelight: "'Limelight', cursive, Georgia, serif",
   sail: "'Sail', cursive, Georgia, serif",
   federo: "'Federo', system-ui, -apple-system, sans-serif",
   alegreya: "'Alegreya SC', Georgia, serif",
   molle: "'Molle', cursive, Georgia, serif",
-  betania: "'Betania Patmos', cursive, Georgia, serif"
+  betania: "'Betania Patmos', cursive, Georgia, serif",
+
+  number: "'DM Mono'",
+  // title: "'Poltawski Nowy'",
+  title: "'Yeseva One'",
 };

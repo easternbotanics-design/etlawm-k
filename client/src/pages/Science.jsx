@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import NavBar from "../Components/NavBar.jsx";
-import Footer from "../Components/Footer.jsx";
-import ScienceCard from "../Components/SciencePage/ScienceCard.jsx";
+import NavBar from "../components/NavBar.jsx";
+import Footer from "../components/Footer.jsx";
+import ScienceCard from "../components/SciencePage/ScienceCard.jsx";
 import scienceService from "../services/scienceService.js";
 import heroBanner3 from "../assets/heroBanner3.png";
 import { colours } from "../theme/theme.js";

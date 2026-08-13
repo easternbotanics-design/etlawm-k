@@ -15,6 +15,8 @@ export default function FloatingCart() {
     location.pathname.startsWith("/collection") ||
     location.pathname.startsWith("/product");
 
+  const [hasStickyBar, setHasStickyBar] = useState(false);
+
   useEffect(() => {
     if (!isVisible) return undefined;
 
@@ -40,13 +42,31 @@ export default function FloatingCart() {
     };
   }, [isVisible, user]);
 
+  useEffect(() => {
+    const handleStickyBarChange = (e) => {
+      setHasStickyBar(Boolean(e.detail?.visible));
+    };
+
+    window.addEventListener("sticky-bar-change", handleStickyBarChange);
+
+    return () => {
+      window.removeEventListener("sticky-bar-change", handleStickyBarChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    setHasStickyBar(false);
+  }, [location.pathname]);
+
   if (!isVisible) return null;
 
   return (
     <Link
       to="/cart"
       aria-label="Open cart"
-      className="fixed bottom-6 right-6 z-[150] flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+      className={`fixed right-6 z-[150] flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer ${
+        hasStickyBar ? "bottom-20 md:bottom-6" : "bottom-6"
+      }`}
       style={{
         backgroundColor: colours.text,
         color: colours.background,

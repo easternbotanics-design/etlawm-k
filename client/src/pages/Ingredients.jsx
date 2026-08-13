@@ -1,8 +1,8 @@
 import { useParams } from "react-router-dom";
-import NavBar from "../Components/NavBar.jsx";
-import Footer from "../Components/Footer.jsx";
-import IngredientsProductGrid from "../Components/Ingredients/IngredientsProductGrid.jsx";
-import IngredientDetailView from "../Components/Ingredients/IngredientDetailView.jsx";
+import NavBar from "../components/NavBar.jsx";
+import Footer from "../components/Footer.jsx";
+import IngredientsProductGrid from "../components/Ingredients/IngredientsProductGrid.jsx";
+import IngredientDetailView from "../components/Ingredients/IngredientDetailView.jsx";
 import { colours } from "../theme/theme.js";
 
 const Ingredients = () => {

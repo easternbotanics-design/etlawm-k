@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getOrderById } from "../services/orderService";
-import Navbar from "../Components/NavBar";
-import { colours, fonts } from "../theme/theme";
-import Loader from "../Components/Loader";
+import { getOrderById } from "../../services/orderService";
+import { colours, fonts } from "../../theme/theme";
+import Loader from "../LoaderTruck"
 
-function OrderSuccess2() {
+function AdminOrderInfo() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
@@ -188,22 +187,14 @@ function OrderSuccess2() {
             </p>
           </div>
 
-          
 
           {/* Action Buttons */}
-          <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center no-print" style={{ fontFamily: fonts.secondary }}>
+          <div className="mt-12 flex justify-center no-print" style={{ fontFamily: fonts.secondary }}>
             <button
               onClick={() => window.print()}
               className="cursor-pointer px-8 py-3.5 rounded-full bg-stone-900 hover:bg-stone-800 text-xs font-bold uppercase tracking-widest text-white transition-colors duration-200 border-none"
             >
               Download Receipt
-            </button>
-
-            <button
-              onClick={() => navigate("/")}
-              className="cursor-pointer px-8 py-3.5 rounded-full border border-stone-300 hover:border-stone-800 bg-white text-xs font-bold uppercase tracking-widest text-stone-900 transition-colors duration-200 border-solid"
-            >
-              Back to Home
             </button>
           </div>
 
@@ -228,5 +219,4 @@ function OrderSuccess2() {
   );
 }
 
-
-export default OrderSuccess2;
+export default AdminOrderInfo;

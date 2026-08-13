@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import NavBar from "../Components/NavBar.jsx";
-import Footer from "../Components/Footer.jsx";
+import NavBar from "../components/NavBar.jsx";
+import Footer from "../components/Footer.jsx";
 import { getProductBySlug } from "../services/productService.js";
 import { colours, fonts } from "../theme/theme.js";
-import ProductImageGallery from "../Components/ProductsPage/ProductImageGallery.jsx";
-import ProductPurchasePanel from "../Components/ProductsPage/ProductPurchasePanel.jsx";
-import ProductDetailsSection from "../Components/ProductsPage/ProductDetailsSection.jsx";
+import ProductImageGallery from "../components/ProductsPage/ProductImageGallery.jsx";
+import ProductPurchasePanel from "../components/ProductsPage/ProductPurchasePanel.jsx";
+import ProductDetailsSection from "../components/ProductsPage/ProductDetailsSection.jsx";
 import { ArrowLeft } from "lucide-react";
 
 const API = import.meta.env.VITE_SERVER_API;

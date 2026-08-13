@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import EllipseSeatCarousel from "../Components/Template";
+import EllipseSeatCarousel from "../components/Template";
 import ritualService from "../services/ritualService";
 
 const Ritual = () => {

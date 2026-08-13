@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import ProductGrid from "../Components/Collection/ProductGrid.jsx";
+import ProductGrid from "../components/Collection/ProductGrid.jsx";
 import {
   FilterSidebar,
   MobileFilterDrawer,
-} from "../Components/Collection/FilterSidebar.jsx";
+} from "../components/Collection/FilterSidebar.jsx";
 import { getProducts } from "../services/productService.js";
 import { getCategories } from "../services/categoryService.js";
 import { colours, fonts } from "../theme/theme.js";

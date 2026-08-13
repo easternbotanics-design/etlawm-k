@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Route, Routes } from "react-router-dom";
-import UserSidebar from "../Components/UserDashboard/UserSidebar";
-import UserTopBar from "../Components/UserDashboard/UserTopBar";
-import UserHome from "../Components/UserDashboard/UserHome";
-import UserProfile from "../Components/UserDashboard/UserProfile";
-import UserAddress from "../Components/UserDashboard/UserAddress";
-import UserOrders from "../Components/UserDashboard/UserOrders";
-import UserSupport from "../Components/UserDashboard/UserSupport";
+import UserSidebar from "../components/UserDashboard/UserSidebar.jsx";
+import UserTopBar from "../components/UserDashboard/UserTopBar.jsx";
+import UserHome from "../components/UserDashboard/UserHome.jsx";
+import UserProfile from "../components/UserDashboard/UserProfile.jsx";
+import UserAddress from "../components/UserDashboard/UserAddress.jsx";
+import UserOrders from "../components/UserDashboard/UserOrders.jsx";
+import UserSupport from "../components/UserDashboard/UserSupport.jsx";
 import { colours, fonts } from "../theme/theme.js";
 
 const DashBoard = () => {
