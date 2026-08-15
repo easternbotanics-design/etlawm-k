@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { colours, fonts } from "../../../theme/theme.js";
 import scienceService from "../../../services/scienceService.js";
+import TableTemplate from "../TableTemplate";
 
 const EditIcon = () => (
   <svg
@@ -84,6 +85,135 @@ export default function CMSScience() {
     navigate(`/admin/content/science/edit/${item.id}`);
   };
 
+  const columns = [
+    {
+      key: "image",
+      label: "IMAGE",
+      render: (item) => (
+        <div className="h-12 w-12 overflow-hidden rounded-lg border border-black/10 bg-stone-50 flex items-center justify-center p-1">
+          {item.image_url ? (
+            <img
+              src={item.image_url}
+              alt={item.name}
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <span className="text-[10px] text-stone-400 italic">No Image</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "name",
+      label: "NAME",
+      render: (item) => (
+        <h3
+          className="text-sm font-semibold"
+          style={{
+            color: colours.text,
+            fontFamily: fonts.primary,
+          }}
+        >
+          {item.name || "—"}
+        </h3>
+      ),
+    },
+    {
+      key: "descriptions",
+      label: "DESCRIPTIONS",
+      render: (item) => {
+        const descList = Array.isArray(item.descriptions) && item.descriptions.length > 0
+          ? item.descriptions
+          : [item.box_1, item.box_2, item.box_3].filter(Boolean);
+
+        return descList.length > 0 ? (
+          <div className="space-y-1">
+            <span className="inline-block text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-stone-200 text-stone-700">
+              {descList.length} {descList.length === 1 ? 'Paragraph' : 'Paragraphs'}
+            </span>
+            <p className="line-clamp-2 text-xs text-stone-700 max-w-[320px]">
+              {descList[0]}
+            </p>
+          </div>
+        ) : (
+          <span className="text-xs text-stone-400">—</span>
+        );
+      },
+    },
+    {
+      key: "status",
+      label: "STATUS",
+      render: (item) => {
+        const isPublished = item.status === "published";
+        return (
+          <span
+            className="rounded-full px-3 py-1 text-xs font-medium"
+            style={{
+              backgroundColor: isPublished ? colours.primary : "#FEF3C7",
+              color: isPublished ? colours.accent : "#92400E",
+            }}
+          >
+            {isPublished ? "Published" : "Draft"}
+          </span>
+        );
+      },
+    },
+    {
+      key: "created_at",
+      label: "DATE CREATED",
+      render: (item) => (
+        <span className="text-sm" style={{ color: colours.mutedText }}>
+          {item.created_at
+            ? new Date(item.created_at).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      label: "ACTIONS",
+      render: (item) => {
+        const isDeleting = deletingId === item.id;
+        return (
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => handleEdit(item)}
+              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
+              style={{
+                borderColor: colours.border,
+                color: colours.accent,
+                backgroundColor: colours.background,
+              }}
+              aria-label="Edit Science Entry"
+            >
+              <EditIcon />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDelete(item)}
+              disabled={isDeleting}
+              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+              style={{
+                borderColor: colours.border,
+                color: "#A44A3F",
+                backgroundColor: colours.background,
+              }}
+              aria-label="Delete Science Entry"
+            >
+              {isDeleting ? "..." : <DeleteIcon />}
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="px-6 py-8" style={{ fontFamily: fonts.secondary }}>
       <div className="flex items-center justify-between">
@@ -120,176 +250,15 @@ export default function CMSScience() {
           {error}
         </div>
       ) : (
-        <div
-          className="mt-8 overflow-hidden rounded-2xl border shadow-sm"
-          style={{
-            borderColor: colours.border,
-            backgroundColor: colours.background,
-          }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[950px] border-collapse text-left">
-              <thead>
-                <tr
-                  className="border-b text-xs uppercase tracking-wide"
-                  style={{
-                    borderColor: colours.border,
-                    color: colours.mutedText,
-                  }}
-                >
-                  <th className="px-6 py-4 font-semibold w-16">Image</th>
-                  <th className="px-6 py-4 font-semibold w-48">Name</th>
-                  <th className="px-6 py-4 font-semibold">Descriptions</th>
-                  <th className="px-6 py-4 font-semibold w-28">Status</th>
-                  <th className="px-6 py-4 font-semibold w-32">Date Created</th>
-                  <th className="px-6 py-4 text-right font-semibold w-32">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {scienceList.length > 0 ? (
-                  scienceList.map((item) => {
-                    const isPublished = item.status === "published";
-                    const isDeleting = deletingId === item.id;
-
-                    const descList = Array.isArray(item.descriptions) && item.descriptions.length > 0
-                      ? item.descriptions
-                      : [item.box_1, item.box_2, item.box_3].filter(Boolean);
-
-                    return (
-                      <tr
-                        key={item.id}
-                        className="border-b transition-colors duration-200 hover:bg-black/5"
-                        style={{ borderColor: colours.border }}
-                      >
-                        {/* Image Preview */}
-                        <td className="px-6 py-4">
-                          <div className="h-12 w-12 overflow-hidden rounded-lg border border-black/10 bg-stone-50 flex items-center justify-center p-1">
-                            {item.image_url ? (
-                              <img
-                                src={item.image_url}
-                                alt={item.name}
-                                className="h-full w-full object-contain"
-                              />
-                            ) : (
-                              <span className="text-[10px] text-stone-400 italic">No Image</span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Name */}
-                        <td className="px-6 py-4">
-                          <h3
-                            className="text-sm font-semibold"
-                            style={{
-                              color: colours.text,
-                              fontFamily: fonts.primary,
-                            }}
-                          >
-                            {item.name || "—"}
-                          </h3>
-                        </td>
-
-                        {/* Descriptions */}
-                        <td className="px-6 py-4">
-                          {descList.length > 0 ? (
-                            <div className="space-y-1">
-                              <span className="inline-block text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-stone-200 text-stone-700">
-                                {descList.length} {descList.length === 1 ? 'Paragraph' : 'Paragraphs'}
-                              </span>
-                              <p className="line-clamp-2 text-xs text-stone-700 max-w-[320px]">
-                                {descList[0]}
-                              </p>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-stone-400">—</span>
-                          )}
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-6 py-4">
-                          <span
-                            className="rounded-full px-3 py-1 text-xs font-medium"
-                            style={{
-                              backgroundColor: isPublished
-                                ? colours.primary
-                                : "#FEF3C7",
-                              color: isPublished ? colours.accent : "#92400E",
-                            }}
-                          >
-                            {isPublished ? "Published" : "Draft"}
-                          </span>
-                        </td>
-
-                        {/* Date */}
-                        <td
-                          className="px-6 py-4 text-sm"
-                          style={{ color: colours.mutedText }}
-                        >
-                          {item.created_at
-                            ? new Date(item.created_at).toLocaleDateString(
-                                "en-IN",
-                                {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                }
-                              )
-                            : "—"}
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-6 py-4">
-                          <div className="flex justify-end gap-3">
-                            <button
-                              type="button"
-                              onClick={() => handleEdit(item)}
-                              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
-                              style={{
-                                borderColor: colours.border,
-                                color: colours.accent,
-                                backgroundColor: colours.background,
-                              }}
-                              aria-label="Edit Science Entry"
-                            >
-                              <EditIcon />
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(item)}
-                              disabled={isDeleting}
-                              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-                              style={{
-                                borderColor: colours.border,
-                                color: "#A44A3F",
-                                backgroundColor: colours.background,
-                              }}
-                              aria-label="Delete Science Entry"
-                            >
-                              {isDeleting ? "..." : <DeleteIcon />}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="9"
-                      className="px-6 py-10 text-center text-sm"
-                      style={{ color: colours.mutedText }}
-                    >
-                      No science entries found. Click <strong>+ Add Entry</strong> to create your first entry.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="mt-8">
+          <TableTemplate
+            columns={columns}
+            data={scienceList}
+            emptyLabel="No science entries found. Click + Add Entry to create your first entry."
+          />
         </div>
       )}
     </div>
   );
 }
+

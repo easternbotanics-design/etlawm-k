@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { colours, fonts } from "../../../theme/theme";
 import { updateOrderShipment } from "../../../services/orderService";
 import { getAdminShipments } from "../../../services/adminService";
+import TableTemplate from "../TableTemplate";
 
 export default function AdminShipments() {
   const [orders, setOrders] = useState([]);
@@ -107,6 +108,113 @@ export default function AdminShipments() {
     return true;
   });
 
+  const columns = [
+    {
+      key: "id",
+      label: "ORDER ID",
+      render: (order) => (
+        <a
+          href={`/orders/${order.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-mono text-xs md:text-sm font-semibold text-[#171715] hover:text-[#A77C6B] hover:underline"
+        >
+          #{order.id.slice(0, 8).toUpperCase()}...
+        </a>
+      ),
+    },
+    {
+      key: "name",
+      label: "CUSTOMER NAME",
+      render: (order) => (
+        <span className="text-xs md:text-sm font-semibold text-[#171715]">
+          {order.name || "Guest Customer"}
+        </span>
+      ),
+    },
+    {
+      key: "contact_details",
+      label: "CONTACT DETAILS",
+      render: (order) => (
+        <span className="text-stone-600 text-xs md:text-sm">{order.contact_details}</span>
+      ),
+    },
+    {
+      key: "delivery_address",
+      label: "DELIVERY ADDRESS",
+      render: (order) => (
+        <span className="text-stone-600 text-xs md:text-sm leading-tight block max-w-[280px]">
+          {order.delivery_address}
+        </span>
+      ),
+    },
+    {
+      key: "shipment_status",
+      label: "STATUS",
+      render: (order) => {
+        const isSaving = updatingRow === order.id;
+        return (
+          <select
+            value={statusInputs[order.id] || "unpacked"}
+            onChange={(e) => setStatusInputs((prev) => ({ ...prev, [order.id]: e.target.value }))}
+            disabled={isSaving}
+            className="px-2.5 py-1.5 rounded-lg border text-xs font-semibold bg-white cursor-pointer outline-none focus:ring-1 focus:ring-accent transition-colors disabled:opacity-50"
+            style={{ borderColor: colours.border }}
+          >
+            <option value="unpacked">Unpacked</option>
+            <option value="dispatched">Dispatched</option>
+            <option value="delivered">Delivered</option>
+          </select>
+        );
+      },
+    },
+    {
+      key: "tracking_id",
+      label: "TRACKING ID",
+      render: (order) => {
+        const isSaving = updatingRow === order.id;
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <input
+              type="text"
+              value={trackingInputs[order.id] || ""}
+              placeholder="e.g. TRK123456"
+              disabled={isSaving}
+              onChange={(e) => setTrackingInputs((prev) => ({ ...prev, [order.id]: e.target.value }))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSaveShipment(order.id);
+                }
+              }}
+              className="px-2.5 py-1.5 rounded-lg border text-xs bg-white placeholder-stone-300 focus:ring-1 focus:ring-accent outline-none w-28 sm:w-36 text-left font-mono"
+              style={{ borderColor: colours.border }}
+            />
+            <button
+              onClick={() => handleSaveShipment(order.id)}
+              disabled={isSaving}
+              className={`p-1.5 rounded-lg border border-solid transition-all cursor-pointer flex items-center justify-center ${
+                savedTracking[order.id]
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-600"
+                  : "bg-white hover:bg-stone-50 border-stone-200 text-stone-500 hover:text-stone-700"
+              }`}
+              title="Save Shipment details"
+            >
+              {savedTracking[order.id] ? (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              )}
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="px-6 py-8 animate-in fade-in duration-300" style={{ fontFamily: fonts.secondary }}>
       {/* Page Header */}
@@ -186,145 +294,13 @@ export default function AdminShipments() {
           <p className="text-sm text-[#7C7770]">Loading shipments info...</p>
         </div>
       ) : (
-        <div
-          className="overflow-hidden rounded-2xl border shadow-sm animate-in fade-in duration-300"
-          style={{
-            borderColor: colours.border,
-            backgroundColor: colours.primary,
-          }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] border-collapse text-left">
-              <thead>
-                <tr
-                  className="border-b text-[10px] md:text-xs uppercase tracking-widest"
-                  style={{
-                    borderColor: colours.border,
-                    color: colours.mutedText,
-                  }}
-                >
-                  <th className="px-6 py-4 font-bold w-[15%]">Order ID</th>
-                  <th className="px-6 py-4 font-bold w-[20%]">Customer Name</th>
-                  <th className="px-6 py-4 font-bold w-[20%]">Contact Details</th>
-                  <th className="px-6 py-4 font-bold w-[25%]">Delivery Address</th>
-                  <th className="px-6 py-4 font-bold w-[10%]">Status</th>
-                  <th className="px-6 py-4 font-bold w-[10%] text-right">Tracking ID</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredOrders.length > 0 ? (
-                  filteredOrders.map((order) => {
-                    const customerName = order.name || "Guest Customer";
-                    const isSaving = updatingRow === order.id;
-
-                    return (
-                      <tr
-                        key={order.id}
-                        className="border-b transition-colors duration-200 hover:bg-[#171715]/5"
-                        style={{ borderColor: colours.border }}
-                      >
-                        {/* Order ID */}
-                        <td className="px-6 py-5 align-middle">
-                          <a
-                            href={`/orders/${order.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-mono text-xs md:text-sm font-semibold text-[#171715] hover:text-[#A77C6B] hover:underline"
-                          >
-                            #{order.id.slice(0, 8).toUpperCase()}...
-                          </a>
-                        </td>
-
-                        {/* Customer Name */}
-                        <td className="px-6 py-5 align-middle">
-                          <span className="text-xs md:text-sm font-semibold text-[#171715]">
-                            {customerName}
-                          </span>
-                        </td>
-
-                        {/* Contact Details */}
-                        <td className="px-6 py-5 align-middle text-xs md:text-sm">
-                          <span className="text-stone-600">{order.contact_details}</span>
-                        </td>
-
-                        {/* Delivery Address */}
-                        <td className="px-6 py-5 align-middle text-xs md:text-sm">
-                          <span className="text-stone-600 leading-tight block max-w-[280px]">
-                            {order.delivery_address}
-                          </span>
-                        </td>
-
-                        {/* Status (Dropdown) */}
-                        <td className="px-6 py-5 align-middle">
-                          <select
-                            value={statusInputs[order.id] || "unpacked"}
-                            onChange={(e) => setStatusInputs(prev => ({ ...prev, [order.id]: e.target.value }))}
-                            disabled={isSaving}
-                            className="px-2.5 py-1.5 rounded-lg border text-xs font-semibold bg-white cursor-pointer outline-none focus:ring-1 focus:ring-accent transition-colors disabled:opacity-50"
-                            style={{ borderColor: colours.border }}
-                          >
-                            <option value="unpacked">Unpacked</option>
-                            <option value="dispatched">Dispatched</option>
-                            <option value="delivered">Delivered</option>
-                          </select>
-                        </td>
-
-                        {/* Tracking ID (Input & Save button) */}
-                        <td className="px-6 py-5 align-middle text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <input
-                              type="text"
-                              value={trackingInputs[order.id] || ""}
-                              placeholder="e.g. TRK123456"
-                              disabled={isSaving}
-                              onChange={(e) => setTrackingInputs(prev => ({ ...prev, [order.id]: e.target.value }))}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  handleSaveShipment(order.id);
-                                }
-                              }}
-                              className="px-2.5 py-1.5 rounded-lg border text-xs bg-white placeholder-stone-300 focus:ring-1 focus:ring-accent outline-none w-28 sm:w-36 text-left font-mono"
-                              style={{ borderColor: colours.border }}
-                            />
-                            
-                            <button
-                              onClick={() => handleSaveShipment(order.id)}
-                              disabled={isSaving}
-                              className={`p-1.5 rounded-lg border border-solid transition-all cursor-pointer flex items-center justify-center ${
-                                savedTracking[order.id]
-                                  ? "bg-emerald-50 border-emerald-200 text-emerald-600"
-                                  : "bg-white hover:bg-stone-50 border-stone-200 text-stone-500 hover:text-stone-700"
-                              }`}
-                              title="Save Shipment details"
-                            >
-                              {savedTracking[order.id] ? (
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              ) : (
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                </svg>
-                              )}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-10 text-center text-sm" style={{ color: colours.mutedText }}>
-                      No {statusFilter} shipments found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <TableTemplate
+          columns={columns}
+          data={filteredOrders}
+          emptyLabel={`No ${statusFilter} shipments found.`}
+        />
       )}
     </div>
   );
 }
+

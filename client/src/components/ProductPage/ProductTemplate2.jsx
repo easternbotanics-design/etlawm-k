@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Minus, Plus, ShoppingBag, Heart, ChevronRight, ChevronLeft, ChevronDown, Check } from "lucide-react";
+import { Star, Minus, Plus, Heart, ChevronRight, ChevronLeft, ChevronDown, Check } from "lucide-react";
 import { colours, fonts } from "../../theme/theme";
 import { getProducts, getProductBySlug, getProductById } from "../../services/productService";
+import { addToCart } from "../../services/cartService";
 import ritualService from "../../services/ritualService";
+import AddToCartNumbers from "../AddToCartNumbers.jsx";
 
 const API = import.meta.env.VITE_SERVER_API || "";
 
 function ProductPageSkeleton() {
   return (
-    <div className="min-h-screen w-full bg-[#F7F5F0] text-[#1B1B18] font-[Inter,sans-serif]">
+    <div className="min-h-screen w-full text-[#1B1B18] font-[Inter,sans-serif]">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-24 md:py-32">
         {/* Mobile top breadcrumb skeleton */}
         <div className="mb-4 h-4 w-48 animate-pulse rounded bg-[#EAE6DB]" />
@@ -78,6 +80,8 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
   const [quantity, setQuantity] = useState(1);
   const [openDetail, setOpenDetail] = useState(0);
   const [added, setAdded] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [cartError, setCartError] = useState(null);
 
   // Sticky bottom bar visibility state
   const ctaRef = useRef(null);
@@ -251,10 +255,29 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
     }
   };
 
-  const handleAddToCart = () => {
-    setAdded(true);
-    window.clearTimeout(handleAddToCart._t);
-    handleAddToCart._t = window.setTimeout(() => setAdded(false), 1800);
+  const isUnavailable =
+    product?.status === "out_of_stock" ||
+    product?.status === "archived" ||
+    product?.status === "draft" ||
+    Number(product?.stockQty ?? 1) <= 0 ||
+    product?.isActive === false;
+
+  const handleAddToCart = async () => {
+    if (!product || !product.id || isAdding || isUnavailable) return;
+    try {
+      setIsAdding(true);
+      setCartError(null);
+      await addToCart(product.id, Math.max(Number(quantity) || 1, 1));
+      setAdded(true);
+      window.dispatchEvent(new Event("cart-updated"));
+      window.clearTimeout(handleAddToCart._t);
+      handleAddToCart._t = window.setTimeout(() => setAdded(false), 2500);
+    } catch (err) {
+      console.error("Failed to add product to cart:", err);
+      setCartError(err.message || "Failed to add item to cart.");
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const handleTouchStart = (e) => {
@@ -284,7 +307,7 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
 
   if (error || !product) {
     return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center gap-4 bg-[#F7F5F0] px-6 text-center">
+      <div className="flex min-h-screen w-full flex-col items-center justify-center gap-4 px-6 text-center">
         <h2 className="text-2xl font-semibold text-[#1B1B18]">Product Not Found</h2>
         <p className="max-w-md text-sm text-[#6B6656]">
           {error || "We couldn't find the product you were looking for."}
@@ -362,8 +385,8 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
   ];
 
   return (
-    <div className="min-h-screen w-full bg-[#F7F5F0] text-[#1B1B18] font-[Inter,sans-serif] pb-16 md:pb-0">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-24 md:py-32">
+    <div className="min-h-screen w-full text-[#1B1B18] font-[Inter,sans-serif] pb-4 md:pb-0">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-24 pb-4 md:pt-32 md:pb-4">
         {/* Top breadcrumb bar for immediate context on mobile and desktop */}
         <nav aria-label="Breadcrumb" className="mb-4 md:mb-6">
           <ol className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm text-[#6B6656]">
@@ -388,105 +411,108 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
           </ol>
         </nav>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-[88px_1fr_1fr] md:gap-8">
-          {/* ---------------- Thumbnail rail ---------------- */}
-          <div className="order-2 flex gap-2.5 overflow-x-auto pb-1 scrollbar-none md:order-1 md:flex-col md:gap-4 md:overflow-visible md:pb-0">
-            {displayImages.map((src, i) => {
-              const isActive = i === activeImage;
-              return (
-                <button
-                  key={`${src}-${i}`}
-                  onClick={() => setActiveImage(i)}
-                  aria-label={`Show image ${i + 1}`}
-                  aria-pressed={isActive}
-                  className="group relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border md:h-20 md:w-20 md:rounded-md transition-all duration-200"
-                  style={{
-                    borderColor: isActive ? "#1F5C52" : "#DAD3C3",
-                  }}
-                >
-                  <img
-                    src={src}
-                    alt=""
-                    className="h-full w-full object-cover transition duration-300"
-                  />
-                  <span
-                    className="absolute inset-0 bg-black transition-opacity duration-200"
-                    style={{ opacity: isActive ? 0 : 0.35 }}
-                  />
-                  {isActive && (
-                    <motion.span
-                      layoutId="thumb-indicator-2"
-                      className="absolute inset-x-0 bottom-0 h-[3px] bg-[#1F5C52] md:inset-y-0 md:inset-x-auto md:left-0 md:h-full md:w-[3px]"
-                      transition={{ type: "spring", stiffness: 500, damping: 40 }}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[88px_1fr_1fr] md:gap-8 items-start">
+          {/* ---------------- Left Sticky Media Container (Thumbnails + Hero Image) ---------------- */}
+          <div className="order-1 md:order-1 md:col-span-2 md:sticky md:top-28 md:self-start grid grid-cols-1 gap-4 md:grid-cols-[88px_1fr] md:gap-8 items-start">
+            {/* ---------------- Thumbnail rail ---------------- */}
+            <div className="order-2 flex gap-2.5 overflow-x-auto pb-1 scrollbar-none md:order-1 md:flex-col md:gap-4 md:overflow-visible md:pb-0">
+              {displayImages.map((src, i) => {
+                const isActive = i === activeImage;
+                return (
+                  <button
+                    key={`${src}-${i}`}
+                    onClick={() => setActiveImage(i)}
+                    aria-label={`Show image ${i + 1}`}
+                    aria-pressed={isActive}
+                    className="group relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border md:h-20 md:w-20 md:rounded-md transition-all duration-200"
+                    style={{
+                      borderColor: isActive ? "#1F5C52" : "#DAD3C3",
+                    }}
+                  >
+                    <img
+                      src={src}
+                      alt=""
+                      className="h-full w-full object-cover transition duration-300"
                     />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ---------------- Hero image ---------------- */}
-          <div className="order-1 md:order-2">
-            <div
-              className="relative aspect-[4/5] sm:aspect-[5/6] w-full overflow-hidden rounded-2xl md:rounded-xl bg-[#EAE6DB] touch-pan-y"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={() => handleTouchEnd(displayImages)}
-            >
-              {displayImages.length > 0 ? (
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={activeImage}
-                    src={displayImages[activeImage] || displayImages[0]}
-                    alt={product.name}
-                    initial={{ opacity: 0, scale: 1.02 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.35, ease: "easeOut" }}
-                    className="h-full w-full object-cover"
-                  />
-                </AnimatePresence>
-              ) : (
-                <div className="h-full w-full animate-pulse bg-[#EAE6DB]" />
-              )}
-
-              {/* Gallery Arrow Controls for easy mobile/desktop tap navigation */}
-              {displayImages.length > 1 && (
-                <>
-                  <button
-                    onClick={() => setActiveImage((prev) => (prev > 0 ? prev - 1 : displayImages.length - 1))}
-                    aria-label="Previous image"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-full bg-[#F7F5F0]/80 text-[#1B1B18] shadow-sm backdrop-blur-sm transition hover:scale-105 active:scale-95 md:opacity-0 md:group-hover:opacity-100"
-                  >
-                    <ChevronLeft size={18} />
+                    <span
+                      className="absolute inset-0 bg-black transition-opacity duration-200"
+                      style={{ opacity: isActive ? 0 : 0.35 }}
+                    />
+                    {isActive && (
+                      <motion.span
+                        layoutId="thumb-indicator-2"
+                        className="absolute inset-x-0 bottom-0 h-[3px] bg-[#1F5C52] md:inset-y-0 md:inset-x-auto md:left-0 md:h-full md:w-[3px]"
+                        transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                      />
+                    )}
                   </button>
-                  <button
-                    onClick={() => setActiveImage((prev) => (prev < displayImages.length - 1 ? prev + 1 : 0))}
-                    aria-label="Next image"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-full bg-[#F7F5F0]/80 text-[#1B1B18] shadow-sm backdrop-blur-sm transition hover:scale-105 active:scale-95 md:opacity-0 md:group-hover:opacity-100"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
+                );
+              })}
+            </div>
 
-                  {/* Image Counter Badge for Mobile */}
-                  <span className="absolute bottom-3 right-3 rounded-full bg-[#1B1B18]/75 px-2.5 py-0.5 text-[11px] font-medium tracking-wider text-[#F7F5F0] backdrop-blur-md">
-                    {activeImage + 1} / {displayImages.length}
-                  </span>
-                </>
-              )}
-
-              {product.badge && (
-                <span className="absolute left-4 top-4 rounded-full bg-[#1B1B18] px-3 py-1 text-xs font-medium tracking-wide text-[#F7F5F0]">
-                  {product.badge}
-                </span>
-              )}
-
-              <button
-                aria-label="Save to wishlist"
-                className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-[#F7F5F0]/90 text-[#1B1B18] shadow-sm transition hover:scale-105 active:scale-95"
+            {/* ---------------- Hero image ---------------- */}
+            <div className="order-1 md:order-2">
+              <div
+                className="relative aspect-[4/5] sm:aspect-[5/6] w-full overflow-hidden rounded-2xl md:rounded-xl bg-[#EAE6DB] touch-pan-y"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={() => handleTouchEnd(displayImages)}
               >
-                <Heart size={16} />
-              </button>
+                {displayImages.length > 0 ? (
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={activeImage}
+                      src={displayImages[activeImage] || displayImages[0]}
+                      alt={product.name}
+                      initial={{ opacity: 0, scale: 1.02 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.35, ease: "easeOut" }}
+                      className="h-full w-full object-cover"
+                    />
+                  </AnimatePresence>
+                ) : (
+                  <div className="h-full w-full animate-pulse bg-[#EAE6DB]" />
+                )}
+
+                {/* Gallery Arrow Controls for easy mobile/desktop tap navigation */}
+                {displayImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setActiveImage((prev) => (prev > 0 ? prev - 1 : displayImages.length - 1))}
+                      aria-label="Previous image"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-full bg-[#F7F5F0]/80 text-[#1B1B18] shadow-sm backdrop-blur-sm transition hover:scale-105 active:scale-95 md:opacity-0 md:group-hover:opacity-100"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <button
+                      onClick={() => setActiveImage((prev) => (prev < displayImages.length - 1 ? prev + 1 : 0))}
+                      aria-label="Next image"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-full bg-[#F7F5F0]/80 text-[#1B1B18] shadow-sm backdrop-blur-sm transition hover:scale-105 active:scale-95 md:opacity-0 md:group-hover:opacity-100"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+
+                    {/* Image Counter Badge for Mobile */}
+                    <span className="absolute bottom-3 right-3 rounded-full bg-[#1B1B18]/75 px-2.5 py-0.5 text-[11px] font-medium tracking-wider text-[#F7F5F0] backdrop-blur-md">
+                      {activeImage + 1} / {displayImages.length}
+                    </span>
+                  </>
+                )}
+
+                {product.badge && (
+                  <span className="absolute left-4 top-4 rounded-full bg-[#1B1B18] px-3 py-1 text-xs font-medium tracking-wide text-[#F7F5F0]">
+                    {product.badge}
+                  </span>
+                )}
+
+                <button
+                  aria-label="Save to wishlist"
+                  className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-[#F7F5F0]/90 text-[#1B1B18] shadow-sm transition hover:scale-105 active:scale-95"
+                >
+                  <Heart size={16} />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -531,10 +557,10 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
               <div
                 className="flex items-baseline gap-2.5"
                 style={{
-                  fontFamily: fonts.number,
+                  fontFamily: fonts.title,
                 }}
               >
-                <span className="text-2xl sm:text-3xl font-medium text-[#1B1B18]">
+                <span className="text-2xl sm:text-5xl font-medium text-[#1B1B18]">
                   ₹{product.price}
                 </span>
                 {product.originalPrice && product.originalPrice > product.price && (
@@ -560,54 +586,71 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
             )}
 
             {/* Quantity + CTA Section */}
-            <div ref={ctaRef} className="mt-6 flex flex-row items-center gap-3">
-              <div className="flex h-12 shrink-0 items-center rounded-lg border border-[#DAD3C3] bg-[#F7F5F0]">
-                <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="grid h-full w-10 place-items-center text-[#1B1B18] transition hover:bg-[#EFEBE0] active:scale-95"
-                  aria-label="Decrease quantity"
+            <div ref={ctaRef} className="mt-6 flex flex-col gap-2">
+              <div className="flex flex-row items-center gap-3">
+                <AddToCartNumbers
+                  count={quantity}
+                  onIncrease={() => setQuantity((q) => q + 1)}
+                  onDecrease={() => setQuantity((q) => Math.max(1, q - 1))}
+                />
+
+                <motion.button
+                  onClick={handleAddToCart}
+                  disabled={isAdding || isUnavailable}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-[#1F5C52] px-4 sm:px-6 text-sm font-semibold text-[#F7F5F0] shadow-sm transition hover:bg-[#194A42] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Minus size={14} />
-                </button>
-                <span className="w-7 text-center text-sm font-medium">{quantity}</span>
-                <button
-                  onClick={() => setQuantity((q) => q + 1)}
-                  className="grid h-full w-10 place-items-center text-[#1B1B18] transition hover:bg-[#EFEBE0] active:scale-95"
-                  aria-label="Increase quantity"
-                >
-                  <Plus size={14} />
-                </button>
+                  <AnimatePresence mode="wait" initial={false}>
+                    {isAdding ? (
+                      <motion.span
+                        key="adding"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        className="flex items-center gap-2"
+                      >
+                        Adding...
+                      </motion.span>
+                    ) : added ? (
+                      <motion.span
+                        key="added"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        className="flex items-center gap-2"
+                      >
+                        <Check size={16} /> Added to Cart
+                      </motion.span>
+                    ) : isUnavailable ? (
+                      <motion.span
+                        key="unavailable"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        className="flex items-center gap-2"
+                      >
+                        Out of Stock
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="add"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        className="flex items-center gap-2"
+                      >
+                        Add to Cart
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
               </div>
 
-              <motion.button
-                onClick={handleAddToCart}
-                whileTap={{ scale: 0.97 }}
-                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-[#1F5C52] px-4 sm:px-6 text-sm font-semibold text-[#F7F5F0] shadow-sm transition hover:bg-[#194A42] active:scale-[0.98]"
-              >
-                <AnimatePresence mode="wait" initial={false}>
-                  {added ? (
-                    <motion.span
-                      key="added"
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      className="flex items-center gap-2"
-                    >
-                      <Check size={16} /> Added to bag
-                    </motion.span>
-                  ) : (
-                    <motion.span
-                      key="add"
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      className="flex items-center gap-2"
-                      >
-                        Add to bag
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.button>
+              {cartError && (
+                <p className="text-xs text-red-600 font-medium mt-1">
+                  {cartError}
+                </p>
+              )}
             </div>
 
             {/* Details accordion */}
@@ -690,7 +733,7 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                 </span>
                 <span
                   className="text-xs text-[#6B6656] font-medium"
-                  style={{ fontFamily: fonts.number }}
+                  style={{ fontFamily: fonts.title }}
                 >
                   ₹{product.price}
                 </span>
@@ -698,9 +741,10 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
             </div>
             <button
               onClick={handleAddToCart}
-              className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[#1F5C52] px-4 text-xs font-semibold text-[#F7F5F0] transition active:scale-95 shadow-sm"
+              disabled={isAdding || isUnavailable}
+              className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[#1F5C52] px-4 text-xs font-semibold text-[#F7F5F0] transition active:scale-95 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>{added ? "Added" : "Add to Bag"}</span>
+              <span>{isAdding ? "Adding..." : added ? "Added" : isUnavailable ? "Out of Stock" : "Add to Cart"}</span>
             </button>
           </motion.div>
         )}

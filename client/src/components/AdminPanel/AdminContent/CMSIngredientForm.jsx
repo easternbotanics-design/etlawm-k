@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { colours, fonts } from '../../../theme/theme.js';
 import ingredientService from "../../../services/ingredientService.js";
 import { uploadImage } from "../../../services/adminService.js";
+import { getProducts } from "../../../services/productService.js";
 
 const SCOPED_CSS = `
   .ingredient-form-input:focus, .ingredient-form-textarea:focus {
@@ -24,6 +25,7 @@ const emptyForm = {
   name: '',
   scientific_name: '',
   image_url: '',
+  product_id: '',
   para1: '',
   para2: '',
   para3: '',
@@ -38,11 +40,25 @@ export default function CMSIngredientForm() {
   const returnTo = location.state?.returnTo || '/admin/content/ingredients';
 
   const [form, setForm] = useState(emptyForm);
+  const [productsList, setProductsList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  /* ── Fetch products list ─────────────────────────────────────────── */
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const prods = await getProducts(true);
+        setProductsList(prods || []);
+      } catch (err) {
+        console.error("Failed to load products list:", err);
+      }
+    }
+    loadProducts();
+  }, []);
 
   /* ── Fetch existing ingredient in edit mode ────────────────────────── */
   useEffect(() => {
@@ -59,6 +75,7 @@ export default function CMSIngredientForm() {
           name: ingredient.name || '',
           scientific_name: ingredient.scientific_name || '',
           image_url: ingredient.image_url || '',
+          product_id: ingredient.product_id || '',
           para1: ingredient.para1 || '',
           para2: ingredient.para2 || '',
           para3: ingredient.para3 || '',
@@ -134,6 +151,7 @@ export default function CMSIngredientForm() {
         name: form.name.trim(),
         scientific_name: form.scientific_name.trim(),
         image_url: form.image_url,
+        product_id: form.product_id || null,
         para1: form.para1.trim(),
         para2: form.para2.trim(),
         para3: form.para3.trim(),
@@ -289,7 +307,7 @@ export default function CMSIngredientForm() {
                   style={{ color: colours.mutedText }}
                   className="text-xs mt-1"
                 >
-                  Enter the ingredient's name and upload a primary image.
+                  Enter the ingredient's name, select product assignment, and upload details.
                 </p>
               </div>
 
@@ -316,6 +334,24 @@ export default function CMSIngredientForm() {
                   style={inputStyle}
                   className="ingredient-form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all"
                 />
+              </div>
+
+              <div>
+                <FieldLabel>Assign to Product</FieldLabel>
+                <select
+                  name="product_id"
+                  value={form.product_id}
+                  onChange={handleChange}
+                  style={inputStyle}
+                  className="ingredient-form-input w-full rounded-lg border px-4 py-3 text-sm focus:outline-none transition-all cursor-pointer"
+                >
+                  <option value="">-- Select Product --</option>
+                  {productsList.map((prod) => (
+                    <option key={prod.id} value={prod.id}>
+                      {prod.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
             </section>

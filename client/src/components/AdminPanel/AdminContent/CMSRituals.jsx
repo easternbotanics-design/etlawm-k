@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { colours, fonts } from "../../../theme/theme.js";
 import ritualService from "../../../services/ritualService.js";
+import TableTemplate from "../TableTemplate";
 
 const EditIcon = () => (
   <svg
@@ -84,6 +85,131 @@ export default function CMSRituals() {
     navigate(`/admin/content/rituals/edit/${ritual.id}`);
   };
 
+  const columns = [
+    {
+      key: "image",
+      label: "IMAGE",
+      render: (ritual) => (
+        <div className="h-12 w-12 overflow-hidden rounded-lg border border-black/10 bg-white">
+          {ritual.image_url ? (
+            <img
+              src={ritual.image_url}
+              alt={ritual.title || ritual.product_name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-stone-100 text-stone-400 text-xs">
+              No img
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "product_name",
+      label: "PRODUCT",
+      render: (ritual) => (
+        <h3
+          className="text-sm font-semibold"
+          style={{
+            color: colours.text,
+            fontFamily: fonts.primary,
+          }}
+        >
+          {ritual.product_name || "—"}
+        </h3>
+      ),
+    },
+    {
+      key: "title",
+      label: "RITUAL TITLE",
+      render: (ritual) => (
+        <div>
+          <div className="text-sm text-stone-800 font-medium">
+            {ritual.title || "—"}
+          </div>
+          {ritual.description && (
+            <p className="line-clamp-1 text-xs text-stone-500 mt-0.5">
+              {ritual.description}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      label: "STATUS",
+      render: (ritual) => {
+        const isPublished = ritual.status === "published";
+        return (
+          <span
+            className="rounded-full px-3 py-1 text-xs font-medium"
+            style={{
+              backgroundColor: isPublished ? colours.primary : "#FEF3C7",
+              color: isPublished ? colours.accent : "#92400E",
+            }}
+          >
+            {isPublished ? "Published" : "Draft"}
+          </span>
+        );
+      },
+    },
+    {
+      key: "created_at",
+      label: "DATE CREATED",
+      render: (ritual) => (
+        <span className="text-sm" style={{ color: colours.mutedText }}>
+          {ritual.created_at
+            ? new Date(ritual.created_at).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      label: "ACTIONS",
+      render: (ritual) => {
+        const isDeleting = deletingId === ritual.id;
+        return (
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => handleEdit(ritual)}
+              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
+              style={{
+                borderColor: colours.border,
+                color: colours.accent,
+                backgroundColor: colours.background,
+              }}
+              aria-label="Edit Ritual"
+            >
+              <EditIcon />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDelete(ritual)}
+              disabled={isDeleting}
+              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+              style={{
+                borderColor: colours.border,
+                color: "#A44A3F",
+                backgroundColor: colours.background,
+              }}
+              aria-label="Delete Ritual"
+            >
+              {isDeleting ? "..." : <DeleteIcon />}
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="px-6 py-8" style={{ fontFamily: fonts.secondary }}>
       <div className="flex items-center justify-between">
@@ -114,170 +240,15 @@ export default function CMSRituals() {
           {error}
         </div>
       ) : (
-        <div
-          className="mt-8 overflow-hidden rounded-2xl border shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300"
-          style={{
-            borderColor: colours.border,
-            backgroundColor: colours.background,
-          }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] border-collapse text-left">
-              <thead>
-                <tr
-                  className="border-b text-xs uppercase tracking-wide"
-                  style={{
-                    borderColor: colours.border,
-                    color: colours.mutedText,
-                  }}
-                >
-                  <th className="px-6 py-4 font-semibold w-16">Image</th>
-                  <th className="px-6 py-4 font-semibold w-48">Product</th>
-                  <th className="px-6 py-4 font-semibold">Ritual Title</th>
-                  <th className="px-6 py-4 font-semibold w-28">Status</th>
-                  <th className="px-6 py-4 font-semibold w-32">Date Created</th>
-                  <th className="px-6 py-4 text-right font-semibold w-32">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {rituals.length > 0 ? (
-                  rituals.map((ritual) => {
-                    const isPublished = ritual.status === "published";
-                    const isDeleting = deletingId === ritual.id;
-
-                    return (
-                      <tr
-                        key={ritual.id}
-                        className="border-b transition-colors duration-200 hover:bg-black/5"
-                        style={{ borderColor: colours.border }}
-                      >
-                        {/* Image */}
-                        <td className="px-6 py-4">
-                          <div className="h-12 w-12 overflow-hidden rounded-lg border border-black/10 bg-white">
-                            {ritual.image_url ? (
-                              <img
-                                src={ritual.image_url}
-                                alt={ritual.title || ritual.product_name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center bg-stone-100 text-stone-400 text-xs">
-                                No img
-                              </div>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Product Name */}
-                        <td className="px-6 py-4">
-                          <h3
-                            className="text-sm font-semibold"
-                            style={{
-                              color: colours.text,
-                              fontFamily: fonts.primary,
-                            }}
-                          >
-                            {ritual.product_name || "—"}
-                          </h3>
-                        </td>
-
-                        {/* Title / Description */}
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-stone-800 font-medium">
-                            {ritual.title || "—"}
-                          </div>
-                          {ritual.description && (
-                            <p className="line-clamp-1 text-xs text-stone-500 mt-0.5">
-                              {ritual.description}
-                            </p>
-                          )}
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-6 py-4">
-                          <span
-                            className="rounded-full px-3 py-1 text-xs font-medium"
-                            style={{
-                              backgroundColor: isPublished
-                                ? colours.primary
-                                : "#FEF3C7",
-                              color: isPublished ? colours.accent : "#92400E",
-                            }}
-                          >
-                            {isPublished ? "Published" : "Draft"}
-                          </span>
-                        </td>
-
-                        {/* Date */}
-                        <td
-                          className="px-6 py-4 text-sm"
-                          style={{ color: colours.mutedText }}
-                        >
-                          {ritual.created_at
-                            ? new Date(ritual.created_at).toLocaleDateString(
-                                "en-IN",
-                                {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                }
-                              )
-                            : "—"}
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-6 py-4">
-                          <div className="flex justify-end gap-3">
-                            <button
-                              type="button"
-                              onClick={() => handleEdit(ritual)}
-                              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
-                              style={{
-                                borderColor: colours.border,
-                                color: colours.accent,
-                                backgroundColor: colours.background,
-                              }}
-                              aria-label={`Edit Ritual`}
-                            >
-                              <EditIcon />
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(ritual)}
-                              disabled={isDeleting}
-                              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-                              style={{
-                                borderColor: colours.border,
-                                color: "#A44A3F",
-                                backgroundColor: colours.background,
-                              }}
-                              aria-label={`Delete Ritual`}
-                            >
-                              {isDeleting ? "..." : <DeleteIcon />}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="px-6 py-10 text-center text-sm"
-                      style={{ color: colours.mutedText }}
-                    >
-                      No rituals found. Add a new ritual to get started.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="mt-8">
+          <TableTemplate
+            columns={columns}
+            data={rituals}
+            emptyLabel="No rituals found. Add a new ritual to get started."
+          />
         </div>
       )}
     </div>
   );
 }
+

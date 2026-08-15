@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS cms_reviews (
   customer_name TEXT NOT NULL,
   product_name TEXT NOT NULL,
   product_link TEXT,
+  heading TEXT,
   rating NUMERIC(2,1) NOT NULL CHECK (rating >= 0 AND rating <= 5),
   review TEXT NOT NULL,
 

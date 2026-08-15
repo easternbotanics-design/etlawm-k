@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { colours, fonts } from "../../theme/theme";
 import { getAdminCustomers } from "../../services/adminService";
+import TableTemplate from "./TableTemplate";
 
 export default function AdminCustomers() {
   const [customers, setCustomers] = useState([]);
@@ -16,16 +17,6 @@ export default function AdminCustomers() {
   const [sortOrder, setSortOrder] = useState("desc"); // 'desc' | 'asc'
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
-
-  const handleSort = (field) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === "desc" ? "asc" : "desc");
-    } else {
-      setSortBy(field);
-      setSortOrder("desc");
-    }
-    setCurrentPage(1);
-  };
 
   useEffect(() => {
     loadCustomers();
@@ -155,6 +146,126 @@ export default function AdminCustomers() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedCustomers = filteredCustomers.slice(startIndex, startIndex + itemsPerPage);
 
+  const columns = [
+    {
+      key: "name",
+      label: "CUSTOMER DETAILS",
+      render: (customer) => (
+        <div>
+          <span className="text-xs md:text-sm font-semibold text-[#171715] block">
+            {`${customer.first_name || ""} ${customer.last_name || ""}`.trim() || "Guest Customer"}
+          </span>
+          <span className="font-mono text-[10px] text-[#7C7770] block mt-1 select-all">
+            ID: {customer.id}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "contact",
+      label: "CONTACT DETAILS",
+      render: (customer) => (
+        <div className="flex flex-col">
+          {customer.email ? (
+            <a
+              href={`mailto:${customer.email}`}
+              className="text-xs md:text-sm text-[#171715] hover:text-[#A77C6B] underline transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {customer.email}
+            </a>
+          ) : (
+            <span className="text-xs text-[#7C7770] italic">—</span>
+          )}
+          {customer.phone_number ? (
+            <a
+              href={`tel:${customer.phone_number}`}
+              className="text-[10px] md:text-xs text-[#7C7770] hover:text-[#A77C6B] underline mt-0.5 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {customer.phone_number}
+            </a>
+          ) : (
+            <span className="text-[10px] text-[#7C7770] italic mt-0.5">—</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "created_at",
+      label: "REGISTRATION DATE",
+      sortable: true,
+      render: (customer) => {
+        const regDate = formatCustomerDate(customer.created_at);
+        return (
+          <div className="flex flex-col">
+            <span className="text-xs md:text-sm font-medium text-[#171715]">
+              {regDate.date}
+            </span>
+            <span className="text-[10px] md:text-xs text-[#7C7770] mt-0.5">
+              {regDate.relative}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      key: "last_login_at",
+      label: "LAST LOGIN",
+      sortable: true,
+      render: (customer) => {
+        const lastLogin = formatCustomerDate(customer.last_login_at);
+        return customer.last_login_at ? (
+          <div className="flex flex-col">
+            <span className="text-xs md:text-sm font-medium text-[#171715]">
+              {lastLogin.date}
+            </span>
+            <span className="text-[10px] md:text-xs text-[#7C7770] mt-0.5">
+              {lastLogin.relative}
+            </span>
+          </div>
+        ) : (
+          <span className="text-xs text-[#7C7770] italic">Never</span>
+        );
+      },
+    },
+    {
+      key: "role_status",
+      label: "ROLE / STATUS",
+      render: (customer) => (
+        <div className="flex flex-col gap-1.5 items-start">
+          {customer.is_admin ? (
+            <span className="text-[10px] md:text-xs font-semibold px-2.5 py-0.5 rounded-full border text-amber-700 bg-amber-50/80 border-amber-200 inline-block">
+              Admin
+            </span>
+          ) : (
+            <span className="text-[10px] md:text-xs font-semibold px-2.5 py-0.5 rounded-full border text-stone-600 bg-stone-50 border-stone-200 inline-block">
+              Customer
+            </span>
+          )}
+
+          {customer.is_active !== false ? (
+            <span className="text-[10px] md:text-xs font-semibold px-2.5 py-0.5 rounded-full border text-emerald-700 bg-emerald-50/80 border-emerald-200 inline-block">
+              Active
+            </span>
+          ) : (
+            <span className="text-[10px] md:text-xs font-semibold px-2.5 py-0.5 rounded-full border text-red-700 bg-red-50/80 border-red-200 inline-block">
+              Inactive
+            </span>
+          )}
+        </div>
+      ),
+    },
+  ];
+
+  const handleSortChange = (key, dir) => {
+    if (key === "created_at" || key === "last_login_at") {
+      setSortBy(key);
+      setSortOrder(dir);
+      setCurrentPage(1);
+    }
+  };
+
   return (
     <div className="px-6 py-8 animate-in fade-in duration-300" style={{ fontFamily: fonts.secondary }}>
       {/* Header and Filters */}
@@ -253,174 +364,19 @@ export default function AdminCustomers() {
           {error}
         </div>
       ) : (
-        <div
-          className="overflow-hidden rounded-2xl border shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300"
-          style={{
-            borderColor: colours.border,
-            backgroundColor: colours.primary,
-          }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] border-collapse text-left">
-              <thead>
-                <tr
-                  className="border-b text-[10px] md:text-xs uppercase tracking-widest"
-                  style={{
-                    borderColor: colours.border,
-                    color: colours.mutedText,
-                  }}
-                >
-                  <th className="px-6 py-4 font-bold w-[25%]">Customer Details</th>
-                  <th className="px-6 py-4 font-bold w-[20%]">Contact Details</th>
-                  <th
-                    className="px-6 py-4 font-bold w-[20%] cursor-pointer select-none group"
-                    onClick={() => handleSort("created_at")}
-                    title="Click to sort by registration date"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Registration Date</span>
-                      <span className="text-[#7C7770] group-hover:text-[#171715] transition-colors font-mono">
-                        {sortBy === "created_at" ? (sortOrder === "desc" ? " ↓" : " ↑") : ""}
-                      </span>
-                    </div>
-                  </th>
-                  <th
-                    className="px-6 py-4 font-bold w-[20%] cursor-pointer select-none group"
-                    onClick={() => handleSort("last_login_at")}
-                    title="Click to sort by last login date"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Last Login</span>
-                      <span className="text-[#7C7770] group-hover:text-[#171715] transition-colors font-mono">
-                        {sortBy === "last_login_at" ? (sortOrder === "desc" ? " ↓" : " ↑") : ""}
-                      </span>
-                    </div>
-                  </th>
-                  <th className="px-6 py-4 font-bold w-[15%]">Role / Status</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {paginatedCustomers.length > 0 ? (
-                  paginatedCustomers.map((customer) => {
-                    const regDate = formatCustomerDate(customer.created_at);
-                    const lastLogin = formatCustomerDate(customer.last_login_at);
-
-                    return (
-                      <tr
-                        key={customer.id}
-                        className="border-b transition-colors duration-200 hover:bg-[#171715]/5"
-                        style={{ borderColor: colours.border }}
-                      >
-                        {/* Customer Details */}
-                        <td className="px-6 py-5 align-top">
-                          <span className="text-xs md:text-sm font-semibold text-[#171715] block">
-                            {`${customer.first_name || ""} ${customer.last_name || ""}`.trim() || "Guest Customer"}
-                          </span>
-                          <span className="font-mono text-[10px] text-[#7C7770] block mt-1 select-all">
-                            ID: {customer.id}
-                          </span>
-                        </td>
-
-                        {/* Contact Details */}
-                        <td className="px-6 py-5 align-top">
-                          <div className="flex flex-col">
-                            {customer.email ? (
-                              <a
-                                href={`mailto:${customer.email}`}
-                                className="text-xs md:text-sm text-[#171715] hover:text-[#A77C6B] underline transition-colors"
-                              >
-                                {customer.email}
-                              </a>
-                            ) : (
-                              <span className="text-xs text-[#7C7770] italic">—</span>
-                            )}
-                            {customer.phone_number ? (
-                              <a
-                                href={`tel:${customer.phone_number}`}
-                                className="text-[10px] md:text-xs text-[#7C7770] hover:text-[#A77C6B] underline mt-0.5 transition-colors"
-                              >
-                                {customer.phone_number}
-                              </a>
-                            ) : (
-                              <span className="text-[10px] text-[#7C7770] italic mt-0.5">—</span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Registration Date */}
-                        <td className="px-6 py-5 align-top">
-                          <div className="flex flex-col">
-                            <span className="text-xs md:text-sm font-medium text-[#171715]">
-                              {regDate.date}
-                            </span>
-                            <span className="text-[10px] md:text-xs text-[#7C7770] mt-0.5">
-                              {regDate.relative}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Last Login */}
-                        <td className="px-6 py-5 align-top">
-                          {customer.last_login_at ? (
-                            <div className="flex flex-col">
-                              <span className="text-xs md:text-sm font-medium text-[#171715]">
-                                {lastLogin.date}
-                              </span>
-                              <span className="text-[10px] md:text-xs text-[#7C7770] mt-0.5">
-                                {lastLogin.relative}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-[#7C7770] italic">Never</span>
-                          )}
-                        </td>
-
-                        {/* Role / Status */}
-                        <td className="px-6 py-5 align-top">
-                          <div className="flex flex-col gap-1.5 items-start">
-                            {customer.is_admin ? (
-                              <span className="text-[10px] md:text-xs font-semibold px-2.5 py-0.5 rounded-full border text-amber-700 bg-amber-50/80 border-amber-200 inline-block">
-                                Admin
-                              </span>
-                            ) : (
-                              <span className="text-[10px] md:text-xs font-semibold px-2.5 py-0.5 rounded-full border text-stone-600 bg-stone-50 border-stone-200 inline-block">
-                                Customer
-                              </span>
-                            )}
-
-                            {customer.is_active !== false ? (
-                              <span className="text-[10px] md:text-xs font-semibold px-2.5 py-0.5 rounded-full border text-emerald-700 bg-emerald-50/80 border-emerald-200 inline-block">
-                                Active
-                              </span>
-                            ) : (
-                              <span className="text-[10px] md:text-xs font-semibold px-2.5 py-0.5 rounded-full border text-red-700 bg-red-50/80 border-red-200 inline-block">
-                                Inactive
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="5"
-                      className="px-6 py-10 text-center text-sm"
-                      style={{ color: colours.mutedText }}
-                    >
-                      No customers found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-4">
+          <TableTemplate
+            columns={columns}
+            data={paginatedCustomers}
+            sortKey={sortBy}
+            sortDir={sortOrder}
+            onSortChange={handleSortChange}
+            emptyLabel="No customers found."
+          />
 
           {/* Pagination Controls */}
           <div
-            className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t"
+            className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 rounded-xl border bg-white shadow-sm"
             style={{
               borderColor: colours.border,
               fontFamily: fonts.secondary,
@@ -453,3 +409,4 @@ export default function AdminCustomers() {
     </div>
   );
 }
+

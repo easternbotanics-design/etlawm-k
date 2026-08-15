@@ -380,7 +380,7 @@ const clearCart = async (req, res) => {
 }
 
 const mergeGuestCart = async (req, res) => {
-  const { guest_id } = req.body;
+  const { guest_id, action, keep_product_ids, check_only } = req.body;
 
   if (!guest_id || typeof guest_id !== "string" || guest_id.length > 128) {
     return res.status(400).json({
@@ -390,11 +390,42 @@ const mergeGuestCart = async (req, res) => {
   }
 
   try {
+    if (check_only) {
+      const { rows: [userCart] } = await db.carts.getOrCreateForUser(req.user.id);
+      const { rows: [guestCart] } = await db.query(
+        `SELECT * FROM carts WHERE guest_id = $1 LIMIT 1`,
+        [guest_id]
+      );
+
+      let guestCount = 0;
+      let userItems = [];
+
+      if (guestCart) {
+        const { rows: gItems } = await db.cartItems.findByCart(guestCart.id);
+        guestCount = gItems.length;
+      }
+
+      if (userCart) {
+        const { rows: uItems } = await db.cartItems.findByCart(userCart.id);
+        userItems = uItems;
+      }
+
+      return res.json({
+        success: true,
+        has_conflict: guestCount > 0 && userItems.length > 0,
+        guest_count: guestCount,
+        user_count: userItems.length,
+        user_items: userItems,
+      });
+    }
+
     const {
       rows: [cart],
     } = await db.carts.mergeGuestToUser(
       guest_id,
       req.user.id,
+      action || "merge",
+      keep_product_ids,
     );
 
     const { rows: items } = await db.cartItems.findByCart(cart.id);

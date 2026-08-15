@@ -68,6 +68,7 @@ const createCmsReview = async (req, res) => {
     customer_name,
     product_name,
     product_link,
+    heading,
     rating,
     review,
     status = "published",
@@ -96,6 +97,7 @@ const createCmsReview = async (req, res) => {
       customer_name,
       product_name,
       product_link,
+      heading,
       rating,
       review,
       status,
@@ -134,8 +136,17 @@ const getAdminCmsReviews = async (req, res) => {
 };
 
 const getPublicCmsReviews = async (req, res) => {
+  const productIdentifier = req.query.slug || req.query.product;
+
   try {
-    const { rows: reviews } = await db.cmsReviews.findPublished();
+    let reviews;
+    if (productIdentifier) {
+      const { rows } = await db.cmsReviews.findPublishedByProduct(productIdentifier);
+      reviews = rows;
+    } else {
+      const { rows } = await db.cmsReviews.findPublished();
+      reviews = rows;
+    }
 
     return res.json({
       success: true,

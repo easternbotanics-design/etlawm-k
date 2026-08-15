@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { colours, fonts } from "../../../theme/theme";
 import { getAdminInventory, addAdminInventoryStock } from "../../../services/adminService";
+import TableTemplate from "../TableTemplate";
 
 export default function AdminInventory() {
   const [products, setProducts] = useState([]);
@@ -153,6 +154,86 @@ export default function AdminInventory() {
     }
   };
 
+  const columns = [
+    {
+      key: "name",
+      label: "NAME AND PIC",
+      render: (product) => (
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-white border border-[#D8D2C8] overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
+            {product.primary_image ? (
+              <img
+                src={product.primary_image}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <svg className="w-6 h-6 text-stone-300" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+              </svg>
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs md:text-sm font-semibold text-[#171715] leading-tight">
+              {product.name}
+            </span>
+            {!product.is_active && (
+              <span className="text-[9px] font-bold text-red-600 uppercase tracking-wider mt-1 w-fit bg-red-50 px-1.5 py-0.5 rounded border border-red-200">
+                Inactive
+              </span>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "price",
+      label: "CURRENT PRICE",
+      render: (product) => (
+        <span className="font-medium text-stone-700 text-xs md:text-sm">
+          ₹
+          {parseFloat(product.price || 0).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </span>
+      ),
+    },
+    {
+      key: "items_sold",
+      label: "ITEMS SOLD",
+      render: (product) => (
+        <span
+          className="font-bold px-2.5 py-1 rounded-md shrink-0 border text-xs md:text-sm"
+          style={{
+            backgroundColor: product.items_sold > 0 ? `${colours.accent}15` : "#FAF9F6",
+            borderColor: product.items_sold > 0 ? `${colours.accent}30` : colours.border,
+            color: product.items_sold > 0 ? colours.accent : "#8c8c8c",
+          }}
+        >
+          {product.items_sold}
+        </span>
+      ),
+    },
+    {
+      key: "stock",
+      label: "STOCK",
+      render: (product) => (
+        <span
+          className={`font-semibold px-2.5 py-1 rounded-md shrink-0 border text-xs md:text-sm ${
+            product.stock_qty <= 0
+              ? "text-red-700 bg-red-50 border-red-200"
+              : product.stock_qty <= 5
+              ? "text-amber-700 bg-amber-50 border-amber-200 animate-pulse"
+              : "text-emerald-700 bg-emerald-50 border-emerald-200"
+          }`}
+        >
+          {product.stock_qty <= 0 ? "Out of Stock" : `${product.stock_qty} available`}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="px-6 py-8 animate-in fade-in duration-300" style={{ fontFamily: fonts.secondary }}>
       {/* Header and Controls */}
@@ -208,119 +289,16 @@ export default function AdminInventory() {
           {error}
         </div>
       ) : (
-        <div
-          className="overflow-hidden rounded-2xl border shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300"
-          style={{
-            borderColor: colours.border,
-            backgroundColor: colours.primary,
-          }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] border-collapse text-left">
-              <thead>
-                <tr
-                  className="border-b text-[10px] md:text-xs uppercase tracking-widest"
-                  style={{
-                    borderColor: colours.border,
-                    color: colours.mutedText,
-                  }}
-                >
-                  <th className="px-6 py-4 font-bold w-[40%]">Name and Pic</th>
-                  <th className="px-6 py-4 font-bold w-[20%]">Current Price</th>
-                  <th className="px-6 py-4 font-bold w-[20%]">Items Sold</th>
-                  <th className="px-6 py-4 font-bold w-[20%]">Stock</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {paginatedProducts.length > 0 ? (
-                  paginatedProducts.map((product) => (
-                    <tr
-                      key={product.id}
-                      className="border-b transition-colors duration-200 hover:bg-[#171715]/5"
-                      style={{ borderColor: colours.border }}
-                    >
-                      {/* Name and Pic */}
-                      <td className="px-6 py-4 align-middle">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-white border border-[#D8D2C8] overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
-                            {product.primary_image ? (
-                              <img
-                                src={product.primary_image}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <svg className="w-6 h-6 text-stone-300" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                              </svg>
-                            )}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-xs md:text-sm font-semibold text-[#171715] leading-tight">
-                              {product.name}
-                            </span>
-                            {!product.is_active && (
-                              <span className="text-[9px] font-bold text-red-600 uppercase tracking-wider mt-1 w-fit bg-red-50 px-1.5 py-0.5 rounded border border-red-200">
-                                Inactive
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Current Price */}
-                      <td className="px-6 py-4 align-middle font-medium text-stone-700 text-xs md:text-sm">
-                        ₹{parseFloat(product.price).toLocaleString("en-IN", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-
-                      {/* Items Sold */}
-                      <td className="px-6 py-4 align-middle text-xs md:text-sm">
-                        <span
-                          className="font-bold px-2.5 py-1 rounded-md shrink-0 border"
-                          style={{
-                            backgroundColor: product.items_sold > 0 ? `${colours.accent}15` : "#FAF9F6",
-                            borderColor: product.items_sold > 0 ? `${colours.accent}30` : colours.border,
-                            color: product.items_sold > 0 ? colours.accent : "#8c8c8c",
-                          }}
-                        >
-                          {product.items_sold}
-                        </span>
-                      </td>
-
-                      {/* Stock (showing current stock) */}
-                      <td className="px-6 py-4 align-middle text-xs md:text-sm">
-                        <span
-                          className={`font-semibold px-2.5 py-1 rounded-md shrink-0 border ${
-                            product.stock_qty <= 0
-                              ? "text-red-700 bg-red-50 border-red-200"
-                              : product.stock_qty <= 5
-                              ? "text-amber-700 bg-amber-50 border-amber-200 animate-pulse"
-                              : "text-emerald-700 bg-emerald-50 border-emerald-200"
-                          }`}
-                        >
-                          {product.stock_qty <= 0 ? "Out of Stock" : `${product.stock_qty} available`}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="4" className="px-6 py-12 text-center text-sm" style={{ color: colours.mutedText }}>
-                      No products found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-4">
+          <TableTemplate
+            columns={columns}
+            data={paginatedProducts}
+            emptyLabel="No products found."
+          />
 
           {/* Pagination Controls */}
           <div
-            className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t"
+            className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 rounded-xl border bg-white shadow-sm"
             style={{
               borderColor: colours.border,
               fontFamily: fonts.secondary,

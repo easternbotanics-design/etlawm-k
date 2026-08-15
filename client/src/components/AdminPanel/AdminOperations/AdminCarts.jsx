@@ -1,20 +1,12 @@
 import { useEffect, useState } from "react";
 import { colours, fonts } from "../../../theme/theme";
 import { getAllOrders } from "../../../services/orderService";
+import TableTemplate from "../TableTemplate";
 
 export default function AdminCarts() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [copiedId, setCopiedId] = useState(null);
-
-  const handleCopy = (id) => {
-    navigator.clipboard.writeText(id);
-    setCopiedId(id);
-    setTimeout(() => {
-      setCopiedId(null);
-    }, 2000);
-  };
 
   // Filters & Pagination State
   const [searchQuery, setSearchQuery] = useState("");
@@ -136,6 +128,98 @@ export default function AdminCarts() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
 
+  const columns = [
+    {
+      key: "id",
+      label: "ID",
+      render: (order) => (
+        <div>
+          <a
+            href={`/admin/operations/carts/${order.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={order.id.toUpperCase()}
+            className="font-mono text-xs md:text-sm font-semibold text-[#171715] block select-all hover:text-[#A77C6B] hover:underline"
+          >
+            #{order.id.slice(0, 8).toUpperCase()}...
+          </a>
+          <span className="text-xs text-[#171715] font-semibold block mt-1">
+            ₹
+            {parseFloat(order.total || 0).toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "created_at",
+      label: "DATE",
+      sortable: true,
+      render: (order) => {
+        const dateInfo = formatOrderDate(order.created_at);
+        return (
+          <div className="flex flex-col">
+            <span className="text-xs md:text-sm font-medium text-[#171715]">
+              {dateInfo.date}
+            </span>
+            <span className="text-[10px] md:text-xs text-[#7C7770] mt-0.5">
+              {dateInfo.relative}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      key: "personal_details",
+      label: "PERSONAL DETAILS",
+      render: (order) => (
+        <div className="flex flex-col">
+          <span className="text-xs md:text-sm font-medium text-[#171715]">
+            {order.shipping_name ||
+              `${order.first_name || ""} ${order.last_name || ""}`.trim() ||
+              "Guest Customer"}
+          </span>
+          {order.email && (
+            <a
+              href={`mailto:${order.email}`}
+              className="text-[10px] md:text-xs text-[#7C7770] hover:text-[#A77C6B] underline mt-0.5 tracking-tight transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {order.email}
+            </a>
+          )}
+          {order.phone_number && (
+            <a
+              href={`tel:${order.phone_number}`}
+              className="text-[10px] md:text-xs text-[#7C7770] hover:text-[#A77C6B] underline mt-0.5 tracking-tight transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {order.phone_number}
+            </a>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "shipping_details",
+      label: "SHIPPING DETAILS",
+      render: (order) => (
+        <div className="flex flex-col text-xs md:text-sm text-[#171715]/90 max-w-[280px]">
+          <span>{order.shipping_line1}</span>
+          <span className="text-[#7C7770] text-xs mt-0.5">
+            {order.shipping_city}, {order.shipping_state} {order.shipping_pincode}
+          </span>
+        </div>
+      ),
+    },
+  ];
+
+  const handleSortChange = (key, dir) => {
+    setSortOrder(dir);
+  };
+
   return (
     <div className="px-6 py-8 animate-in fade-in duration-300" style={{ fontFamily: fonts.secondary }}>
       {/* Header and Search Filters */}
@@ -195,141 +279,19 @@ export default function AdminCarts() {
           {error}
         </div>
       ) : (
-        <div
-          className="overflow-hidden rounded-2xl border shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300"
-          style={{
-            borderColor: colours.border,
-            backgroundColor: colours.primary,
-          }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] border-collapse text-left">
-              <thead>
-                <tr
-                  className="border-b text-[10px] md:text-xs uppercase tracking-widest"
-                  style={{
-                    borderColor: colours.border,
-                    color: colours.mutedText,
-                  }}
-                >
-                  <th className="px-6 py-4 font-bold w-[15%]">ID</th>
-                  <th
-                    className="px-6 py-4 font-bold w-[20%] cursor-pointer select-none group"
-                    onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
-                    title="Click to sort by date"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Date</span>
-                      <span className="text-[#7C7770] group-hover:text-[#171715] transition-colors font-mono">
-                        {sortOrder === "desc" ? "↓" : "↑"}
-                      </span>
-                    </div>
-                  </th>
-                  <th className="px-6 py-4 font-bold w-[30%]">Personal Details</th>
-                  <th className="px-6 py-4 font-bold w-[35%]">Shipping Details</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {paginatedOrders.length > 0 ? (
-                  paginatedOrders.map((order) => {
-                    const dateInfo = formatOrderDate(order.created_at);
-
-                    return (
-                      <tr
-                        key={order.id}
-                        className="border-b transition-colors duration-200 hover:bg-[#171715]/5"
-                        style={{ borderColor: colours.border }}
-                      >
-                        {/* ID */}
-                        <td className="px-6 py-5 align-top">
-                          <a
-                            href={`/admin/operations/carts/${order.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={order.id.toUpperCase()}
-                            className="font-mono text-xs md:text-sm font-semibold text-[#171715] block select-all hover:text-[#A77C6B] hover:underline"
-                          >
-                            #{order.id.slice(0, 8).toUpperCase()}...
-                          </a>
-                          {/* Price Tag underneath ID */}
-                          <span className="text-xs text-[#171715] font-semibold block mt-1">
-                            ₹{parseFloat(order.total).toLocaleString("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </span>
-                        </td>
-
-                        {/* Date */}
-                        <td className="px-6 py-5 align-top">
-                          <div className="flex flex-col">
-                            <span className="text-xs md:text-sm font-medium text-[#171715]">
-                              {dateInfo.date}
-                            </span>
-                            <span className="text-[10px] md:text-xs text-[#7C7770] mt-0.5">
-                              {dateInfo.relative}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Personal Details */}
-                        <td className="px-6 py-5 align-top">
-                          <div className="flex flex-col">
-                            <span className="text-xs md:text-sm font-medium text-[#171715]">
-                              {order.shipping_name ||
-                                `${order.first_name || ""} ${order.last_name || ""}`.trim() ||
-                                "Guest Customer"}
-                            </span>
-                            {order.email && (
-                              <a
-                                href={`mailto:${order.email}`}
-                                className="text-[10px] md:text-xs text-[#7C7770] hover:text-[#A77C6B] underline mt-0.5 tracking-tight transition-colors"
-                              >
-                                {order.email}
-                              </a>
-                            )}
-                            {order.phone_number && (
-                              <a
-                                href={`tel:${order.phone_number}`}
-                                className="text-[10px] md:text-xs text-[#7C7770] hover:text-[#A77C6B] underline mt-0.5 tracking-tight transition-colors"
-                              >
-                                {order.phone_number}
-                              </a>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Shipping Details */}
-                        <td className="px-6 py-5 align-top">
-                          <div className="flex flex-col text-xs md:text-sm text-[#171715]/90 max-w-[280px]">
-                            <span>{order.shipping_line1}</span>
-                            <span className="text-[#7C7770] text-xs mt-0.5">
-                              {order.shipping_city}, {order.shipping_state} {order.shipping_pincode}
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="px-6 py-10 text-center text-sm"
-                      style={{ color: colours.mutedText }}
-                    >
-                      No cart entries found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-4">
+          <TableTemplate
+            columns={columns}
+            data={paginatedOrders}
+            sortKey="created_at"
+            sortDir={sortOrder}
+            onSortChange={handleSortChange}
+            emptyLabel="No cart entries found."
+          />
 
           {/* Pagination Controls */}
           <div
-            className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t"
+            className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 rounded-xl border bg-white shadow-sm"
             style={{
               borderColor: colours.border,
               fontFamily: fonts.secondary,
@@ -362,3 +324,4 @@ export default function AdminCarts() {
     </div>
   );
 }
+

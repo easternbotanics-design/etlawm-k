@@ -11,7 +11,7 @@ export const colours = {
   hover: '#C8B9A4',
   another: '#F4F1EC',
   grey: '#e9ecef',
-  green: '#bfd8bd'
+  green: '#1f5c52'
 }
 
 export const fonts = {
@@ -30,7 +30,7 @@ export const fonts = {
   molle: "'Molle', cursive, Georgia, serif",
   betania: "'Betania Patmos', cursive, Georgia, serif",
 
-  number: "'DM Mono'",
+  number: "'UnifrakturMaguntia'",
   // title: "'Poltawski Nowy'",
   title: "'Yeseva One'",
 };

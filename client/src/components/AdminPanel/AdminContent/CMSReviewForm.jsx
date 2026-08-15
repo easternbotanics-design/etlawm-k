@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { colours, fonts } from '../../../theme/theme.js';
 import reviewService from "../../../services/reviewService";
+import { getProducts } from '../../../services/productService.js';
 
 const SCOPED_CSS = `
-  .review-form-input:focus, .review-form-textarea:focus {
+  .review-form-input:focus, .review-form-textarea:focus, .review-form-select:focus {
     border-color: ${colours.accent} !important;
     background-color: ${colours.background} !important;
     box-shadow: 0 0 0 1px ${colours.accent} !important;
@@ -40,6 +41,7 @@ const emptyForm = {
   customerName: '',
   productName: '',
   productLink: '',
+  heading: '',
   rating: '',
   review: '',
 };
@@ -90,10 +92,29 @@ export default function CMSReviewForm() {
   const returnTo = location.state?.returnTo || '/admin/content/reviews';
 
   const [form, setForm] = useState(emptyForm);
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  /* ── Fetch products list for dropdown ──────────────────────────── */
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoadingProducts(true);
+      try {
+        const data = await getProducts(true);
+        setProducts(data || []);
+      } catch (err) {
+        console.error('Failed to load products for dropdown:', err);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   /* ── Fetch existing review in edit mode ────────────────────────── */
   useEffect(() => {
@@ -110,6 +131,7 @@ export default function CMSReviewForm() {
           customerName: review.customer_name || '',
           productName: review.product_name || '',
           productLink: review.product_link || '',
+          heading: review.heading || '',
           rating: review.rating != null ? String(review.rating) : '',
           review: review.review || review.comment || '',
         });
@@ -200,6 +222,7 @@ export default function CMSReviewForm() {
         customer_name: form.customerName.trim(),
         product_name: form.productName.trim(),
         product_link: form.productLink.trim() || null,
+        heading: form.heading.trim() || null,
         rating: Number(Number(form.rating).toFixed(1)),
         review: form.review.trim(),
         status: mode === 'draft' ? 'draft' : 'published',
@@ -375,30 +398,48 @@ export default function CMSReviewForm() {
 
                 <div>
                   <FieldLabel required>Product for Review</FieldLabel>
-                  <input
+                  <select
                     name="productName"
                     value={form.productName}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      const selectedName = e.target.value;
+                      const selectedProd = products.find((p) => p.name === selectedName);
+                      setForm((prev) => ({
+                        ...prev,
+                        productName: selectedName,
+                        productLink: selectedProd ? `/product/${selectedProd.slug}` : prev.productLink,
+                      }));
+                    }}
                     required
-                    placeholder="e.g. Hydrating Face Serum"
                     style={inputStyle}
-                    className="review-form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all"
-                  />
+                    className="review-form-select w-full rounded-lg border px-4 py-3 text-sm focus:outline-none transition-all cursor-pointer"
+                  >
+                    <option value="" disabled style={{ backgroundColor: colours.primary, color: colours.mutedText }}>
+                      {loadingProducts ? 'Loading products...' : 'Select a Product'}
+                    </option>
+                    {products.map((prod) => (
+                      <option
+                        key={prod.id}
+                        value={prod.name}
+                        style={{ backgroundColor: colours.primary, color: colours.text }}
+                      >
+                        {prod.name}
+                      </option>
+                    ))}
+                    {form.productName && !products.some((p) => p.name === form.productName) && (
+                      <option
+                        value={form.productName}
+                        style={{ backgroundColor: colours.primary, color: colours.text }}
+                      >
+                        {form.productName}
+                      </option>
+                    )}
+                  </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <FieldLabel>Link of the Product</FieldLabel>
-                  <input
-                    name="productLink"
-                    value={form.productLink}
-                    onChange={handleChange}
-                    placeholder="e.g. /products/hydrating-face-serum"
-                    style={inputStyle}
-                    className="review-form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all"
-                  />
-                </div>
+                
 
                 <div>
                   <FieldLabel required>Rating</FieldLabel>
@@ -460,6 +501,18 @@ export default function CMSReviewForm() {
               </div>
 
               <div>
+                <FieldLabel>Review Heading / Title</FieldLabel>
+                <input
+                  name="heading"
+                  value={form.heading}
+                  onChange={handleChange}
+                  placeholder="e.g. Amazing results for my hair!"
+                  style={inputStyle}
+                  className="review-form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all"
+                />
+              </div>
+
+              <div>
                 <FieldLabel required>Review</FieldLabel>
                 <textarea
                   name="review"
@@ -483,76 +536,7 @@ export default function CMSReviewForm() {
 
           {/* ── Right: sidebar with preview + actions ─────────── */}
           <aside className="xl:col-span-4 space-y-8">
-            {/* Live Preview */}
-            <section
-              style={cardStyle}
-              className="border rounded-2xl p-6 shadow-sm space-y-4"
-            >
-              <div>
-                <h2
-                  style={{ fontFamily: fonts.primary }}
-                  className="text-2xl font-semibold"
-                >
-                  Preview
-                </h2>
-                <p
-                  style={{ color: colours.mutedText }}
-                  className="text-xs mt-1"
-                >
-                  Live preview of how the review card will look.
-                </p>
-              </div>
-
-              <div
-                style={{
-                  backgroundColor: `${colours.primary}`,
-                  borderColor: colours.border,
-                }}
-                className="rounded-xl border p-5 space-y-3"
-              >
-                {/* Customer Name */}
-                <div className="flex items-center gap-3">
-                  <div
-                    style={{
-                      backgroundColor: colours.accent,
-                      color: colours.background,
-                    }}
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
-                  >
-                    {form.customerName
-                      ? form.customerName
-                          .split(' ')
-                          .map((w) => w[0])
-                          .join('')
-                          .toUpperCase()
-                          .slice(0, 2)
-                      : '?'}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold leading-tight">
-                      {form.customerName || 'Customer Name'}
-                    </p>
-                    <p
-                      style={{ color: colours.mutedText }}
-                      className="text-[11px]"
-                    >
-                      {form.productName || 'Product Name'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Stars */}
-                <StarDisplay rating={form.rating} />
-
-                {/* Review text */}
-                <p
-                  style={{ color: colours.mutedText }}
-                  className="text-xs leading-relaxed line-clamp-4"
-                >
-                  {form.review || 'Review text will appear here...'}
-                </p>
-              </div>
-            </section>
+            
 
             {/* Action Buttons */}
             <section

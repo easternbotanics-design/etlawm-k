@@ -7,6 +7,8 @@ import { colours, fonts } from "../theme/theme.js";
 import ProductImageGallery from "../components/ProductsPage/ProductImageGallery.jsx";
 import ProductPurchasePanel from "../components/ProductsPage/ProductPurchasePanel.jsx";
 import ProductDetailsSection from "../components/ProductsPage/ProductDetailsSection.jsx";
+import ReviewGrid from "../components/ProductPage/ReviewPanel.jsx";
+import SuggestedProducts from "../components/ProductPage/SuggestedProducts.jsx";
 import { ArrowLeft } from "lucide-react";
 
 const API = import.meta.env.VITE_SERVER_API;
@@ -307,12 +309,14 @@ export default function Product() {
         </nav>
 
         <section className="mx-auto grid max-w-[1260px] items-start gap-9 px-6 pb-24 lg:grid-cols-[1.05fr_0.95fr]">
-          <ProductImageGallery
-            name={product.name}
-            badge={product.badge}
-            images={images}
-            fallbackImage={product.image}
-          />
+          <div className="lg:sticky lg:top-28 lg:self-start">
+            <ProductImageGallery
+              name={product.name}
+              badge={product.badge}
+              images={images}
+              fallbackImage={product.image}
+            />
+          </div>
 
           <ProductPurchasePanel
             product={product}
@@ -340,6 +344,8 @@ export default function Product() {
           productSize={productSize}
           code={code}
         />
+        <ReviewGrid product={product} />
+        <SuggestedProducts currentSlug={slug} currentProductId={product?.id} category={category} />
       </main>
 
       <Footer />

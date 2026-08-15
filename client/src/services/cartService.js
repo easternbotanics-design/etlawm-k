@@ -283,12 +283,58 @@ export async function clearCart() {
   return normalizeCart(data);
 }
 
-export async function mergeGuestCart() {
-  const guestId = localStorage.getItem(
-    GUEST_CART_ID_KEY,
-  );
+export async function checkCartConflict(tokenOverride) {
+  const guestId = localStorage.getItem(GUEST_CART_ID_KEY);
+  const token = tokenOverride || localStorage.getItem("token");
 
-  const token = localStorage.getItem("token");
+  if (!guestId || !token) {
+    return { hasConflict: false };
+  }
+
+  try {
+    const response = await fetch(`${API}/api/cart/merge`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        guest_id: guestId,
+        check_only: true,
+      }),
+    });
+
+    const data = await handleResponse(response);
+    const rawItems = Array.isArray(data.user_items) ? data.user_items : [];
+
+    return {
+      hasConflict: !!data.has_conflict,
+      guestCount: data.guest_count || 0,
+      userCount: data.user_count || 0,
+      userItems: rawItems.map(normalizeCartItem),
+    };
+  } catch {
+    return { hasConflict: false, userItems: [] };
+  }
+}
+
+export async function mergeGuestCart(options = {}) {
+  const guestId = localStorage.getItem(GUEST_CART_ID_KEY);
+  
+  const token =
+    typeof options === "string"
+      ? options
+      : options?.token || localStorage.getItem("token");
+
+  const action =
+    typeof options === "object" && options?.action
+      ? options.action
+      : "merge";
+
+  const keepProductIds =
+    typeof options === "object" && Array.isArray(options?.keepProductIds)
+      ? options.keepProductIds
+      : null;
 
   if (!guestId) {
     return null;
@@ -310,6 +356,8 @@ export async function mergeGuestCart() {
       },
       body: JSON.stringify({
         guest_id: guestId,
+        action,
+        keep_product_ids: keepProductIds,
       }),
     },
   );

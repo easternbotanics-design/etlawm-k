@@ -30,8 +30,12 @@ const handleResponse = async (res) => {
 
 const reviewService = {
   // Public CMS reviews for homepage/review panel
-  getPublicReviews: async () => {
-    const res = await fetch(`${API}/api/reviews/cms`, {
+  getPublicReviews: async (productSlug = null) => {
+    const url = productSlug
+      ? `${API}/api/reviews/cms?slug=${encodeURIComponent(productSlug)}`
+      : `${API}/api/reviews/cms`;
+
+    const res = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

@@ -10,6 +10,8 @@ import {
   removeCartItem,
   removeSelectedCartItems,
   updateCartItemQuantity,
+  checkCartConflict,
+  mergeGuestCart,
 } from "../services/cartService";
 import Navbar from "../components/NavBar";
 import { colours, fonts } from "../theme/theme";
@@ -115,8 +117,36 @@ function Cart() {
     });
   }, [user]);
 
+  const [cartConflict, setCartConflict] = useState(null);
+  const [selectedConflictProductIds, setSelectedConflictProductIds] = useState([]);
+  const [isMergingConflict, setIsMergingConflict] = useState(false);
+
   useEffect(() => {
-    loadCart();
+    async function initCart() {
+      if (user && localStorage.getItem("guest_cart_id")) {
+        try {
+          const conflict = await checkCartConflict();
+          if (conflict.hasConflict) {
+            const userItems = conflict.userItems || [];
+            setCartConflict({
+              guestCount: conflict.guestCount,
+              userCount: conflict.userCount,
+              userItems: userItems,
+            });
+            setSelectedConflictProductIds(userItems.map((item) => item.productId));
+            await loadCart();
+            return;
+          } else {
+            await mergeGuestCart();
+          }
+        } catch (err) {
+          console.error("Cart merge check failed:", err);
+        }
+      }
+      await loadCart();
+    }
+
+    initCart();
 
     // Check if the saved checkout order has already been paid
     const savedOrder = sessionStorage.getItem("checkoutOrder");
@@ -141,7 +171,7 @@ function Cart() {
         console.error(e);
       }
     }
-  }, []);
+  }, [user]);
 
   const navigate = useNavigate();
 
@@ -294,6 +324,44 @@ function Cart() {
 
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+
+  function toggleConflictItem(productId) {
+    setSelectedConflictProductIds((current) =>
+      current.includes(productId)
+        ? current.filter((id) => id !== productId)
+        : [...current, productId]
+    );
+  }
+
+  function toggleAllConflictItems() {
+    if (!cartConflict?.userItems) return;
+    if (selectedConflictProductIds.length === cartConflict.userItems.length) {
+      setSelectedConflictProductIds([]);
+    } else {
+      setSelectedConflictProductIds(cartConflict.userItems.map((item) => item.productId));
+    }
+  }
+
+  async function handleResolveConflict(action, keepProductIds = null) {
+    try {
+      setIsMergingConflict(true);
+      if (action === "discard_all" || action === "replace") {
+        await mergeGuestCart({ action: "replace" });
+      } else {
+        await mergeGuestCart({
+          action: "merge_selected",
+          keepProductIds: keepProductIds || selectedConflictProductIds,
+        });
+      }
+      setCartConflict(null);
+      await loadCart();
+      window.dispatchEvent(new Event("cart-updated"));
+    } catch (err) {
+      setPageError(err.message || "Failed to merge cart.");
+    } finally {
+      setIsMergingConflict(false);
+    }
+  }
 
   async function loadCart() {
     try {
@@ -877,7 +945,7 @@ function Cart() {
                 type="button"
                 onClick={() => {
                   setShowLoginPrompt(false);
-                  navigate(`/login?redirect=${encodeURIComponent('/cart?step=address')}`);
+                  navigate(`/login?redirect=${encodeURIComponent('/cart')}`);
                 }}
                 className="w-full cursor-pointer rounded-xl border py-3.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200 hover:opacity-90"
                 style={{
@@ -899,6 +967,169 @@ function Cart() {
                 }}
               >
                 Continue Guest Shopping
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cartConflict && (
+        <div className="fixed inset-0 z-[260] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div
+            style={{
+              backgroundColor: colours.background,
+              borderColor: colours.border,
+              fontFamily: fonts.secondary,
+              color: colours.text,
+            }}
+            className="w-full max-w-lg rounded-2xl border p-6 sm:p-8 shadow-2xl transition-all duration-300 transform scale-100 flex flex-col text-left relative overflow-hidden animate-in zoom-in-95"
+          >
+            {/* Background ambient lighting */}
+            <div
+              className="absolute -right-16 -top-16 h-36 w-36 rounded-full opacity-30 blur-xl pointer-events-none"
+              style={{ background: colours.accent }}
+            />
+            <div
+              className="absolute -left-16 -bottom-16 h-36 w-36 rounded-full opacity-30 blur-xl pointer-events-none"
+              style={{ background: colours.hover }}
+            />
+
+            {/* Header Icon + Title */}
+            <div className="flex items-center gap-4 mb-4">
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: `${colours.accent}15`,
+                  color: colours.accent,
+                }}
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <path d="M16 10a4 4 0 0 1-8 0" />
+                </svg>
+              </div>
+
+              <div>
+                <h3
+                  style={{ fontFamily: fonts.primary }}
+                  className="text-xl sm:text-2xl font-normal tracking-wide leading-tight"
+                >
+                  Items in Previous Cart
+                </h3>
+                <p className="text-xs opacity-65" style={{ color: colours.mutedText }}>
+                  Select items from your previous session to keep with your guest cart
+                </p>
+              </div>
+            </div>
+
+            {/* Select All Toggle Bar */}
+            {cartConflict.userItems && cartConflict.userItems.length > 0 && (
+              <div className="mb-3 flex items-center justify-between border-b pb-2 text-xs" style={{ borderColor: colours.border }}>
+                <span className="font-semibold uppercase tracking-wider text-[10px] opacity-60">
+                  Previous Cart Items ({cartConflict.userItems.length})
+                </span>
+
+                <button
+                  type="button"
+                  onClick={toggleAllConflictItems}
+                  className="cursor-pointer text-[11px] font-semibold underline underline-offset-2 opacity-70 hover:opacity-100"
+                  style={{ color: colours.accent }}
+                >
+                  {selectedConflictProductIds.length === cartConflict.userItems.length
+                    ? "Deselect all"
+                    : "Select all"}
+                </button>
+              </div>
+            )}
+
+            {/* List of Previous Cart Items with Checkboxes */}
+            <div className="mb-6 flex max-h-56 w-full flex-col gap-2.5 overflow-y-auto pr-1">
+              {cartConflict.userItems && cartConflict.userItems.length > 0 ? (
+                cartConflict.userItems.map((item) => {
+                  const isChecked = selectedConflictProductIds.includes(item.productId);
+                  return (
+                    <label
+                      key={item.productId}
+                      htmlFor={`conflict-item-${item.productId}`}
+                      className="flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-stone-50/50"
+                      style={{
+                        borderColor: isChecked ? colours.accent : colours.border,
+                        backgroundColor: isChecked ? `${colours.accent}08` : colours.background,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        id={`conflict-item-${item.productId}`}
+                        checked={isChecked}
+                        onChange={() => toggleConflictItem(item.productId)}
+                        className="h-4 w-4 shrink-0 cursor-pointer rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                      />
+
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border bg-white p-1" style={{ borderColor: colours.border }}>
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-1 text-xs font-semibold" style={{ color: colours.text }}>
+                          {item.name}
+                        </p>
+                        <p className="mt-0.5 text-[11px] opacity-60" style={{ color: colours.mutedText }}>
+                          Qty {item.quantity} • ₹{(item.price * item.quantity).toFixed(2)}
+                        </p>
+                      </div>
+                    </label>
+                  );
+                })
+              ) : (
+                <p className="py-4 text-center text-xs opacity-60">No items found in previous cart.</p>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex w-full flex-col gap-2.5">
+              <button
+                type="button"
+                disabled={isMergingConflict}
+                onClick={() => handleResolveConflict("merge_selected", selectedConflictProductIds)}
+                className="flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border py-3 px-4 transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+                style={{
+                  background: colours.secondary,
+                  borderColor: colours.secondary,
+                  color: colours.background,
+                }}
+              >
+                <span className="text-xs font-semibold uppercase tracking-wider">
+                  {isMergingConflict
+                    ? "Updating Carts…"
+                    : `Keep ${selectedConflictProductIds.length} item${selectedConflictProductIds.length === 1 ? '' : 's'} & combine`}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isMergingConflict}
+                onClick={() => handleResolveConflict("discard_all")}
+                className="flex w-full cursor-pointer items-center justify-center rounded-xl border py-3 px-4 text-xs font-semibold uppercase tracking-wider transition-all duration-200 bg-transparent hover:bg-stone-50 disabled:opacity-50"
+                style={{
+                  borderColor: colours.border,
+                  color: colours.text,
+                }}
+              >
+                Discard all
               </button>
             </div>
           </div>

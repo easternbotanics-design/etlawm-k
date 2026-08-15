@@ -1,11 +1,11 @@
-import ProductPage from "./components/ProductPage/ProductTemplate";
-import NavBar from "./components/NavBar";
+import DataTableDemo from "./components/AdminPanel/TableTemplate";
+import IngredientSection from "./components/ProductPage/IngredientsSection";
 
 const Scrap = () => {
   return (
     <div>
-      <NavBar />
-      <ProductPage />
+      <DataTableDemo />
+      <IngredientSection />
     </div>
   )
 }

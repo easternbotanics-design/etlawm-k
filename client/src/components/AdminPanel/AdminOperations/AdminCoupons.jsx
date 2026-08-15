@@ -7,6 +7,7 @@ import {
   deleteEarlyBirdCampaign,
   relaunchEarlyBirdCampaign,
 } from "../../../services/adminService";
+import TableTemplate from "../TableTemplate";
 
 export default function AdminCoupons() {
   const [campaigns, setCampaigns] = useState([]);
@@ -203,6 +204,139 @@ export default function AdminCoupons() {
       minute: "2-digit",
     });
   };
+
+  const columns = [
+    {
+      key: "coupon_code",
+      label: "COUPON CODE",
+      render: (camp) => (
+        <span className="font-mono text-sm font-bold text-[#171715] tracking-wider block bg-stone-100/80 px-2.5 py-1 rounded w-fit border border-stone-200">
+          {camp.coupon_code}
+        </span>
+      ),
+    },
+    {
+      key: "discount",
+      label: "DISCOUNT",
+      render: (camp) => (
+        <span className="text-xs md:text-sm font-semibold text-[#171715]">
+          {camp.discount_type === "percentage"
+            ? `${parseFloat(camp.discount_value)}% OFF`
+            : `₹${parseFloat(camp.discount_value).toLocaleString("en-IN")} OFF`}
+        </span>
+      ),
+    },
+    {
+      key: "starts_at",
+      label: "EFFECTIVE DATE",
+      render: (camp) => (
+        <div className="flex flex-col text-xs md:text-sm">
+          <span className="text-[#171715] font-medium">{formatDate(camp.starts_at)}</span>
+          {new Date() < new Date(camp.starts_at) && (
+            <span className="text-[10px] text-amber-600 font-semibold mt-0.5 uppercase tracking-wider">Scheduled</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "redemptions",
+      label: "REDEMPTIONS",
+      render: (camp) => {
+        const isLimitReached = camp.user_limit !== -1 && camp.used_count >= camp.user_limit;
+        return (
+          <div className="flex flex-col">
+            <span className={`text-xs md:text-sm font-semibold ${isLimitReached ? "text-stone-400" : "text-[#171715]"}`}>
+              {camp.used_count} / {camp.user_limit === -1 ? "∞" : camp.user_limit}
+            </span>
+            {camp.user_limit !== -1 && (
+              <div className="w-24 bg-stone-100 rounded-full h-1.5 mt-1.5 overflow-hidden border border-stone-200">
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min((camp.used_count / camp.user_limit) * 100, 100)}%`,
+                    backgroundColor: isLimitReached ? '#D6D3D1' : colours.accent,
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "status",
+      label: "STATUS",
+      render: (camp) => {
+        const isLimitReached = camp.user_limit !== -1 && camp.used_count >= camp.user_limit;
+        return (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleToggleStatus(camp)}
+              disabled={isLimitReached}
+              className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: camp.is_active ? colours.accent : '#D6D3D1',
+              }}
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  camp.is_active ? "translate-x-4" : "translate-x-0"
+                }`}
+              />
+            </button>
+            
+            <span className="text-xs font-semibold">
+              {isLimitReached ? (
+                <span className="text-stone-400">Sold Out</span>
+              ) : camp.is_active ? (
+                <span className="text-emerald-600">Active</span>
+              ) : (
+                <span className="text-stone-500">Disabled</span>
+              )}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      key: "actions",
+      label: "ACTIONS",
+      render: (camp) => (
+        <div className="flex items-center justify-end gap-3">
+          <button
+            onClick={() => handleRelaunch(camp.id, camp.coupon_code)}
+            className="text-[#A77C6B] hover:text-[#8C6253] transition-colors p-1 cursor-pointer"
+            title="Relaunch Coupon (Reset Usage)"
+          >
+            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+          </button>
+
+          <button
+            onClick={() => handleOpenEditModal(camp)}
+            className="text-stone-600 hover:text-stone-900 transition-colors p-1 cursor-pointer"
+            title="Edit Coupon"
+          >
+            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+            </svg>
+          </button>
+
+          <button
+            onClick={() => handleDelete(camp.id, camp.coupon_code)}
+            className="text-red-500 hover:text-red-700 transition-colors p-1 cursor-pointer"
+            title="Delete Coupon"
+          >
+            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="px-6 py-8 animate-in fade-in duration-300" style={{ fontFamily: fonts.secondary }}>
       {/* Page Header */}
@@ -250,170 +384,11 @@ export default function AdminCoupons() {
           <p className="text-sm text-[#7C7770]">Loading campaign settings...</p>
         </div>
       ) : (
-        <div
-          className="overflow-hidden rounded-2xl border shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300"
-          style={{
-            borderColor: colours.border,
-            backgroundColor: colours.primary,
-          }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] border-collapse text-left">
-              <thead>
-                <tr
-                  className="border-b text-[10px] md:text-xs uppercase tracking-widest"
-                  style={{
-                    borderColor: colours.border,
-                    color: colours.mutedText,
-                  }}
-                >
-                  <th className="px-6 py-4 font-bold w-[20%]">Coupon Code</th>
-                  <th className="px-6 py-4 font-bold w-[15%]">Discount</th>
-                  <th className="px-6 py-4 font-bold w-[25%]">Effective Date</th>
-                  <th className="px-6 py-4 font-bold w-[15%]">Redemptions</th>
-                  <th className="px-6 py-4 font-bold w-[12%]">Status</th>
-                  <th className="px-6 py-4 font-bold w-[13%] text-right">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {campaigns.length > 0 ? (
-                  campaigns.map((camp) => {
-                    const isLimitReached = camp.user_limit !== -1 && camp.used_count >= camp.user_limit;
-                    const isCampActive = camp.is_active && !isLimitReached;
-
-                    return (
-                      <tr
-                        key={camp.id}
-                        className="border-b transition-colors duration-200 hover:bg-[#171715]/5"
-                        style={{ borderColor: colours.border }}
-                      >
-                        {/* Coupon Code */}
-                        <td className="px-6 py-5 align-middle">
-                          <span className="font-mono text-sm font-bold text-[#171715] tracking-wider block bg-stone-100/80 px-2.5 py-1 rounded w-fit border border-stone-200">
-                            {camp.coupon_code}
-                          </span>
-                        </td>
-
-                        {/* Discount */}
-                        <td className="px-6 py-5 align-middle">
-                          <span className="text-xs md:text-sm font-semibold text-[#171715]">
-                            {camp.discount_type === "percentage"
-                              ? `${parseFloat(camp.discount_value)}% OFF`
-                              : `₹${parseFloat(camp.discount_value).toLocaleString("en-IN")} OFF`}
-                          </span>
-                        </td>
-
-                        {/* Effective Date */}
-                        <td className="px-6 py-5 align-middle">
-                          <div className="flex flex-col text-xs md:text-sm">
-                            <span className="text-[#171715] font-medium">{formatDate(camp.starts_at)}</span>
-                            {new Date() < new Date(camp.starts_at) && (
-                              <span className="text-[10px] text-amber-600 font-semibold mt-0.5 uppercase tracking-wider">Scheduled</span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Redemptions */}
-                        <td className="px-6 py-5 align-middle">
-                          <div className="flex flex-col">
-                            <span className={`text-xs md:text-sm font-semibold ${isLimitReached ? "text-stone-400" : "text-[#171715]"}`}>
-                              {camp.used_count} / {camp.user_limit === -1 ? "∞" : camp.user_limit}
-                            </span>
-                            
-                            {/* Simple Visual Progress Bar */}
-                            {camp.user_limit !== -1 && (
-                              <div className="w-24 bg-stone-100 rounded-full h-1.5 mt-1.5 overflow-hidden border border-stone-200">
-                                <div
-                                  className="h-full rounded-full transition-all duration-300"
-                                  style={{
-                                    width: `${Math.min((camp.used_count / camp.user_limit) * 100, 100)}%`,
-                                    backgroundColor: isLimitReached ? '#D6D3D1' : colours.accent,
-                                  }}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Status (Toggle) */}
-                        <td className="px-6 py-5 align-middle">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleToggleStatus(camp)}
-                              disabled={isLimitReached}
-                              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed`}
-                              style={{
-                                backgroundColor: camp.is_active ? colours.accent : '#D6D3D1',
-                              }}
-                            >
-                              <span
-                                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                  camp.is_active ? "translate-x-4" : "translate-x-0"
-                                }`}
-                              />
-                            </button>
-                            
-                            <span className="text-xs font-semibold">
-                              {isLimitReached ? (
-                                <span className="text-stone-400">Sold Out</span>
-                              ) : camp.is_active ? (
-                                <span className="text-emerald-600">Active</span>
-                              ) : (
-                                <span className="text-stone-500">Disabled</span>
-                              )}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-6 py-5 align-middle text-right">
-                          <div className="flex items-center justify-end gap-3">
-                            <button
-                              onClick={() => handleRelaunch(camp.id, camp.coupon_code)}
-                              className="text-[#A77C6B] hover:text-[#8C6253] transition-colors p-1 cursor-pointer"
-                              title="Relaunch Coupon (Reset Usage)"
-                            >
-                              <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                              </svg>
-                            </button>
-
-                            <button
-                              onClick={() => handleOpenEditModal(camp)}
-                              className="text-stone-600 hover:text-stone-900 transition-colors p-1 cursor-pointer"
-                              title="Edit Coupon"
-                            >
-                              <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                              </svg>
-                            </button>
-
-                            <button
-                              onClick={() => handleDelete(camp.id, camp.coupon_code)}
-                              className="text-red-500 hover:text-red-700 transition-colors p-1 cursor-pointer"
-                              title="Delete Coupon"
-                            >
-                              <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                              </svg>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-10 text-center text-sm" style={{ color: colours.mutedText }}>
-                      No early bird coupons found. Click "Create Coupon" to add one.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <TableTemplate
+          columns={columns}
+          data={campaigns}
+          emptyLabel='No early bird coupons found. Click "Create Coupon" to add one.'
+        />
       )}
 
       {/* Modal Dialog Form */}

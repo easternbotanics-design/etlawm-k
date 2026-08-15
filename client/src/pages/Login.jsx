@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { colours, fonts } from '../theme/theme.js';
 import CustomSelect from '../components/CustomSelect.jsx';
-import { mergeGuestCart } from '../services/cartService';
+import { mergeGuestCart, checkCartConflict } from '../services/cartService';
 
 const API = import.meta.env.VITE_SERVER_API;
 
@@ -348,12 +348,16 @@ export default function Login() {
         return;
       }
 
-      login(data.token, data.user);
+      localStorage.setItem('token', data.token);
       try {
-        await mergeGuestCart();
+        const conflict = await checkCartConflict(data.token);
+        if (!conflict.hasConflict) {
+          await mergeGuestCart(data.token);
+        }
       } catch (err) {
-        console.error('Failed to merge guest cart:', err);
+        console.error('Failed to handle guest cart on verify OTP:', err);
       }
+      login(data.token, data.user);
       const target = redirectPath || (data.user.is_admin ? '/admin/dashboard' : '/dashboard');
       navigate(target, { replace: true });
     } catch {
@@ -443,12 +447,16 @@ export default function Login() {
         return;
       }
 
-      login(data.token, data.user);
+      localStorage.setItem('token', data.token);
       try {
-        await mergeGuestCart();
+        const conflict = await checkCartConflict(data.token);
+        if (!conflict.hasConflict) {
+          await mergeGuestCart(data.token);
+        }
       } catch (err) {
-        console.error('Failed to merge guest cart:', err);
+        console.error('Failed to handle guest cart on onboard:', err);
       }
+      login(data.token, data.user);
       const target = redirectPath || (data.user.is_admin ? '/admin/dashboard' : '/dashboard');
       navigate(target, { replace: true });
     } catch {

@@ -46,6 +46,7 @@ const cmsReviews = {
         customer_name,
         product_name,
         product_link,
+        heading,
         rating,
         review,
         status = "published",
@@ -58,19 +59,21 @@ const cmsReviews = {
         customer_name,
         product_name,
         product_link,
+        heading,
         rating,
         review,
         status,
         sort_order,
         is_active
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
       `,
             [
                 customer_name,
                 product_name,
                 product_link ?? null,
+                heading ?? null,
                 rating,
                 review,
                 status,
@@ -110,6 +113,25 @@ const cmsReviews = {
       `
         ),
 
+    findPublishedByProduct: (value) => {
+        const normalizedSpace = (value || "").replace(/-/g, ' ');
+        return query(
+            `
+      SELECT *
+      FROM cms_reviews
+      WHERE status = 'published'
+        AND is_active = true
+        AND (
+          LOWER(product_name) = LOWER($1)
+          OR LOWER(product_name) = LOWER($2)
+          OR product_link ILIKE '%' || $1 || '%'
+        )
+      ORDER BY sort_order ASC, created_at DESC
+      `,
+            [value, normalizedSpace]
+        );
+    },
+
     findByProductNameOrSlug: (value) =>
         query(
             `
@@ -127,6 +149,7 @@ const cmsReviews = {
             "customer_name",
             "product_name",
             "product_link",
+            "heading",
             "rating",
             "review",
             "status",
@@ -182,6 +205,7 @@ const cmsIngredients = {
         para1,
         para2,
         para3,
+        product_id = null,
         status = "published",
         sort_order = 0,
         is_active = true,
@@ -195,11 +219,12 @@ const cmsIngredients = {
         para1,
         para2,
         para3,
+        product_id,
         status,
         sort_order,
         is_active
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
       `,
             [
@@ -209,6 +234,7 @@ const cmsIngredients = {
                 para1,
                 para2,
                 para3,
+                product_id || null,
                 status,
                 sort_order,
                 is_active,
@@ -218,9 +244,10 @@ const cmsIngredients = {
     findById: (id) =>
         query(
             `
-      SELECT *
-      FROM cms_ingredients
-      WHERE id = $1
+      SELECT i.*, p.name AS product_name
+      FROM cms_ingredients i
+      LEFT JOIN products p ON i.product_id = p.id
+      WHERE i.id = $1
       LIMIT 1
       `,
             [id]
@@ -229,20 +256,22 @@ const cmsIngredients = {
     findAllAdmin: () =>
         query(
             `
-      SELECT *
-      FROM cms_ingredients
-      ORDER BY created_at DESC
+      SELECT i.*, p.name AS product_name
+      FROM cms_ingredients i
+      LEFT JOIN products p ON i.product_id = p.id
+      ORDER BY i.created_at DESC
       `
         ),
 
     findPublished: () =>
         query(
             `
-      SELECT *
-      FROM cms_ingredients
-      WHERE status = 'published'
-        AND is_active = true
-      ORDER BY sort_order ASC, created_at DESC
+      SELECT i.*, p.name AS product_name
+      FROM cms_ingredients i
+      LEFT JOIN products p ON i.product_id = p.id
+      WHERE i.status = 'published'
+        AND i.is_active = true
+      ORDER BY i.sort_order ASC, i.created_at DESC
       `
         ),
 
@@ -254,6 +283,7 @@ const cmsIngredients = {
             "para1",
             "para2",
             "para3",
+            "product_id",
             "status",
             "sort_order",
             "is_active",
@@ -266,7 +296,7 @@ const cmsIngredients = {
         for (const key of allowed) {
             if (fields[key] !== undefined) {
                 sets.push(`${key} = $${i++}`);
-                vals.push(fields[key]);
+                vals.push(fields[key] || null);
             }
         }
 
@@ -415,10 +445,11 @@ const cmsScience = {
 const productIngredients = {
     getByProductId: (productId) =>
         query(
-            `SELECT i.*
+            `SELECT DISTINCT i.*, p.name AS product_name
        FROM cms_ingredients i
-       INNER JOIN products_ingredient pi ON pi.ingredient_id = i.id
-       WHERE pi.product_id = $1
+       LEFT JOIN products_ingredient pi ON pi.ingredient_id = i.id
+       LEFT JOIN products p ON (i.product_id = p.id OR pi.product_id = p.id)
+       WHERE i.product_id = $1 OR pi.product_id = $1
        ORDER BY i.sort_order ASC, i.name ASC`,
             [productId]
         ),
@@ -1087,8 +1118,8 @@ const carts = {
     findById: (id) =>
         query(`SELECT * FROM carts WHERE id = $1 LIMIT 1`, [id]),
 
-    /** Merge guest cart into user cart on login */
-    mergeGuestToUser: async (guest_id, user_id) => {
+    /** Merge or replace guest cart into user cart on login */
+    mergeGuestToUser: async (guest_id, user_id, action = 'merge', keep_product_ids = null) => {
         const client = await pool.connect();
 
         try {
@@ -1134,6 +1165,26 @@ const carts = {
                 return { rows: [userCart] };
             }
 
+            if (action === 'replace' || action === 'discard_all') {
+                // User chose to discard all previous cart items in userCart
+                await client.query(
+                    `DELETE FROM cart_items WHERE cart_id = $1`,
+                    [userCart.id],
+                );
+            } else if (action === 'merge_selected' && Array.isArray(keep_product_ids)) {
+                if (keep_product_ids.length === 0) {
+                    await client.query(
+                        `DELETE FROM cart_items WHERE cart_id = $1`,
+                        [userCart.id],
+                    );
+                } else {
+                    await client.query(
+                        `DELETE FROM cart_items WHERE cart_id = $1 AND NOT (product_id = ANY($2::uuid[]))`,
+                        [userCart.id, keep_product_ids],
+                    );
+                }
+            }
+
             await client.query(
                 `INSERT INTO cart_items (
                     cart_id,
@@ -1161,6 +1212,20 @@ const carts = {
                  )`,
                 [userCart.id, guestCart.id],
             );
+
+            // Copy coupons from guest cart if user cart has none
+            if (guestCart.coupon_id && !userCart.coupon_id) {
+                await client.query(
+                    `UPDATE carts SET coupon_id = $1 WHERE id = $2`,
+                    [guestCart.coupon_id, userCart.id],
+                );
+            }
+            if (guestCart.early_bird_discount_id && !userCart.early_bird_discount_id) {
+                await client.query(
+                    `UPDATE carts SET early_bird_discount_id = $1 WHERE id = $2`,
+                    [guestCart.early_bird_discount_id, userCart.id],
+                );
+            }
 
             await client.query(
                 `DELETE FROM carts

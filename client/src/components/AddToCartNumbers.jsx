@@ -94,20 +94,14 @@ export default function AddToCartNumbers({ count, onIncrease, onDecrease }) {
   const units = formattedCount[1];
 
   return (
-    <div
-      className="inline-flex h-8 items-center gap-2 rounded-full "
-      style={{
-        background: colours.background,
-      }}
-    >
+    <div className="inline-flex h-8 items-center gap-2 rounded-full">
       <button
         type="button"
         onClick={onDecrease}
-        className="flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-300 hover:scale-105 active:scale-95"
+        className="flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
         style={{
-          background: colours.background,
-          borderColor: colours.accent,
-          color: colours.accent,
+          borderColor: colours.green,
+          color: colours.green,
         }}
         aria-label="Decrease quantity"
       >
@@ -130,7 +124,7 @@ export default function AddToCartNumbers({ count, onIncrease, onDecrease }) {
       <div
         className="flex h-8 items-center overflow-hidden"
         style={{
-          fontFamily: fonts.logo,
+          fontFamily: fonts.title,
         }}
       >
         <AnimatedDigit digit={tens} />
@@ -140,11 +134,10 @@ export default function AddToCartNumbers({ count, onIncrease, onDecrease }) {
       <button
         type="button"
         onClick={onIncrease}
-        className="flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-300 hover:scale-105 active:scale-95"
+        className="flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
         style={{
-          background: colours.background,
-          borderColor: colours.accent,
-          color: colours.accent,
+          borderColor: colours.green,
+          color: colours.green,
         }}
         aria-label="Increase quantity"
       >

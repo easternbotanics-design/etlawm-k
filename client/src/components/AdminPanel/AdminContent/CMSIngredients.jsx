@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { colours, fonts } from "../../../theme/theme.js";
 import ingredientService from "../../../services/ingredientService.js";
+import TableTemplate from "../TableTemplate";
 
 const EditIcon = () => (
   <svg
@@ -84,6 +85,147 @@ export default function CMSIngredients() {
     navigate(`/admin/content/ingredients/edit/${ingredient.id}`);
   };
 
+  const columns = [
+    {
+      key: "image",
+      label: "IMAGE",
+      render: (ing) => (
+        <div className="h-12 w-12 overflow-hidden rounded-full border border-black/10 bg-white">
+          <img
+            src={ing.image_url}
+            alt={ing.name}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ),
+    },
+    {
+      key: "name",
+      label: "NAME",
+      render: (ing) => (
+        <div>
+          <h3
+            className="text-sm font-semibold"
+            style={{
+              color: colours.text,
+              fontFamily: fonts.primary,
+            }}
+          >
+            {ing.name}
+          </h3>
+          {ing.scientific_name && (
+            <p className="text-xs italic text-stone-500">{ing.scientific_name}</p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "product",
+      label: "PRODUCT",
+      render: (ing) => (
+        <span
+          className="inline-block px-2.5 py-1 rounded-md text-xs font-medium border"
+          style={{
+            backgroundColor: ing.product_name ? `${colours.accent}15` : "#F3F4F6",
+            color: ing.product_name ? colours.accent : "#6B7280",
+            borderColor: ing.product_name ? `${colours.accent}30` : "#E5E7EB",
+          }}
+        >
+          {ing.product_name || "— Unassigned"}
+        </span>
+      ),
+    },
+    {
+      key: "paragraphs",
+      label: "DESCRIPTION PARAGRAPHS",
+      render: (ing) => (
+        <div className="text-xs space-y-1 max-w-sm">
+          <p className="line-clamp-1 text-stone-600">
+            <strong>Para 1 (Left Text):</strong> {ing.para1}
+          </p>
+          <p className="line-clamp-1 text-stone-600">
+            <strong>Para 2 (Right Text 1):</strong> {ing.para2}
+          </p>
+          <p className="line-clamp-1 text-stone-600">
+            <strong>Para 3 (Right Text 2):</strong> {ing.para3}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      label: "STATUS",
+      render: (ing) => {
+        const isPublished = ing.status === "published";
+        return (
+          <span
+            className="rounded-full px-3 py-1 text-xs font-medium"
+            style={{
+              backgroundColor: isPublished ? colours.primary : "#FEF3C7",
+              color: isPublished ? colours.accent : "#92400E",
+            }}
+          >
+            {isPublished ? "Published" : "Draft"}
+          </span>
+        );
+      },
+    },
+    {
+      key: "created_at",
+      label: "DATE CREATED",
+      render: (ing) => (
+        <span className="text-sm" style={{ color: colours.mutedText }}>
+          {ing.created_at
+            ? new Date(ing.created_at).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      label: "ACTIONS",
+      render: (ing) => {
+        const isDeleting = deletingId === ing.id;
+        return (
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => handleEdit(ing)}
+              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
+              style={{
+                borderColor: colours.border,
+                color: colours.accent,
+                backgroundColor: colours.background,
+              }}
+              aria-label={`Edit ${ing.name}`}
+            >
+              <EditIcon />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDelete(ing)}
+              disabled={isDeleting}
+              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+              style={{
+                borderColor: colours.border,
+                color: "#A44A3F",
+                backgroundColor: colours.background,
+              }}
+              aria-label={`Delete ${ing.name}`}
+            >
+              {isDeleting ? "..." : <DeleteIcon />}
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="px-6 py-8" style={{ fontFamily: fonts.secondary }}>
       <div className="flex items-center justify-between">
@@ -114,165 +256,15 @@ export default function CMSIngredients() {
           {error}
         </div>
       ) : (
-        <div
-          className="mt-8 overflow-hidden rounded-2xl border shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300"
-          style={{
-            borderColor: colours.border,
-            backgroundColor: colours.background,
-          }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] border-collapse text-left">
-              <thead>
-                <tr
-                  className="border-b text-xs uppercase tracking-wide"
-                  style={{
-                    borderColor: colours.border,
-                    color: colours.mutedText,
-                  }}
-                >
-                  <th className="px-6 py-4 font-semibold w-16">Image</th>
-                  <th className="px-6 py-4 font-semibold w-40">Name</th>
-                  <th className="px-6 py-4 font-semibold">Description Paragraphs</th>
-                  <th className="px-6 py-4 font-semibold w-28">Status</th>
-                  <th className="px-6 py-4 font-semibold w-32">Date Created</th>
-                  <th className="px-6 py-4 text-right font-semibold w-32">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {ingredients.length > 0 ? (
-                  ingredients.map((ing) => {
-                    const isPublished = ing.status === "published";
-                    const isDeleting = deletingId === ing.id;
-
-                    return (
-                      <tr
-                        key={ing.id}
-                        className="border-b transition-colors duration-200 hover:bg-black/5"
-                        style={{ borderColor: colours.border }}
-                      >
-                        {/* Image */}
-                        <td className="px-6 py-4">
-                          <div className="h-12 w-12 overflow-hidden rounded-full border border-black/10 bg-white">
-                            <img
-                              src={ing.image_url}
-                              alt={ing.name}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        </td>
-
-                        {/* Name */}
-                        <td className="px-6 py-4">
-                          <h3
-                            className="text-sm font-semibold"
-                            style={{
-                              color: colours.text,
-                              fontFamily: fonts.primary,
-                            }}
-                          >
-                            {ing.name}
-                          </h3>
-                        </td>
-
-                        {/* Paragraphs */}
-                        <td className="px-6 py-4 text-xs space-y-1 max-w-sm">
-                          <p className="line-clamp-1 text-stone-600">
-                            <strong>Para 1 (Left Text):</strong> {ing.para1}
-                          </p>
-                          <p className="line-clamp-1 text-stone-600">
-                            <strong>Para 2 (Right Text 1):</strong> {ing.para2}
-                          </p>
-                          <p className="line-clamp-1 text-stone-600">
-                            <strong>Para 3 (Right Text 2):</strong> {ing.para3}
-                          </p>
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-6 py-4">
-                          <span
-                            className="rounded-full px-3 py-1 text-xs font-medium"
-                            style={{
-                              backgroundColor: isPublished
-                                ? colours.primary
-                                : "#FEF3C7",
-                              color: isPublished ? colours.accent : "#92400E",
-                            }}
-                          >
-                            {isPublished ? "Published" : "Draft"}
-                          </span>
-                        </td>
-
-                        {/* Date */}
-                        <td
-                          className="px-6 py-4 text-sm"
-                          style={{ color: colours.mutedText }}
-                        >
-                          {ing.created_at
-                            ? new Date(ing.created_at).toLocaleDateString(
-                                "en-IN",
-                                {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                }
-                              )
-                            : "—"}
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-6 py-4">
-                          <div className="flex justify-end gap-3">
-                            <button
-                              type="button"
-                              onClick={() => handleEdit(ing)}
-                              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
-                              style={{
-                                borderColor: colours.border,
-                                color: colours.accent,
-                                backgroundColor: colours.background,
-                              }}
-                              aria-label={`Edit ${ing.name}`}
-                            >
-                              <EditIcon />
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(ing)}
-                              disabled={isDeleting}
-                              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-                              style={{
-                                borderColor: colours.border,
-                                color: "#A44A3F",
-                                backgroundColor: colours.background,
-                              }}
-                              aria-label={`Delete ${ing.name}`}
-                            >
-                              {isDeleting ? "..." : <DeleteIcon />}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="px-6 py-10 text-center text-sm"
-                      style={{ color: colours.mutedText }}
-                    >
-                      No ingredients found. Add a new ingredient to get started.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="mt-8">
+          <TableTemplate
+            columns={columns}
+            data={ingredients}
+            emptyLabel="No ingredients found. Add a new ingredient to get started."
+          />
         </div>
       )}
     </div>
   );
 }
+

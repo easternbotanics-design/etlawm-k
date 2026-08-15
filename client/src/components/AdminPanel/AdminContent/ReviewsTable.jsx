@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { colours, fonts } from '../../../theme/theme';
 import reviewService from "../../../services/reviewService";
+import TableTemplate from "../TableTemplate";
 
 /* ── Star icons ──────────────────────────────────────────────────── */
 const StarDisplay = ({ rating }) => {
@@ -95,206 +96,187 @@ const ReviewsTable = ({ reviews = [], onEdit, onDeleted }) => {
     }
   };
 
-  return (
-    <div
-      className="mt-8 overflow-hidden rounded-2xl border shadow-sm"
-      style={{
-        borderColor: colours.border,
-        backgroundColor: colours.background,
-        fontFamily: fonts.secondary,
-      }}
-    >
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[850px] border-collapse text-left">
-          <thead>
-            <tr
-              className="border-b text-xs uppercase tracking-wide"
+  const columns = [
+    {
+      key: "customer",
+      label: "CUSTOMER",
+      render: (review) => {
+        const initials = (review.customer_name || '?')
+          .split(' ')
+          .map((w) => w[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2);
+
+        return (
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
               style={{
-                borderColor: colours.border,
-                color: colours.mutedText,
+                backgroundColor: colours.accent,
+                color: colours.background,
               }}
             >
-              <th className="px-6 py-4 font-semibold">Customer</th>
-              <th className="px-6 py-4 font-semibold">Rating</th>
-              <th className="px-6 py-4 font-semibold" style={{ maxWidth: 360 }}>Review</th>
-              <th className="px-6 py-4 font-semibold">Status</th>
-              <th className="px-6 py-4 font-semibold">Date</th>
-              <th className="px-6 py-4 text-right font-semibold">Actions</th>
-            </tr>
-          </thead>
+              {initials}
+            </div>
 
-          <tbody>
-            {reviews.length > 0 ? (
-              reviews.map((review) => {
-                const isPublished =
-                  review.status === 'published' || review.status === 'active';
-                const isDeleting = deletingId === review.id;
-                const initials = (review.customer_name || '?')
-                  .split(' ')
-                  .map((w) => w[0])
-                  .join('')
-                  .toUpperCase()
-                  .slice(0, 2);
+            <div>
+              <h3
+                className="text-sm font-semibold"
+                style={{
+                  color: colours.text,
+                  fontFamily: fonts.primary,
+                }}
+              >
+                {review.customer_name}
+              </h3>
 
-                return (
-                  <tr
-                    key={review.id}
-                    className="border-b transition-colors duration-200 hover:bg-black/5"
-                    style={{ borderColor: colours.border }}
-                  >
-                    {/* Customer */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-                          style={{
-                            backgroundColor: colours.accent,
-                            color: colours.background,
-                          }}
-                        >
-                          {initials}
-                        </div>
-
-                        <div>
-                          <h3
-                            className="text-sm font-semibold"
-                            style={{
-                              color: colours.text,
-                              fontFamily: fonts.primary,
-                            }}
-                          >
-                            {review.customer_name}
-                          </h3>
-
-                          {review.product_link ? (
-                            <a
-                              href={review.product_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-0.5 block text-xs no-underline transition-colors hover:underline"
-                              style={{ color: colours.accent }}
-                            >
-                              {review.product_name}
-                            </a>
-                          ) : (
-                            <p
-                              className="mt-0.5 text-xs"
-                              style={{ color: colours.mutedText }}
-                            >
-                              {review.product_name}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Rating */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <StarDisplay rating={review.rating} />
-                        <span
-                          className="text-xs font-semibold"
-                          style={{ color: colours.text }}
-                        >
-                          {Number(review.rating).toFixed(1)}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Review text */}
-                    <td className="px-6 py-4" style={{ maxWidth: 360 }}>
-                      <p
-                        className="text-sm leading-relaxed line-clamp-2"
-                        style={{ color: colours.text }}
-                      >
-                        {review.review}
-                      </p>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-6 py-4">
-                      <span
-                        className="rounded-full px-3 py-1 text-xs font-medium"
-                        style={{
-                          backgroundColor: isPublished
-                            ? colours.primary
-                            : '#FEF3C7',
-                          color: isPublished ? colours.accent : '#92400E',
-                        }}
-                      >
-                        {isPublished ? 'Published' : 'Draft'}
-                      </span>
-                    </td>
-
-                    {/* Date */}
-                    <td
-                      className="px-6 py-4 text-sm"
-                      style={{ color: colours.mutedText }}
-                    >
-                      {review.created_at
-                        ? new Date(review.created_at).toLocaleDateString(
-                            'en-IN',
-                            {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            }
-                          )
-                        : '—'}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-6 py-4">
-                      <div className="flex justify-end gap-3">
-                        <button
-                          type="button"
-                          onClick={() => onEdit?.(review)}
-                          className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
-                          style={{
-                            borderColor: colours.border,
-                            color: colours.accent,
-                            backgroundColor: colours.background,
-                          }}
-                          aria-label={`Edit review by ${review.customer_name}`}
-                        >
-                          <EditIcon />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(review)}
-                          disabled={isDeleting}
-                          className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-                          style={{
-                            borderColor: colours.border,
-                            color: '#A44A3F',
-                            backgroundColor: colours.background,
-                          }}
-                          aria-label={`Delete review by ${review.customer_name}`}
-                        >
-                          {isDeleting ? '...' : <DeleteIcon />}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td
-                  colSpan="6"
-                  className="px-6 py-10 text-center text-sm"
+              {review.product_link ? (
+                <a
+                  href={review.product_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-0.5 block text-xs no-underline transition-colors hover:underline"
+                  style={{ color: colours.accent }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {review.product_name}
+                </a>
+              ) : (
+                <p
+                  className="mt-0.5 text-xs"
                   style={{ color: colours.mutedText }}
                 >
-                  No reviews found for this product.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  {review.product_name}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: "rating",
+      label: "RATING",
+      render: (review) => (
+        <div className="flex items-center gap-2">
+          <StarDisplay rating={review.rating} />
+          <span
+            className="text-xs font-semibold"
+            style={{ color: colours.text }}
+          >
+            {Number(review.rating).toFixed(1)}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "review",
+      label: "REVIEW",
+      render: (review) => (
+        <div>
+          {review.heading && (
+            <h4
+              className="text-xs font-semibold uppercase tracking-wider mb-1"
+              style={{ color: colours.accent, fontFamily: fonts.primary }}
+            >
+              {review.heading}
+            </h4>
+          )}
+          <p
+            className="text-sm leading-relaxed line-clamp-2 max-w-sm"
+            style={{ color: colours.text }}
+          >
+            {review.review}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      label: "STATUS",
+      render: (review) => {
+        const isPublished =
+          review.status === 'published' || review.status === 'active';
+        return (
+          <span
+            className="rounded-full px-3 py-1 text-xs font-medium"
+            style={{
+              backgroundColor: isPublished ? colours.primary : '#FEF3C7',
+              color: isPublished ? colours.accent : '#92400E',
+            }}
+          >
+            {isPublished ? 'Published' : 'Draft'}
+          </span>
+        );
+      },
+    },
+    {
+      key: "created_at",
+      label: "DATE",
+      render: (review) => (
+        <span className="text-sm" style={{ color: colours.mutedText }}>
+          {review.created_at
+            ? new Date(review.created_at).toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })
+            : '—'}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      label: "ACTIONS",
+      render: (review) => {
+        const isDeleting = deletingId === review.id;
+        return (
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => onEdit?.(review)}
+              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
+              style={{
+                borderColor: colours.border,
+                color: colours.accent,
+                backgroundColor: colours.background,
+              }}
+              aria-label={`Edit review by ${review.customer_name}`}
+            >
+              <EditIcon />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDelete(review)}
+              disabled={isDeleting}
+              className="rounded-lg border p-2 transition-all duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+              style={{
+                borderColor: colours.border,
+                color: '#A44A3F',
+                backgroundColor: colours.background,
+              }}
+              aria-label={`Delete review by ${review.customer_name}`}
+            >
+              {isDeleting ? '...' : <DeleteIcon />}
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+
+  return (
+    <div className="mt-8">
+      <TableTemplate
+        columns={columns}
+        data={reviews}
+        emptyLabel="No reviews found."
+      />
     </div>
   );
 };
 
 export default ReviewsTable;
+
