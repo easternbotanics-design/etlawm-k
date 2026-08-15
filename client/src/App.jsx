@@ -23,7 +23,7 @@ import Loader from './components/LoaderHamster.jsx';
 import FloatingCart from './components/FloatingCart.jsx';
 import Science from './pages/Science.jsx';
 import usePageTracking from './hooks/usePageTracking.js';
-import Scrap from './Scrap.jsx';
+// import Scrap from './Scrap.jsx';
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -65,7 +65,7 @@ function AppRoutes() {
       <Routes>
         
         <Route path="/" element={<Home />} />
-        <Route path="/scrap" element={<Scrap />} />
+        {/* <Route path="/scrap" element={<Scrap />} />*/}
         {/* <Route path="/login"                    element={<Login />} />*/}
         <Route path="/login" element={<Login />} />
         {/* Collection routes */}
