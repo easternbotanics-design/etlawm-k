@@ -66,36 +66,7 @@ const ReviewGrid = ({ reviews: propReviews, product, productName, productSlug })
   }
 
   if (!displayReviews || displayReviews.length === 0) {
-    return (
-      <div className="w-full px-3 sm:px-12 md:px-24 lg:px-48 py-8 sm:py-12 text-center">
-        <div
-          className="max-w-md mx-auto p-6 sm:p-8 rounded-2xl border text-center shadow-sm"
-          style={{
-            backgroundColor: colours.primary || "#F7F3EC",
-            borderColor: colours.border || "#D8D2C8",
-          }}
-        >
-          <p
-            className="text-base sm:text-lg font-medium"
-            style={{
-              color: colours.secondary || colours.text || "#171715",
-              fontFamily: fonts?.primary || "serif",
-            }}
-          >
-            No reviews available
-          </p>
-          <p
-            className="text-xs sm:text-sm mt-1"
-            style={{
-              color: colours.mutedText || "#7C7770",
-              fontFamily: fonts?.secondary || "sans-serif",
-            }}
-          >
-            There are no reviews for this product yet.
-          </p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (

@@ -538,20 +538,28 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
               {product.name}
             </h1>
 
-            <div className="mt-2.5 flex items-center gap-2">
-              <div className="flex items-center gap-0.5 text-[#C98A3E]">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    size={14}
-                    fill={i < Math.round(product.rating || 5) ? "currentColor" : "none"}
-                  />
-                ))}
-              </div>
-              <span className="text-xs sm:text-sm text-[#6B6656]">
-                {product.rating || 5.0} ({product.reviews || 0} reviews)
-              </span>
-            </div>
+            {(() => {
+              const numReviews = Number(product.reviews || 0);
+              const rating = numReviews > 0 ? Number(product.rating || 0) : 0;
+              return (
+                <div className="mt-2.5 flex items-center gap-2">
+                  <div className="flex items-center gap-0.5 text-[#C98A3E]">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        size={14}
+                        fill={rating > 0 && i < Math.round(rating) ? "currentColor" : "none"}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs sm:text-sm text-[#6B6656]">
+                    {numReviews > 0 && rating > 0
+                      ? `${rating} (${numReviews} reviews)`
+                      : "No reviews yet"}
+                  </span>
+                </div>
+              );
+            })()}
 
             <div className="mt-4 flex items-baseline gap-3">
               <div

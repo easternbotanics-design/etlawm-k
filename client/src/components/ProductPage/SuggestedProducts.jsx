@@ -84,7 +84,7 @@ export default function SuggestedProducts({ currentSlug, currentProductId, categ
 
   return (
     <section 
-      className="w-full px-4 sm:px-8 py-10 sm:py-16"
+      className="w-full px-4 sm:px-8 py-10 sm:py-8"
     >
       <div className="max-w-4xl mx-auto">
         {/* Section Header */}

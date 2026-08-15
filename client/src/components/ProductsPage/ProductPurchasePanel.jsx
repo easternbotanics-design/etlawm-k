@@ -30,7 +30,8 @@ export default function ProductPurchasePanel({
   added,
   isUnavailable,
 }) {
-  const rating = Number(product.rating || 0);
+  const numReviews = Number(product?.reviews || 0);
+  const rating = numReviews > 0 ? Number(product?.rating || 0) : 0;
   const productId = getProductId(product);
   const [isAdding, setIsAdding] = useState(false);
   const [localAdded, setLocalAdded] = useState(false);
@@ -151,8 +152,8 @@ export default function ProductPurchasePanel({
             className="text-xs"
             style={{ color: colours.mutedText, fontFamily: fonts.secondary }}
           >
-            {rating > 0
-              ? `${rating} (${product.reviews || 0} reviews)`
+            {numReviews > 0 && rating > 0
+              ? `${rating} (${numReviews} reviews)`
               : "No reviews yet"}
           </span>
         </div>
