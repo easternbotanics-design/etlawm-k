@@ -1,11 +1,9 @@
-import DataTableDemo from "./components/AdminPanel/TableTemplate";
-import IngredientSection from "./components/ProductPage/IngredientsSection";
+import NotFoundPage from "./pages/NotFoundPage";
 
 const Scrap = () => {
   return (
     <div>
-      <DataTableDemo />
-      <IngredientSection />
+      <NotFoundPage />
     </div>
   )
 }

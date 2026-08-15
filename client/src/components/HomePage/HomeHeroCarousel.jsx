@@ -76,11 +76,13 @@ const mobileFrames = testimonials.map((item) => [item]);
 
 const HomeHeroCarousel = () => {
   const [isMobile, setIsMobile] = useState(false);
-  const [currentFrame, setCurrentFrame] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(true);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   const minSwipeDistance = 40;
 
@@ -95,21 +97,63 @@ const HomeHeroCarousel = () => {
 
   const activeFrames = isMobile ? mobileFrames : desktopFrames;
 
-  useEffect(() => {
-    if (currentFrame >= activeFrames.length) {
-      setCurrentFrame(0);
-    }
-  }, [activeFrames, currentFrame]);
+  // Extended frames array for infinite seamless looping: [Last frame, ...activeFrames, First frame]
+  const extendedFrames =
+    activeFrames.length > 1
+      ? [activeFrames[activeFrames.length - 1], ...activeFrames, activeFrames[0]]
+      : activeFrames;
 
-  const handlePrev = () => {
-    setCurrentFrame((prev) => (prev > 0 ? prev - 1 : activeFrames.length - 1));
-  };
+  // Reset index when switching between mobile and desktop layouts
+  useEffect(() => {
+    setIsTransitioning(false);
+    setCurrentIndex(1);
+  }, [isMobile]);
+
+  // Re-enable transitions after reset
+  useEffect(() => {
+    if (!isTransitioning) {
+      const timer = setTimeout(() => {
+        setIsTransitioning(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isTransitioning]);
 
   const handleNext = () => {
-    setCurrentFrame((prev) => (prev < activeFrames.length - 1 ? prev + 1 : 0));
+    if (currentIndex >= extendedFrames.length - 1) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => prev + 1);
   };
 
+  const handlePrev = () => {
+    if (currentIndex <= 0) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => prev - 1);
+  };
+
+  const handleTransitionEnd = () => {
+    if (currentIndex === extendedFrames.length - 1) {
+      // Reached clone of first frame at end -> seamlessly jump to real first frame
+      setIsTransitioning(false);
+      setCurrentIndex(1);
+    } else if (currentIndex === 0) {
+      // Reached clone of last frame at start -> seamlessly jump to real last frame
+      setIsTransitioning(false);
+      setCurrentIndex(activeFrames.length);
+    }
+  };
+
+  // Auto-slide every 4 seconds when not paused
+  useEffect(() => {
+    if (isPaused || activeFrames.length <= 1) return;
+    const interval = setInterval(() => {
+      handleNext();
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [isPaused, activeFrames.length, currentIndex]);
+
   const handleTouchStart = (e) => {
+    setIsPaused(true);
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
   };
@@ -119,6 +163,7 @@ const HomeHeroCarousel = () => {
   };
 
   const handleTouchEnd = () => {
+    setIsPaused(false);
     if (!touchStart || !touchEnd) return;
     const distance = touchStart - touchEnd;
     if (distance > minSwipeDistance) {
@@ -129,11 +174,13 @@ const HomeHeroCarousel = () => {
   };
 
   const handleMouseDown = (e) => {
+    setIsPaused(true);
     setIsDragging(true);
     setDragStartX(e.clientX);
   };
 
   const handleMouseUp = (e) => {
+    setIsPaused(false);
     if (!isDragging) return;
     setIsDragging(false);
     const distance = dragStartX - e.clientX;
@@ -146,6 +193,7 @@ const HomeHeroCarousel = () => {
 
   const handleMouseLeave = () => {
     setIsDragging(false);
+    setIsPaused(false);
   };
 
   return (
@@ -188,12 +236,16 @@ const HomeHeroCarousel = () => {
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
+          onMouseEnter={() => setIsPaused(true)}
         >
           <div
-            className="flex transition-transform duration-500 ease-in-out items-center"
-            style={{ transform: `translateX(-${currentFrame * 100}%)` }}
+            className={`flex items-center ${
+              isTransitioning ? "transition-transform duration-500 ease-in-out" : ""
+            }`}
+            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            onTransitionEnd={handleTransitionEnd}
           >
-            {activeFrames.map((pair, frameIdx) => (
+            {extendedFrames.map((pair, frameIdx) => (
               <div
                 key={frameIdx}
                 className="w-full shrink-0 flex-none px-2 py-4 md:py-6 flex items-center justify-center"
@@ -207,7 +259,7 @@ const HomeHeroCarousel = () => {
                 >
                   {pair.map((item, idx) => (
                     <div
-                      key={item.id}
+                      key={`${item.id}-${frameIdx}-${idx}`}
                       className={`w-full flex justify-center transform transition-transform ${
                         pair.length > 1
                           ? idx === 0

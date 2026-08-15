@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Loader = () => {
+const Ghost = () => {
   return (
     <div className="ghost-loader-wrapper">
       <div className="ghost">
@@ -201,4 +201,4 @@ const Loader = () => {
   );
 };
 
-export default Loader;
+export default Ghost;

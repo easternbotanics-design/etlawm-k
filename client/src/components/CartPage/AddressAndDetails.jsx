@@ -412,10 +412,10 @@ function AddressAndDetails({
 
   return (
     <section className="min-w-0">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2.5">
         <div>
           <h2
-            className="text-xl font-semibold"
+            className="text-lg font-semibold"
             style={{
               color: colours.text,
               fontFamily: fonts.primary,
@@ -425,7 +425,7 @@ function AddressAndDetails({
           </h2>
 
           <p
-            className="mt-1 text-sm opacity-55"
+            className="mt-0.5 text-xs opacity-55"
             style={{
               color: colours.text,
               fontFamily: fonts.secondary,
@@ -438,20 +438,20 @@ function AddressAndDetails({
         <button
           type="button"
           onClick={onBack}
-          className="flex cursor-pointer items-center gap-2 text-sm font-semibold opacity-60 transition-opacity hover:opacity-100"
+          className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold opacity-60 transition-opacity hover:opacity-100"
           style={{
             color: colours.text,
             fontFamily: fonts.secondary,
           }}
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={14} />
           Back to cart
         </button>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-2xl border p-5 sm:p-6"
+        className="rounded-xl border p-4 sm:p-5"
         style={{
           borderColor: colours.border,
           backgroundColor: colours.background,

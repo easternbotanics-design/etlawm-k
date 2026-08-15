@@ -13,24 +13,24 @@ function CartProductCard({
 
   return (
     <article
-      className="relative flex gap-4 border-b px-4 py-5 last:border-b-0 sm:px-5"
+      className="relative flex gap-3 border-b px-3.5 py-3 last:border-b-0 sm:gap-4 sm:px-4"
       style={{
         borderColor: colours.border,
         backgroundColor: colours.background,
       }}
     >
-      <label className="mt-1 flex shrink-0 cursor-pointer items-start">
+      <label className="mt-0.5 flex shrink-0 cursor-pointer items-start">
         <input
           type="checkbox"
           checked={item.selected}
           onChange={() => onToggleSelected(item.cartItemId)}
-          className="h-4 w-4 cursor-pointer accent-black"
+          className="h-3.5 w-3.5 cursor-pointer accent-black"
           aria-label={`Select ${item.name}`}
         />
       </label>
 
       <div
-        className="h-28 w-24 shrink-0 overflow-hidden rounded-xl sm:h-32 sm:w-28"
+        className="h-20 w-18 shrink-0 overflow-hidden rounded-lg sm:h-22 sm:w-20"
         style={{
           backgroundColor: colours.primary,
         }}
@@ -38,15 +38,15 @@ function CartProductCard({
         <img
           src={item.image}
           alt={item.name}
-          className="h-full w-full object-contain p-2"
+          className="h-full w-full object-cover"
         />
       </div>
 
       <div className="min-w-0 flex flex-1 flex-col justify-between">
-        <div className="pr-8">
+        <div className="pr-6">
           {item.category && (
             <p
-              className="mb-1 text-xs font-medium uppercase tracking-[0.12em]"
+              className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.1em]"
               style={{
                 color: colours.accent,
                 fontFamily: fonts.secondary,
@@ -57,7 +57,7 @@ function CartProductCard({
           )}
 
           <h3
-            className="line-clamp-2 text-base font-semibold sm:text-lg"
+            className="line-clamp-1 text-sm font-semibold sm:text-base"
             style={{
               color: colours.text,
               fontFamily: fonts.primary,
@@ -68,7 +68,7 @@ function CartProductCard({
 
           {size && (
             <p
-              className="mt-1 text-sm opacity-60"
+              className="mt-0.5 text-xs opacity-60"
               style={{
                 color: colours.text,
                 fontFamily: fonts.secondary,
@@ -80,7 +80,7 @@ function CartProductCard({
 
           {item.stockQty > 0 && item.stockQty <= 5 && (
             <p
-              className="mt-2 text-xs font-medium"
+              className="mt-1 text-[11px] font-medium"
               style={{
                 color: colours.accent,
                 fontFamily: fonts.secondary,
@@ -91,10 +91,10 @@ function CartProductCard({
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="mt-2.5 flex flex-wrap items-end justify-between gap-2">
           <div>
             <p
-              className="text-base font-semibold"
+              className="text-sm font-semibold"
               style={{
                 color: colours.text,
                 fontFamily: fonts.primary,
@@ -105,7 +105,7 @@ function CartProductCard({
 
             {item.originalPrice && item.originalPrice > item.price && (
               <p
-                className="text-xs line-through opacity-45"
+                className="text-[11px] line-through opacity-45"
                 style={{
                   color: colours.text,
                   fontFamily: fonts.secondary,
@@ -117,7 +117,7 @@ function CartProductCard({
           </div>
 
           <div
-            className="flex h-9 items-center overflow-hidden rounded-full border"
+            className="flex h-7 items-center overflow-hidden rounded-lg border"
             style={{
               borderColor: colours.border,
               backgroundColor: colours.background,
@@ -127,14 +127,14 @@ function CartProductCard({
               type="button"
               onClick={() => onDecrease(item)}
               disabled={isUpdating}
-              className="flex h-full w-9 cursor-pointer items-center justify-center transition-opacity hover:opacity-60 disabled:cursor-not-allowed disabled:opacity-30"
+              className="flex h-full w-7 cursor-pointer items-center justify-center transition-opacity hover:opacity-60 disabled:cursor-not-allowed disabled:opacity-30"
               aria-label={`Decrease ${item.name} quantity`}
             >
-              <Minus size={14} />
+              <Minus size={12} />
             </button>
 
             <span
-              className="min-w-8 text-center text-sm font-medium"
+              className="min-w-6 text-center text-xs font-medium"
               style={{
                 color: colours.text,
                 fontFamily: fonts.secondary,
@@ -147,10 +147,10 @@ function CartProductCard({
               type="button"
               onClick={() => onIncrease(item)}
               disabled={isUpdating || item.quantity >= item.stockQty}
-              className="flex h-full w-9 cursor-pointer items-center justify-center transition-opacity hover:opacity-60 disabled:cursor-not-allowed disabled:opacity-30"
+              className="flex h-full w-7 cursor-pointer items-center justify-center transition-opacity hover:opacity-60 disabled:cursor-not-allowed disabled:opacity-30"
               aria-label={`Increase ${item.name} quantity`}
             >
-              <Plus size={14} />
+              <Plus size={12} />
             </button>
           </div>
         </div>
@@ -160,13 +160,13 @@ function CartProductCard({
         type="button"
         onClick={() => onRemove(item.cartItemId)}
         disabled={isUpdating}
-        className="absolute right-4 top-5 cursor-pointer opacity-45 transition-opacity hover:opacity-100 disabled:cursor-not-allowed"
+        className="absolute right-3 top-3.5 cursor-pointer opacity-45 transition-opacity hover:opacity-100 disabled:cursor-not-allowed"
         style={{
           color: colours.text,
         }}
         aria-label={`Remove ${item.name}`}
       >
-        <Trash2 size={17} />
+        <Trash2 size={15} />
       </button>
     </article>
   );

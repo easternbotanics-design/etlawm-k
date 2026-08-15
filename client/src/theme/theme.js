@@ -33,4 +33,5 @@ export const fonts = {
   number: "'UnifrakturMaguntia'",
   // title: "'Poltawski Nowy'",
   title: "'Yeseva One'",
+  mono: "'IBM Plex Mono'"
 };

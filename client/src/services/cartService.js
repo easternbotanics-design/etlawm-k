@@ -111,15 +111,33 @@ function normalizeCartItem(raw) {
         raw.image_url,
     ),
 
-    price:
-      Number(product.price ?? raw.price) || 0,
+    price: Number(product.price ?? raw.price) || 0,
 
-    originalPrice:
-      product.original_price != null
-        ? Number(product.original_price)
-        : raw.original_price != null
-          ? Number(raw.original_price)
-          : null,
+    originalPrice: (() => {
+      const p = Number(product.price ?? raw.price) || 0;
+      const rawOrig =
+        product.original_price != null && !isNaN(Number(product.original_price))
+          ? Number(product.original_price)
+          : raw.original_price != null && !isNaN(Number(raw.original_price))
+            ? Number(raw.original_price)
+            : null;
+
+      if (rawOrig && rawOrig > p) return rawOrig;
+
+      const dVal = Number(product.discount_value ?? raw.discount_value ?? 0);
+      const dType = product.discount_type ?? raw.discount_type ?? "";
+
+      if (dVal > 0 && p > 0) {
+        if (dType === "percentage" && dVal < 100) {
+          const computed = Math.round((p * 100) / (100 - dVal));
+          if (computed > p) return computed;
+        } else if (dType === "fixed") {
+          const computed = p + dVal;
+          if (computed > p) return computed;
+        }
+      }
+      return null;
+    })(),
 
     quantity: Number(raw.quantity) || 1,
 

@@ -23,7 +23,7 @@ import Loader from './components/LoaderHamster.jsx';
 import FloatingCart from './components/FloatingCart.jsx';
 import Science from './pages/Science.jsx';
 import usePageTracking from './hooks/usePageTracking.js';
-// import Scrap from './Scrap.jsx';
+import NotFoundPage from './pages/NotFoundPage.jsx';
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -63,9 +63,8 @@ function AppRoutes() {
     <>
       <ScrollToTop />
       <Routes>
-        
+
         <Route path="/" element={<Home />} />
-        {/* <Route path="/scrap" element={<Scrap />} />*/}
         {/* <Route path="/login"                    element={<Login />} />*/}
         <Route path="/login" element={<Login />} />
         {/* Collection routes */}
@@ -133,6 +132,7 @@ function AppRoutes() {
             </AdminRoute>
           }
         />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <FloatingCart />
     </>

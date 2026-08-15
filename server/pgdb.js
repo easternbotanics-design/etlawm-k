@@ -1289,7 +1289,7 @@ const cartItems = {
 
     findByCart: (cart_id) =>
         query(
-            `SELECT ci.*, p.name AS product_name, p.price, p.stock_qty,
+            `SELECT ci.*, p.name AS product_name, p.price, p.original_price, p.discount_value, p.discount_type, p.stock_qty,
                     (SELECT image_url FROM product_images
                      WHERE product_id = ci.product_id AND is_primary = true LIMIT 1) AS image_url
              FROM cart_items ci

@@ -5,7 +5,7 @@ function CheckoutSteps({ steps, activeStep, onStepChange }) {
   const activeIndex = steps.findIndex((step) => step.key === activeStep);
 
   return (
-    <div className="mx-auto mb-6 max-w-2xl">
+    <div className="mx-auto mb-4 max-w-xl">
       <div className="flex items-start justify-center">
         {steps.map((step, index) => {
           const isActive = index === activeIndex;
@@ -18,10 +18,10 @@ function CheckoutSteps({ steps, activeStep, onStepChange }) {
                 type="button"
                 disabled={!isClickable}
                 onClick={() => onStepChange(step.key)}
-                className="flex w-28 flex-col items-center disabled:cursor-not-allowed"
+                className="flex w-24 flex-col items-center disabled:cursor-not-allowed"
               >
                 <span
-                  className="flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold transition-all"
+                  className="flex h-6 w-6 items-center justify-center rounded-full border text-[11px] font-semibold transition-all"
                   style={{
                     borderColor:
                       isActive || isCompleted
@@ -43,7 +43,7 @@ function CheckoutSteps({ steps, activeStep, onStepChange }) {
                 </span>
 
                 <span
-                  className="mt-2 text-center text-xs font-semibold sm:text-sm"
+                  className="mt-1.5 text-center text-xs font-medium"
                   style={{
                     color: colours.text,
                     fontFamily: fonts.secondary,
@@ -56,7 +56,7 @@ function CheckoutSteps({ steps, activeStep, onStepChange }) {
 
               {index < steps.length - 1 && (
                 <div
-                  className="mt-[13px] h-px w-16 sm:w-28"
+                  className="mt-[11px] h-px w-10 sm:w-16"
                   style={{
                     backgroundColor:
                       index < activeIndex ? colours.text : colours.border,

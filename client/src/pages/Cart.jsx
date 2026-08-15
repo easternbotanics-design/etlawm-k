@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import CartItemsSection from "../components/CartPage/CartItemsSection";
 import CartSummary from "../components/CartPage/CartSummary";
 import CheckoutSteps from "../components/CartPage/CheckoutSteps";
@@ -88,6 +88,10 @@ function Cart() {
   }, [stepParam, user]);
 
   const [items, setItems] = useState([]);
+  const syncedItemsRef = useRef(new Map());
+  const syncedItemIdsRef = useRef(new Set());
+  const [isSyncingCart, setIsSyncingCart] = useState(false);
+
   const [coupon, setCoupon] = useState(null);
   const [couponCode, setCouponCode] = useState("");
   const [addressDetails, setAddressDetails] = useState(
@@ -370,12 +374,21 @@ function Cart() {
 
       const cart = await getCart();
 
-      setItems(
-        cart.items.map((item) => ({
-          ...item,
-          selected: item.selected ?? true,
-        })),
-      );
+      const normalizedItems = cart.items.map((item) => ({
+        ...item,
+        selected: item.selected ?? true,
+      }));
+
+      setItems(normalizedItems);
+
+      const initialMap = new Map();
+      const initialIds = new Set();
+      normalizedItems.forEach((item) => {
+        initialMap.set(item.cartItemId, item.quantity);
+        initialIds.add(item.cartItemId);
+      });
+      syncedItemsRef.current = initialMap;
+      syncedItemIdsRef.current = initialIds;
 
       if (cart.coupon) {
         setCoupon({
@@ -494,7 +507,9 @@ function Cart() {
 
   const checkoutButtonLabel =
     checkoutStep === "cart"
-      ? "Pick address"
+      ? isSyncingCart
+        ? "Updating cart..."
+        : "Pick address"
       : checkoutStep === "address"
         ? isCreatingOrder
           ? "Creating order"
@@ -504,6 +519,7 @@ function Cart() {
           : "Place order";
 
   const checkoutButtonDisabled =
+    isSyncingCart ||
     isCreatingOrder ||
     isPlacingOrder ||
     selectedItems.length === 0 ||
@@ -539,17 +555,15 @@ function Cart() {
     );
   }
 
-  async function changeQuantity(item, nextQuantity) {
+  function changeQuantity(item, nextQuantity) {
     if (nextQuantity < 1) {
-      await handleRemoveItem(item.cartItemId);
+      handleRemoveItem(item.cartItemId);
       return;
     }
 
     if (item.stockQty > 0 && nextQuantity > item.stockQty) {
       return;
     }
-
-    const previousItems = items;
 
     setItems((currentItems) =>
       currentItems.map((currentItem) =>
@@ -561,22 +575,6 @@ function Cart() {
           : currentItem,
       ),
     );
-
-    try {
-      setUpdatingItemId(item.cartItemId);
-
-      await updateCartItemQuantity(
-        item.cartItemId,
-        nextQuantity,
-      );
-
-      window.dispatchEvent(new Event("cart-updated"));
-    } catch (error) {
-      setItems(previousItems);
-      setPageError(error.message);
-    } finally {
-      setUpdatingItemId(null);
-    }
   }
 
   function handleIncrease(item) {
@@ -587,26 +585,57 @@ function Cart() {
     changeQuantity(item, item.quantity - 1);
   }
 
-  async function handleRemoveItem(cartItemId) {
-    const previousItems = items;
-
+  function handleRemoveItem(cartItemId) {
     setItems((currentItems) =>
       currentItems.filter(
         (item) => item.cartItemId !== cartItemId,
       ),
     );
+  }
 
+  async function syncCartWithDatabase() {
     try {
-      setUpdatingItemId(cartItemId);
+      setIsSyncingCart(true);
+      setPageError("");
 
-      await removeCartItem(cartItemId);
+      const promises = [];
+      const currentItemsMap = new Map();
 
-      window.dispatchEvent(new Event("cart-updated"));
+      items.forEach((item) => {
+        currentItemsMap.set(item.cartItemId, item.quantity);
+        const originalQty = syncedItemsRef.current.get(item.cartItemId);
+        if (originalQty === undefined || originalQty !== item.quantity) {
+          promises.push(updateCartItemQuantity(item.cartItemId, item.quantity));
+        }
+      });
+
+      // Process removed items
+      syncedItemIdsRef.current.forEach((originalId) => {
+        if (!currentItemsMap.has(originalId)) {
+          promises.push(removeCartItem(originalId));
+        }
+      });
+
+      if (promises.length > 0) {
+        await Promise.all(promises);
+
+        const updatedMap = new Map();
+        const updatedIds = new Set();
+        items.forEach((item) => {
+          updatedMap.set(item.cartItemId, item.quantity);
+          updatedIds.add(item.cartItemId);
+        });
+        syncedItemsRef.current = updatedMap;
+        syncedItemIdsRef.current = updatedIds;
+
+        window.dispatchEvent(new Event("cart-updated"));
+      }
+      return true;
     } catch (error) {
-      setItems(previousItems);
-      setPageError(error.message);
+      setPageError(error.message || "Failed to update cart in database.");
+      return false;
     } finally {
-      setUpdatingItemId(null);
+      setIsSyncingCart(false);
     }
   }
 
@@ -617,20 +646,9 @@ function Cart() {
 
     if (selectedIds.length === 0) return;
 
-    const previousItems = items;
-
     setItems((currentItems) =>
       currentItems.filter((item) => !item.selected),
     );
-
-    try {
-      await removeSelectedCartItems(selectedIds);
-
-      window.dispatchEvent(new Event("cart-updated"));
-    } catch (error) {
-      setItems(previousItems);
-      setPageError(error.message);
-    }
   }
 
   async function handleApplyCoupon(event) {
@@ -701,7 +719,7 @@ function Cart() {
     );
   }
 
-  function handleStepChange(nextStep) {
+  async function handleStepChange(nextStep) {
     if (nextStep === "address" && selectedItems.length === 0) {
       setPageError("Select at least one item before picking an address.");
       return;
@@ -715,6 +733,11 @@ function Cart() {
     if (nextStep !== "cart" && !user) {
       setShowLoginPrompt(true);
       return;
+    }
+
+    if (checkoutStep === "cart" && nextStep === "address") {
+      const synced = await syncCartWithDatabase();
+      if (!synced) return;
     }
 
     setPageError("");
@@ -732,6 +755,9 @@ function Cart() {
         setShowLoginPrompt(true);
         return;
       }
+
+      const synced = await syncCartWithDatabase();
+      if (!synced) return;
 
       saveSelectedItemsForCheckout();
       setPageError("");
@@ -783,7 +809,7 @@ function Cart() {
       <Navbar />
 
       <main
-        className="min-h-screen px-4 pb-8 pt-28 sm:px-6 lg:px-10 lg:pb-12 lg:pt-32"
+        className="min-h-screen px-4 pb-6 pt-20 sm:px-6 lg:px-8 lg:pb-10 lg:pt-24"
         style={{
           backgroundColor: colours.subBackground,
         }}
@@ -798,7 +824,7 @@ function Cart() {
 
           {pageError && (
             <div
-              className="mb-5 rounded-xl border px-4 py-3 text-sm"
+              className="mb-4 rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm"
               style={{
                 borderColor: colours.accent,
                 color: colours.text,
@@ -810,7 +836,7 @@ function Cart() {
             </div>
           )}
 
-          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.85fr)] xl:gap-12">
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)] xl:gap-8">
             {checkoutStep === "cart" && (
               <CartItemsSection
                 items={items}
@@ -865,6 +891,7 @@ function Cart() {
               checkoutButtonLabel={checkoutButtonLabel}
               checkoutDisabled={checkoutButtonDisabled}
               checkoutHelperText={checkoutHelperText}
+              checkoutStep={checkoutStep}
             />
           </div>
         </div>
@@ -1075,11 +1102,11 @@ function Cart() {
                         className="h-4 w-4 shrink-0 cursor-pointer rounded border-stone-300 text-stone-900 focus:ring-stone-900"
                       />
 
-                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border bg-white p-1" style={{ borderColor: colours.border }}>
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border bg-white" style={{ borderColor: colours.border }}>
                         <img
                           src={item.image}
                           alt={item.name}
-                          className="h-full w-full object-contain"
+                          className="h-full w-full object-cover"
                         />
                       </div>
 
@@ -1293,7 +1320,7 @@ function CheckoutReview({
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="h-full w-full object-contain p-2"
+                    className="h-full w-full object-cover"
                   />
                 </div>
 
