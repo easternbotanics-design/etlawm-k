@@ -373,8 +373,8 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
   details.push({
     title: "Additional Information",
     body: product.sizeValue && product.sizeUnit
-      ? `Size: ${product.sizeValue} ${product.sizeUnit}\nShips in 2–4 business days. Free returns within 30 days.`
-      : "Ships in 2–4 business days. Free returns within 30 days.",
+      ? `Size: ${product.sizeValue} ${product.sizeUnit}\nShips in 2–4 business days.`
+      : "Ships in 2–4 business days.",
     needsRitual: false,
   });
 
