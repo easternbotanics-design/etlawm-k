@@ -9,12 +9,12 @@ if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder('ipv4first');
 }
 
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const poolConfig = process.env.DATABASE_URL
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+const poolConfig = process.env.DATABASE_URL && process.env.DATABASE_URL.trim() !== ''
   ? {
       connectionString: process.env.DATABASE_URL,
       ssl: {

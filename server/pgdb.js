@@ -197,6 +197,158 @@ const cmsReviews = {
         ),
 };
 
+const cmsFaqs = {
+    create: ({
+        product_name,
+        product_link,
+        question,
+        answer,
+        status = "published",
+        sort_order = 0,
+        is_active = true,
+    }) =>
+        query(
+            `
+      INSERT INTO cms_faqs (
+        product_name,
+        product_link,
+        question,
+        answer,
+        status,
+        sort_order,
+        is_active
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+      `,
+            [
+                product_name,
+                product_link ?? null,
+                question,
+                answer,
+                status,
+                sort_order,
+                is_active,
+            ]
+        ),
+
+    findById: (id) =>
+        query(
+            `
+      SELECT *
+      FROM cms_faqs
+      WHERE id = $1
+      LIMIT 1
+      `,
+            [id]
+        ),
+
+    findAllAdmin: () =>
+        query(
+            `
+      SELECT *
+      FROM cms_faqs
+      ORDER BY created_at DESC
+      `
+        ),
+
+    findPublished: () =>
+        query(
+            `
+      SELECT *
+      FROM cms_faqs
+      WHERE status = 'published'
+        AND is_active = true
+      ORDER BY sort_order ASC, created_at DESC
+      `
+        ),
+
+    findPublishedByProduct: (value) => {
+        const normalizedSpace = (value || "").replace(/-/g, ' ');
+        return query(
+            `
+      SELECT *
+      FROM cms_faqs
+      WHERE status = 'published'
+        AND is_active = true
+        AND (
+          LOWER(product_name) = LOWER($1)
+          OR LOWER(product_name) = LOWER($2)
+          OR product_link ILIKE '%' || $1 || '%'
+        )
+      ORDER BY sort_order ASC, created_at DESC
+      `,
+            [value, normalizedSpace]
+        );
+    },
+
+    findByProductNameOrSlug: (value) => {
+        const normalizedSpace = (value || "").replace(/-/g, ' ');
+        return query(
+            `
+      SELECT *
+      FROM cms_faqs
+      WHERE LOWER(product_name) = LOWER($1)
+         OR LOWER(product_name) = LOWER($2)
+         OR product_link ILIKE '%' || $1 || '%'
+      ORDER BY created_at DESC
+      `,
+            [value, normalizedSpace]
+        );
+    },
+
+    update: (id, fields) => {
+        const allowed = [
+            "product_name",
+            "product_link",
+            "question",
+            "answer",
+            "status",
+            "sort_order",
+            "is_active",
+        ];
+
+        const sets = [];
+        const vals = [];
+        let i = 1;
+
+        for (const key of allowed) {
+            if (fields[key] !== undefined) {
+                sets.push(`${key} = $${i++}`);
+                vals.push(fields[key]);
+            }
+        }
+
+        if (!sets.length) {
+            throw new Error("No valid fields to update");
+        }
+
+        sets.push("updated_at = now()");
+        vals.push(id);
+
+        return query(
+            `
+      UPDATE cms_faqs
+      SET ${sets.join(", ")}
+      WHERE id = $${i}
+      RETURNING *
+      `,
+            vals
+        );
+    },
+
+    delete: (id) =>
+        query(
+            `
+      DELETE FROM cms_faqs
+      WHERE id = $1
+      RETURNING *
+      `,
+            [id]
+        ),
+};
+
+
 const cmsIngredients = {
     create: ({
         name,
@@ -885,9 +1037,32 @@ const products = {
             return query(
                 `SELECT p.*, c.name AS category_name,
                         (SELECT image_url FROM product_images
-                         WHERE product_id = p.id AND is_primary = true LIMIT 1) AS primary_image
+                         WHERE product_id = p.id AND is_primary = true LIMIT 1) AS primary_image,
+                        COALESCE(r.total_reviews, 0) AS total,
+                        COALESCE(r.avg_rating, 0) AS avg_rating
                  FROM products p
                  LEFT JOIN categories c ON c.id = p.category_id
+                 LEFT JOIN LATERAL (
+                   SELECT 
+                     COUNT(*)::int AS total_reviews,
+                     ROUND(AVG(rating_val)::numeric, 1) AS avg_rating
+                   FROM (
+                     SELECT rating::numeric AS rating_val
+                     FROM reviews
+                     WHERE product_id = p.id
+                     UNION ALL
+                     SELECT rating::numeric AS rating_val
+                     FROM cms_reviews
+                     WHERE status = 'published' 
+                       AND is_active = true
+                       AND (
+                         LOWER(product_name) = LOWER(p.name)
+                         OR LOWER(product_name) = LOWER(p.slug)
+                         OR LOWER(product_name) = LOWER(REPLACE(p.slug, '-', ' '))
+                         OR product_link ILIKE '%' || p.slug || '%'
+                       )
+                   ) combined_reviews
+                 ) r ON true
                  WHERE p.category_id = $1 AND ${whereClause}
                  ORDER BY p.created_at DESC LIMIT $2 OFFSET $3`,
                 [category_id, limit, offset]
@@ -897,9 +1072,32 @@ const products = {
         return query(
             `SELECT p.*, c.name AS category_name,
                     (SELECT image_url FROM product_images
-                     WHERE product_id = p.id AND is_primary = true LIMIT 1) AS primary_image
+                     WHERE product_id = p.id AND is_primary = true LIMIT 1) AS primary_image,
+                    COALESCE(r.total_reviews, 0) AS total,
+                    COALESCE(r.avg_rating, 0) AS avg_rating
              FROM products p
              LEFT JOIN categories c ON c.id = p.category_id
+             LEFT JOIN LATERAL (
+               SELECT 
+                 COUNT(*)::int AS total_reviews,
+                 ROUND(AVG(rating_val)::numeric, 1) AS avg_rating
+               FROM (
+                 SELECT rating::numeric AS rating_val
+                 FROM reviews
+                 WHERE product_id = p.id
+                 UNION ALL
+                 SELECT rating::numeric AS rating_val
+                 FROM cms_reviews
+                 WHERE status = 'published' 
+                   AND is_active = true
+                   AND (
+                     LOWER(product_name) = LOWER(p.name)
+                     OR LOWER(product_name) = LOWER(p.slug)
+                     OR LOWER(product_name) = LOWER(REPLACE(p.slug, '-', ' '))
+                     OR product_link ILIKE '%' || p.slug || '%'
+                   )
+               ) combined_reviews
+             ) r ON true
              WHERE ${whereClause}
              ORDER BY p.created_at DESC LIMIT $1 OFFSET $2`,
             [limit, offset]
@@ -908,9 +1106,32 @@ const products = {
 
     findById: (id) =>
         query(
-            `SELECT p.*, c.name AS category_name
+            `SELECT p.*, c.name AS category_name,
+                    COALESCE(r.total_reviews, 0) AS total,
+                    COALESCE(r.avg_rating, 0) AS avg_rating
              FROM products p
              LEFT JOIN categories c ON c.id = p.category_id
+             LEFT JOIN LATERAL (
+               SELECT 
+                 COUNT(*)::int AS total_reviews,
+                 ROUND(AVG(rating_val)::numeric, 1) AS avg_rating
+               FROM (
+                 SELECT rating::numeric AS rating_val
+                 FROM reviews
+                 WHERE product_id = p.id
+                 UNION ALL
+                 SELECT rating::numeric AS rating_val
+                 FROM cms_reviews
+                 WHERE status = 'published' 
+                   AND is_active = true
+                   AND (
+                     LOWER(product_name) = LOWER(p.name)
+                     OR LOWER(product_name) = LOWER(p.slug)
+                     OR LOWER(product_name) = LOWER(REPLACE(p.slug, '-', ' '))
+                     OR product_link ILIKE '%' || p.slug || '%'
+                   )
+               ) combined_reviews
+             ) r ON true
              WHERE p.id = $1 LIMIT 1`,
             [id]
         ),
@@ -919,9 +1140,32 @@ const products = {
         query(
             `SELECT p.*, c.name AS category_name,
                     (SELECT image_url FROM product_images
-                     WHERE product_id = p.id AND is_primary = true LIMIT 1) AS primary_image
+                     WHERE product_id = p.id AND is_primary = true LIMIT 1) AS primary_image,
+                    COALESCE(r.total_reviews, 0) AS total,
+                    COALESCE(r.avg_rating, 0) AS avg_rating
              FROM products p
              LEFT JOIN categories c ON c.id = p.category_id
+             LEFT JOIN LATERAL (
+               SELECT 
+                 COUNT(*)::int AS total_reviews,
+                 ROUND(AVG(rating_val)::numeric, 1) AS avg_rating
+               FROM (
+                 SELECT rating::numeric AS rating_val
+                 FROM reviews
+                 WHERE product_id = p.id
+                 UNION ALL
+                 SELECT rating::numeric AS rating_val
+                 FROM cms_reviews
+                 WHERE status = 'published' 
+                   AND is_active = true
+                   AND (
+                     LOWER(product_name) = LOWER(p.name)
+                     OR LOWER(product_name) = LOWER(p.slug)
+                     OR LOWER(product_name) = LOWER(REPLACE(p.slug, '-', ' '))
+                     OR product_link ILIKE '%' || p.slug || '%'
+                   )
+               ) combined_reviews
+             ) r ON true
              WHERE p.slug = $1 LIMIT 1`,
             [slug]
         ),
@@ -1657,8 +1901,30 @@ const reviews = {
 
     avgRating: (product_id) =>
         query(
-            `SELECT ROUND(AVG(rating)::NUMERIC, 1) AS avg_rating, COUNT(*) AS total
-             FROM reviews WHERE product_id = $1`,
+            `SELECT COALESCE(r.total_reviews, 0) AS total, COALESCE(r.avg_rating, 0) AS avg_rating
+             FROM products p
+             LEFT JOIN LATERAL (
+               SELECT 
+                 COUNT(*)::int AS total_reviews,
+                 ROUND(AVG(rating_val)::numeric, 1) AS avg_rating
+               FROM (
+                 SELECT rating::numeric AS rating_val
+                 FROM reviews
+                 WHERE product_id = p.id
+                 UNION ALL
+                 SELECT rating::numeric AS rating_val
+                 FROM cms_reviews
+                 WHERE status = 'published' 
+                   AND is_active = true
+                   AND (
+                     LOWER(product_name) = LOWER(p.name)
+                     OR LOWER(product_name) = LOWER(p.slug)
+                     OR LOWER(product_name) = LOWER(REPLACE(p.slug, '-', ' '))
+                     OR product_link ILIKE '%' || p.slug || '%'
+                   )
+               ) combined_reviews
+             ) r ON true
+             WHERE p.id = $1`,
             [product_id]
         ),
 
@@ -2119,6 +2385,7 @@ const db = {
     cmsScience,
     rituals,
     cmsReviews,
+    cmsFaqs,
     cmsIngredients,
     productIngredients,
     pool,

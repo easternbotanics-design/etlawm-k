@@ -19,6 +19,7 @@ import earlyBirdRouter from './routes/earlyBirdRoute.js';
 import ritualRouter from './routes/ritualRoute.js';
 import scienceRouter from './routes/scienceRoute.js';
 import analyticsRouter from './routes/analyticsRoute.js';
+import faqRouter from './routes/faqRoute.js';
 
 
 const app = express();
@@ -89,6 +90,7 @@ app.use("/api/early-bird-discount", earlyBirdRouter);
 app.use("/api/rituals", ritualRouter);
 app.use("/api/science", scienceRouter);
 app.use("/api/analytics", analyticsRouter);
+app.use("/api/faqs", faqRouter);
 
 
 

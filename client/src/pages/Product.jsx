@@ -9,6 +9,7 @@ import ProductPurchasePanel from "../components/ProductsPage/ProductPurchasePane
 import ProductDetailsSection from "../components/ProductsPage/ProductDetailsSection.jsx";
 import ReviewGrid from "../components/ProductPage/ReviewPanel.jsx";
 import SuggestedProducts from "../components/ProductPage/SuggestedProducts.jsx";
+import ProductFAQSection from "../components/ProductPage/ProductFAQSection.jsx";
 import { ArrowLeft } from "lucide-react";
 
 const API = import.meta.env.VITE_SERVER_API;
@@ -344,6 +345,7 @@ export default function Product() {
           productSize={productSize}
           code={code}
         />
+        <ProductFAQSection product={product} />
         <ReviewGrid product={product} />
         <SuggestedProducts currentSlug={slug} currentProductId={product?.id} category={category} />
       </main>

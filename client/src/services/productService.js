@@ -108,8 +108,18 @@ function normalizeProduct(raw) {
         seoDescription: raw.seo_description ?? '',
     
         // Ratings
-        rating: raw.avg_rating ? Number(raw.avg_rating) : 0,
-        reviews: raw.total ? Number(raw.total) : 0,
+        rating: raw.avg_rating !== undefined && raw.avg_rating !== null
+            ? Number(raw.avg_rating)
+            : raw.rating !== undefined && raw.rating !== null
+                ? Number(raw.rating)
+                : 0,
+        reviews: raw.total !== undefined && raw.total !== null
+            ? Number(raw.total)
+            : raw.reviews_count !== undefined && raw.reviews_count !== null
+                ? Number(raw.reviews_count)
+                : raw.reviews !== undefined && raw.reviews !== null
+                    ? Number(raw.reviews)
+                    : 0,
     
         // Stock
         stockQty: raw.stock_qty ?? 0,

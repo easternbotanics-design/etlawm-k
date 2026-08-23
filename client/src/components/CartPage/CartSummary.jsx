@@ -301,7 +301,7 @@ function CartSummary({
 
         {(checkoutStep === "checkout" || checkoutButtonLabel.toLowerCase().includes("place")) && (
           <div
-            className="flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-xs font-semibold tracking-wide"
+            className="flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2.5 text-xs font-semibold tracking-wide"
             style={{ fontFamily: fonts.secondary }}
           >
             <ShieldCheck size={15} className="text-black-600 shrink-0" />

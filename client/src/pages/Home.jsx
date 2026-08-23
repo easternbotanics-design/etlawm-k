@@ -20,10 +20,10 @@ const Home = () => {
 
       <main>
         <HomeHero />
+        <ProductPanel />
         <HomeHeroCarousel />
         {/* <HomeDirections />*/}
         {/* <HomePathways />*/}
-        <ProductPanel />
         <HomePrinciples />
         <Philosophy />
         {/* <HomeInsights />*/}

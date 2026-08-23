@@ -30,8 +30,9 @@ export default function ProductPurchasePanel({
   added,
   isUnavailable,
 }) {
-  const numReviews = Number(product?.reviews || 0);
-  const rating = numReviews > 0 ? Number(product?.rating || 0) : 0;
+  const numReviews = Number(product?.reviews ?? product?.total ?? 0);
+  const rating = numReviews > 0 ? Number(product?.rating ?? product?.avg_rating ?? 0) : 0;
+  const formattedRating = rating > 0 ? (Number.isInteger(rating) ? rating.toFixed(1) : Number(rating).toFixed(1)) : "0.0";
   const productId = getProductId(product);
   const [isAdding, setIsAdding] = useState(false);
   const [localAdded, setLocalAdded] = useState(false);
@@ -139,7 +140,7 @@ export default function ProductPurchasePanel({
                 width="15"
                 height="15"
                 viewBox="0 0 24 24"
-                fill={star <= Math.round(rating) ? "#c8a96a" : "none"}
+                fill={numReviews > 0 && star <= Math.round(rating) ? "#c8a96a" : "none"}
                 stroke="#c8a96a"
                 strokeWidth="1.5"
               >
@@ -153,7 +154,7 @@ export default function ProductPurchasePanel({
             style={{ color: colours.mutedText, fontFamily: fonts.secondary }}
           >
             {numReviews > 0 && rating > 0
-              ? `${rating} (${numReviews} reviews)`
+              ? `${formattedRating} (${numReviews} ${numReviews === 1 ? "review" : "reviews"})`
               : "No reviews yet"}
           </span>
         </div>

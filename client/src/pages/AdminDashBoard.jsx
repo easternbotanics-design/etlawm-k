@@ -5,6 +5,9 @@ import CMSHomepageReviews from "../components/AdminPanel/AdminContent/CMSHomepag
 import ReviewContent from "../components/AdminPanel/AdminContent/CMSReview.jsx";
 import CMSReviewForm from "../components/AdminPanel/AdminContent/CMSReviewForm.jsx";
 import ProductReviews from "../components/AdminPanel/AdminContent/ProductReviews.jsx";
+import CMSFaq from "../components/AdminPanel/AdminContent/CMSFaq.jsx";
+import CMSFaqForm from "../components/AdminPanel/AdminContent/CMSFaqForm.jsx";
+import ProductFaqs from "../components/AdminPanel/AdminContent/ProductFaqs.jsx";
 import AdminCollection from "../components/AdminPanel/AdminCollection/AdminCollection.jsx";
 import AdminProductForm from "../components/AdminPanel/AdminCollection/CMSProductForm.jsx";
 import AdminSidebar from "../components/AdminPanel/AdminSidebar.jsx";
@@ -507,6 +510,10 @@ const AdminDashBoard = () => {
             <Route path="/content/reviews/add-review" element={<CMSReviewForm />} />
             <Route path="/content/reviews/edit/:id" element={<CMSReviewForm />} />
             <Route path="/content/reviews/:slug" element={<ProductReviews />} />
+            <Route path="/content/faqs" element={<CMSFaq />} />
+            <Route path="/content/faqs/add-faq" element={<CMSFaqForm />} />
+            <Route path="/content/faqs/edit/:id" element={<CMSFaqForm />} />
+            <Route path="/content/faqs/:slug" element={<ProductFaqs />} />
             <Route path="/content/ingredients" element={<CMSIngredients />} />
             <Route path="/content/ingredients/add" element={<CMSIngredientForm />} />
             <Route path="/content/ingredients/edit/:id" element={<CMSIngredientForm />} />

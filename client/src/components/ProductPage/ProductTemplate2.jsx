@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Minus, Plus, Heart, ChevronRight, ChevronLeft, ChevronDown, Check } from "lucide-react";
+import { Star, Minus, Plus, Heart, ChevronRight, ChevronLeft, ShieldCheck, ChevronDown, Check } from "lucide-react";
 import { colours, fonts } from "../../theme/theme";
 import { getProducts, getProductBySlug, getProductById } from "../../services/productService";
 import { addToCart } from "../../services/cartService";
 import ritualService from "../../services/ritualService";
 import AddToCartNumbers from "../AddToCartNumbers.jsx";
+import ProductFAQSection from "./ProductFAQSection.jsx";
 
 const API = import.meta.env.VITE_SERVER_API || "";
 
@@ -358,13 +359,13 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
   const details = [];
 
   if (ingredientsBody) {
-    details.push({ title: "Complete Ingredients", body: ingredientsBody, needsRitual: false });
+    details.push({ title: "Ingredients", body: ingredientsBody, needsRitual: false });
   }
   if (whyBody || ritualLoading || !ritualFetchedRef.current) {
     details.push({ title: 'The "Why"', body: whyBody, needsRitual: true });
   }
   if (howBody || ritualLoading || !ritualFetchedRef.current) {
-    details.push({ title: 'The "How"', body: howBody, needsRitual: true });
+    details.push({ title: 'How To Use', body: howBody, needsRitual: true });
   }
   if (benefitsBody || ritualLoading || !ritualFetchedRef.current) {
     details.push({ title: "Benefits", body: benefitsBody, needsRitual: true });
@@ -539,8 +540,9 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
             </h1>
 
             {(() => {
-              const numReviews = Number(product.reviews || 0);
-              const rating = numReviews > 0 ? Number(product.rating || 0) : 0;
+              const numReviews = Number(product?.reviews ?? product?.total ?? 0);
+              const rating = numReviews > 0 ? Number(product?.rating ?? product?.avg_rating ?? 0) : 0;
+              const formattedRating = rating > 0 ? (Number.isInteger(rating) ? rating.toFixed(1) : Number(rating).toFixed(1)) : "0.0";
               return (
                 <div className="mt-2.5 flex items-center gap-2">
                   <div className="flex items-center gap-0.5 text-[#C98A3E]">
@@ -548,13 +550,13 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                       <Star
                         key={i}
                         size={14}
-                        fill={rating > 0 && i < Math.round(rating) ? "currentColor" : "none"}
+                        fill={numReviews > 0 && rating > 0 && i < Math.round(rating) ? "currentColor" : "none"}
                       />
                     ))}
                   </div>
                   <span className="text-xs sm:text-sm text-[#6B6656]">
                     {numReviews > 0 && rating > 0
-                      ? `${rating} (${numReviews} reviews)`
+                      ? `${formattedRating} (${numReviews} ${numReviews === 1 ? "review" : "reviews"})`
                       : "No reviews yet"}
                   </span>
                 </div>
@@ -595,6 +597,18 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
 
             {/* Quantity + CTA Section */}
             <div ref={ctaRef} className="mt-6 flex flex-col gap-2">
+              <div
+                className="flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2.5 text-xs font-semibold tracking-wide"
+                style={{ fontFamily: fonts.secondary }}
+              >
+                <ShieldCheck size={15}
+                  className="shrink-0"
+                  style={{
+                    color: colours.green
+                  }}
+                />
+                <span>Secured Payments</span>
+              </div>
               <div className="flex flex-row items-center gap-3">
                 <AddToCartNumbers
                   count={quantity}
@@ -653,6 +667,7 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                   </AnimatePresence>
                 </motion.button>
               </div>
+              
 
               {cartError && (
                 <p className="text-xs text-red-600 font-medium mt-1">
@@ -671,7 +686,7 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                     <div key={d.title}>
                       <button
                         onClick={() => handleToggleDetail(i)}
-                        className="flex w-full items-center justify-between py-4 text-left text-sm sm:text-md font-medium text-[#1B1B18] tracking-wide"
+                        className="flex w-full items-center justify-between py-4 text-left text-md sm:text-md font-medium text-[#1B1B18] tracking-wide"
                         style={{
                           fontFamily: fonts.primary,
                         }}
@@ -700,7 +715,7 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                               </div>
                             ) : (
                               d.body && (
-                                <p className="pb-4 text-xs sm:text-sm leading-relaxed whitespace-pre-line text-[#6B6656]">
+                                <p className="pb-4 text-xs sm:text-xs leading-relaxed whitespace-pre-line text-[#6B6656]">
                                   {d.body}
                                 </p>
                               )
@@ -716,6 +731,8 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
           </div>
         </div>
       </div>
+
+      <ProductFAQSection product={product} />
 
       {/* Sticky Mobile Bottom Bar */}
       <AnimatePresence>

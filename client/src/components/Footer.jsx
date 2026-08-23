@@ -61,7 +61,7 @@ export default function Footer() {
 
   const shopLinks = ["All Products", "Collections", "Best Sellers", "New Arrivals"];
   const companyLinks = ["Our Story", "The Science", "The Ritual", "Sustainability"];
-  const supportLinks = ["My Account", "Track Order", "FAQs", "Shipping & Returns"];
+  const supportLinks = ["My Account", "Track Order", "FAQs", "Shipping"];
 
   return (
     <footer className="bg-[#0d0d0d] text-white" style={{ fontFamily: fonts.secondary }}>
