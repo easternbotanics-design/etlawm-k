@@ -230,6 +230,7 @@ export default function ProductPurchasePanel({
             count={quantity}
             onIncrease={handleIncrease}
             onDecrease={handleDecrease}
+            buttonColor={colours.green}
           />
 
           <button

@@ -88,7 +88,14 @@ function AnimatedDigit({ digit }) {
   );
 }
 
-export default function AddToCartNumbers({ count, onIncrease, onDecrease }) {
+export default function AddToCartNumbers({
+  count,
+  onIncrease,
+  onDecrease,
+  buttonColor,
+  color,
+}) {
+  const activeColor = buttonColor || color || colours.green;
   const formattedCount = String(count).padStart(2, "0").slice(-2);
   const tens = formattedCount[0];
   const units = formattedCount[1];
@@ -100,8 +107,8 @@ export default function AddToCartNumbers({ count, onIncrease, onDecrease }) {
         onClick={onDecrease}
         className="flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
         style={{
-          borderColor: colours.green,
-          color: colours.green,
+          borderColor: activeColor,
+          color: activeColor,
         }}
         aria-label="Decrease quantity"
       >
@@ -136,8 +143,8 @@ export default function AddToCartNumbers({ count, onIncrease, onDecrease }) {
         onClick={onIncrease}
         className="flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
         style={{
-          borderColor: colours.green,
-          color: colours.green,
+          borderColor: activeColor,
+          color: activeColor,
         }}
         aria-label="Increase quantity"
       >

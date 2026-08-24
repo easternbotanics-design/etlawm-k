@@ -22,9 +22,9 @@ const HomeHero = () => {
             <div>
               <h1
                 className="mt-12 sm:-mt-5 md:-mt-28 md:mb-8 flex flex-row items-baseline flex-nowrap whitespace-nowrap gap-1.5 sm:gap-2 md:gap-3 text-xl min-[380px]:text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-normal leading-[0.95] lg:leading-[0.92] tracking-[-0.03em] lg:tracking-[-0.04em] drop-shadow-[0_10px_40px_rgba(0,0,0,0.45)]"
-                style={{ fontFamily: fonts.limelight, color: "#55433b" }}
+                style={{ fontFamily: fonts.meta, color: colours.text }}
               >
-                <p className="inline">Nature</p>{", "}<p className="inline">refined through</p>{" "}
+                <p className="inline">Nature,</p><p className="inline">refined through</p>{" "}
                 <p className="inline">Science</p>
               </h1>
         

@@ -3,11 +3,13 @@ import { Link } from "react-router-dom";
 import { Star, Check } from "lucide-react";
 import { colours, fonts } from "../../theme/theme.js";
 import { addToCart } from "../../services/cartService.js";
+import AddToCartNumbers from "../AddToCartNumbers.jsx";
 
-export default function CollectionProductCard({ product }) {
+export default function CollectionProductCard({ product, buttonColor = colours.accent }) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [buttonHovered, setButtonHovered] = useState(false);
@@ -39,7 +41,7 @@ export default function CollectionProductCard({ product }) {
     try {
       setIsAdding(true);
       setCartError(null);
-      await addToCart(productId, 1);
+      await addToCart(productId, Math.max(Number(quantity) || 1, 1));
       setAdded(true);
       window.dispatchEvent(new Event("cart-updated"));
       setTimeout(() => {
@@ -233,13 +235,33 @@ export default function CollectionProductCard({ product }) {
             )}
           </div>
 
-          {/* Add to Cart Button Component */}
+          {/* Add to Cart Container with Side-by-Side Quantity Counter */}
           <div
             style={{
               width: "100%",
               marginTop: "8px",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
             }}
           >
+            {!isUnavailable && (
+              <AddToCartNumbers
+                count={quantity}
+                onIncrease={() => {
+                  setAdded(false);
+                  setQuantity((q) => q + 1);
+                }}
+                onDecrease={() => {
+                  setAdded(false);
+                  setQuantity((q) => Math.max(1, q - 1));
+                }}
+                buttonColor={buttonColor}
+              />
+            )}
+
             <button
               type="button"
               onClick={handleAddToCart}
@@ -247,15 +269,15 @@ export default function CollectionProductCard({ product }) {
               onMouseEnter={() => setButtonHovered(true)}
               onMouseLeave={() => setButtonHovered(false)}
               style={{
-                width: "100%",
+                flex: 1,
                 height: "40px",
-                padding: "0 12px",
+                padding: "0 8px",
                 borderRadius: "8px",
-                fontSize: "0.75rem",
+                fontSize: "0.72rem",
                 fontWeight: 600,
                 fontFamily: fonts.secondary,
                 textTransform: "uppercase",
-                letterSpacing: "0.1em",
+                letterSpacing: "0.06em",
                 border: "none",
                 cursor: isAdding || isUnavailable ? "not-allowed" : "pointer",
                 backgroundColor: isUnavailable
@@ -272,7 +294,7 @@ export default function CollectionProductCard({ product }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "6px",
+                gap: "4px",
                 whiteSpace: "nowrap",
                 boxShadow: buttonHovered && !isUnavailable ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
               }}

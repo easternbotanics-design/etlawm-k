@@ -619,6 +619,7 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                   count={quantity}
                   onIncrease={() => setQuantity((q) => q + 1)}
                   onDecrease={() => setQuantity((q) => Math.max(1, q - 1))}
+                  buttonColor={colours.green}
                 />
 
                 <motion.button
