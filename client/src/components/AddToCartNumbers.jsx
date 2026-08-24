@@ -94,18 +94,28 @@ export default function AddToCartNumbers({
   onDecrease,
   buttonColor,
   color,
+  compact = false,
 }) {
   const activeColor = buttonColor || color || colours.green;
   const formattedCount = String(count).padStart(2, "0").slice(-2);
   const tens = formattedCount[0];
   const units = formattedCount[1];
 
+  const buttonClass = compact
+    ? "flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-md border transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+    : "flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shrink-0";
+
+  const iconSize = compact ? "14" : "16";
+  const containerClass = compact
+    ? "inline-flex h-8 items-center gap-1 sm:gap-1.5 rounded-full shrink-0"
+    : "inline-flex h-8 items-center gap-2 rounded-full shrink-0";
+
   return (
-    <div className="inline-flex h-8 items-center gap-2 rounded-full">
+    <div className={containerClass}>
       <button
         type="button"
         onClick={onDecrease}
-        className="flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+        className={buttonClass}
         style={{
           borderColor: activeColor,
           color: activeColor,
@@ -113,8 +123,8 @@ export default function AddToCartNumbers({
         aria-label="Decrease quantity"
       >
         <svg
-          width="16"
-          height="16"
+          width={iconSize}
+          height={iconSize}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -129,7 +139,7 @@ export default function AddToCartNumbers({
       </button>
 
       <div
-        className="flex h-8 items-center overflow-hidden"
+        className="flex h-8 items-center overflow-hidden shrink-0"
         style={{
           fontFamily: fonts.title,
         }}
@@ -141,7 +151,7 @@ export default function AddToCartNumbers({
       <button
         type="button"
         onClick={onIncrease}
-        className="flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+        className={buttonClass}
         style={{
           borderColor: activeColor,
           color: activeColor,
@@ -149,8 +159,8 @@ export default function AddToCartNumbers({
         aria-label="Increase quantity"
       >
         <svg
-          width="16"
-          height="16"
+          width={iconSize}
+          height={iconSize}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Star, Check } from "lucide-react";
+import { Star, Check, ShoppingBag } from "lucide-react";
 import { colours, fonts } from "../../theme/theme.js";
 import { addToCart } from "../../services/cartService.js";
 import AddToCartNumbers from "../AddToCartNumbers.jsx";
@@ -235,18 +235,8 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
             )}
           </div>
 
-          {/* Add to Cart Container with Side-by-Side Quantity Counter */}
-          <div
-            style={{
-              width: "100%",
-              marginTop: "8px",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-            }}
-          >
+          {/* Add to Cart Container with Mobile-Optimized Side-by-Side Quantity Counter */}
+          <div className="w-full mt-2 flex flex-row items-center justify-between gap-1.5 sm:gap-2">
             {!isUnavailable && (
               <AddToCartNumbers
                 count={quantity}
@@ -259,6 +249,7 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
                   setQuantity((q) => Math.max(1, q - 1));
                 }}
                 buttonColor={buttonColor}
+                compact
               />
             )}
 
@@ -268,16 +259,9 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
               disabled={isAdding || isUnavailable}
               onMouseEnter={() => setButtonHovered(true)}
               onMouseLeave={() => setButtonHovered(false)}
+              className="flex-1 h-8 sm:h-9 px-2 sm:px-3 rounded-md text-[0.72rem] font-semibold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
               style={{
-                flex: 1,
-                height: "40px",
-                padding: "0 8px",
-                borderRadius: "8px",
-                fontSize: "0.72rem",
-                fontWeight: 600,
                 fontFamily: fonts.secondary,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
                 border: "none",
                 cursor: isAdding || isUnavailable ? "not-allowed" : "pointer",
                 backgroundColor: isUnavailable
@@ -290,25 +274,29 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
                 color: isUnavailable
                   ? colours.mutedText
                   : "#ffffff",
-                transition: "all 0.25s ease",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "4px",
-                whiteSpace: "nowrap",
                 boxShadow: buttonHovered && !isUnavailable ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
               }}
             >
               {isAdding ? (
-                "Adding..."
+                <>
+                  <span className="hidden sm:inline">Adding...</span>
+                  <span className="sm:hidden">...</span>
+                </>
               ) : added ? (
                 <>
-                  <Check size={14} /> Added
+                  <Check size={14} />
+                  <span className="hidden sm:inline">Added</span>
                 </>
               ) : isUnavailable ? (
-                "Out of Stock"
+                <>
+                  <span className="hidden sm:inline">Out of Stock</span>
+                  <span className="sm:hidden text-[10px]">N/A</span>
+                </>
               ) : (
-                "Add to Cart"
+                <>
+                  <ShoppingBag size={15} className="sm:hidden" />
+                  <span className="hidden sm:inline">Add to Cart</span>
+                </>
               )}
             </button>
           </div>
