@@ -605,6 +605,14 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                   }}
                 />
                 <span>Secured Payments</span>
+                <span>|</span>
+                <img
+                  src="/truck.svg"
+                  alt="Shipping"
+                  className="h-3.5 w-4 shrink-0"
+                />
+                {/* svg here*/}
+                <span>Ships in 2-4 business days</span>
               </div>
               <div className="flex flex-row items-center gap-3">
                 <AddToCartNumbers
