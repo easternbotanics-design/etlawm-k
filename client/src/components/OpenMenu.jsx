@@ -13,6 +13,10 @@ import { getCategories } from "../services/categoryService";
 
 const menuLinks = [
   {
+    label: "Home",
+    href: "/",
+  },
+  {
     label: "Ritual",
     href: "/ritual",
   },

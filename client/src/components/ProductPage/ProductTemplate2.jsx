@@ -361,9 +361,6 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
   if (ingredientsBody) {
     details.push({ title: "Ingredients", body: ingredientsBody, needsRitual: false });
   }
-  if (whyBody || ritualLoading || !ritualFetchedRef.current) {
-    details.push({ title: 'The "Why"', body: whyBody, needsRitual: true });
-  }
   if (howBody || ritualLoading || !ritualFetchedRef.current) {
     details.push({ title: 'How To Use', body: howBody, needsRitual: true });
   }
