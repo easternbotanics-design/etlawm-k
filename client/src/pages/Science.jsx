@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import NavBar from "../components/NavBar.jsx";
+import NavBar from "../components/NavBar2.jsx";
 import Footer from "../components/Footer.jsx";
 import ScienceCard from "../components/SciencePage/ScienceCard.jsx";
 import scienceService from "../services/scienceService.js";

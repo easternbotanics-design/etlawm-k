@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, ChevronDown, Sparkles } from "lucide-react";
 import CollectionProductCard from "../Collection/CollectionProductCard2.jsx";
 import { getProducts } from "../../services/productService.js";
 import { colours, fonts } from "../../theme/theme.js";
@@ -102,6 +102,7 @@ const ProductPanel = ({ limit = 4 }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -135,7 +136,7 @@ const ProductPanel = ({ limit = 4 }) => {
     };
   }, []);
 
-  const visibleProducts = useMemo(() => {
+  const allProducts = useMemo(() => {
     return [...products]
       .map(normalizeProduct)
       .filter((product) => {
@@ -154,9 +155,13 @@ const ProductPanel = ({ limit = 4 }) => {
         if (aIsNew !== bIsNew) return bIsNew - aIsNew;
 
         return Number(b.id || 0) - Number(a.id || 0);
-      })
-      .slice(0, limit);
-  }, [products, limit]);
+      });
+  }, [products]);
+
+  const visibleProducts = useMemo(() => {
+    if (showAll) return allProducts;
+    return allProducts.slice(0, limit);
+  }, [allProducts, showAll, limit]);
 
   return (
     <section
@@ -166,10 +171,7 @@ const ProductPanel = ({ limit = 4 }) => {
         color: colours.text,
       }}
     >
-
       <div className="relative z-10 mx-auto max-w-7xl">
-        
-
         <div className="mb-7 flex items-center justify-between gap-5">
           <p
             className="text-xs font-semibold uppercase tracking-[0.26em]"
@@ -181,8 +183,8 @@ const ProductPanel = ({ limit = 4 }) => {
             {loading
               ? "Loading products"
               : error
-              ? "Products unavailable"
-              : `From the shelf`}
+                ? "Products unavailable"
+                : `From the shelf`}
           </p>
 
           <div className="hidden h-px flex-1 bg-[#171715]/15 sm:block" />
@@ -257,11 +259,29 @@ const ProductPanel = ({ limit = 4 }) => {
         )}
 
         {!loading && !error && visibleProducts.length > 0 && (
-          <div className="grid grid-cols-2 gap-4 sm:gap-7 lg:grid-cols-4">
-            {visibleProducts.map((product) => (
-              <CollectionProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-4 sm:gap-7 lg:grid-cols-4">
+              {visibleProducts.map((product) => (
+                <CollectionProductCard key={product.id} product={product} />
+              ))}
+            </div>
+
+            {allProducts.length > limit && (
+              <div className="mt-10 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowAll((prev) => !prev)}
+                  className="inline-flex items-center underline decoration-dotted decoration-2 underline-offset-6 rounded-full px-2 py-1 text-xs font-semibold uppercase tracking-[0.2em] cursor-pointer"
+                  style={{
+                    color: colours.text,
+                    fontFamily: fonts.secondary,
+                  }}
+                >
+                  <span>{showAll ? "Show Less" : "Show More"}</span>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>

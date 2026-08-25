@@ -233,7 +233,7 @@ const OpenMenu = ({ isOpen, onClose }) => {
       >
         <div className="flex h-full w-full">
           <div className="flex h-full w-full shrink-0 flex-col bg-[#f4f1ea] md:w-[390px]">
-            <div className="flex h-[72px] shrink-0 items-center justify-between border-b border-black/10 px-5 sm:px-8">
+            <div className="flex h-[62px] shrink-0 items-center justify-between border-b border-black/10 px-5 sm:px-8">
               <button
                 type="button"
                 onClick={handleClose}
@@ -243,35 +243,9 @@ const OpenMenu = ({ isOpen, onClose }) => {
                   fontFamily: fonts.primary,
                 }}
               >
-                <X size={22} strokeWidth={1.25} />
-                <span className="text-sm">Close</span>
+                <X size={24} strokeWidth={1.5} />
+                <span className="text-md">Close</span>
               </button>
-
-              <Link
-                to="/cart"
-                onClick={handleClose}
-                aria-label="Open cart"
-                className="relative flex h-11 w-11 items-center justify-center text-[#171717] transition-opacity duration-300 hover:opacity-55"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 1000 1000"
-                  className="h-6 w-6 fill-current"
-                >
-                  <path d="M126.2 134c-10.7 2.2-20 10.5-24.2 21.7-5.9 15.5 2.2 34.4 17.8 41.6 4.5 2.1 6.1 2.2 45.9 2.5l41.1.3.6 2.2c.3 1.3 21.3 91.2 46.6 199.8 25.3 108.5 47.1 201 48.5 205.4 3.1 10.2 9.1 22.5 16.2 33.4 6.9 10.7 24.9 28.8 35.7 36.1 10.4 6.9 25.9 14.3 37.1 17.5 19.3 5.6 16.4 5.5 166 5.5 83.2-.1 141-.4 145.5-1 55-7.1 98.9-46.6 112.9-101.5.6-2.2 10.7-60.7 22.6-129.9 22.9-134.2 23.1-135.9 20-149.6-4.3-18.3-18.3-36-34.8-44-15.6-7.5 6.4-7-277.4-7-242.1 0-255.2-.1-255.7-1.8-.3-.9-6.1-25.9-13-55.4-8.2-35.2-13.3-55.3-15-58.5-3.3-6.4-8.8-11.6-16.1-15l-6-2.8-55-.2c-30.2 0-56.9.3-59.3.7m667.3 201.2c-.3 1.3-9.5 55.2-20.5 119.8s-20.7 120.9-21.6 125c-4.2 19.9-17.6 37.3-35.7 46.3-14.5 7.1-5.1 6.7-157.3 6.7-133.7 0-137.1-.1-145.3-2-19.1-4.6-34.8-17.5-43.7-35.7-3-6.2-7.9-25.8-33-133.5C320.2 392.4 307 335 307 334.3c0-1.1 44.5-1.3 243.5-1.3H794zM358 733.6c-26.6 4.8-46.7 21.7-54.7 45.8-2.3 7-2.7 9.7-2.7 20.6s.4 13.6 2.7 20.6c5.4 16.2 17.1 30 32.4 38.1 20.1 10.7 45 10.2 64.4-1.4 22.3-13.2 34-35.2 32.6-61.2-.6-11.6-2.6-18.8-8-28.4-11.5-20.6-31.8-33.2-55.1-34.2-5-.2-10.2-.2-11.6.1m364.8.4c-25 4.5-44.3 21.2-52.9 45.7-3 8.4-3.7 24.7-1.5 34.7 6.8 30.5 33.2 51.7 64.6 51.8 12.1.1 21.2-2.1 31.3-7.5 15.3-8.1 27-21.9 32.4-38.1 2.3-7 2.7-9.7 2.7-20.6s-.4-13.6-2.7-20.6c-5.6-16.9-19.4-32.6-34.7-39.6-12.1-5.5-28.1-7.9-39.2-5.8" />
-                </svg>
-
-                {cartCount > 0 && (
-                  <span
-                    className="absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#171717] px-1 text-[10px] leading-none text-white"
-                    style={{
-                      fontFamily: fonts.secondary,
-                    }}
-                  >
-                    {cartCount > 99 ? "99+" : cartCount}
-                  </span>
-                )}
-              </Link>
             </div>
 
             <div className="flex flex-1 flex-col overflow-y-auto px-6 pb-8 pt-10 sm:px-10 sm:pt-12">
@@ -427,48 +401,10 @@ const OpenMenu = ({ isOpen, onClose }) => {
                 </ul>
               </nav>
 
-              <div className="mt-auto border-t border-black/10 pt-6">
-                <Link
-                  to={accountHref}
-                  onClick={handleClose}
-                  className="group flex items-center gap-4"
-                  style={{
-                    fontFamily: fonts.primary,
-                  }}
-                >
-                  <span
-                    className="flex h-14 items-center px-5 text-xl transition-opacity duration-300 group-hover:opacity-75"
-                    style={{
-                      backgroundColor: colours.primary,
-                      fontFamily: fonts.primary,
-                    }}
-                  >
-                    {accountLabel}
-                  </span>
+              <div className="mt-auto pt-6">
+                
 
-                  <ArrowRight
-                    size={21}
-                    strokeWidth={1.1}
-                    className="translate-x-1 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100"
-                  />
-                </Link>
-
-                <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3">
-                  {secondaryLinks.map((item) => (
-                    <li key={item.href}>
-                      <Link
-                        to={item.href}
-                        onClick={handleClose}
-                        className="text-[12px] uppercase tracking-[0.08em] text-black/55 transition-colors duration-300 hover:text-black"
-                        style={{
-                          fontFamily: fonts.primary,
-                        }}
-                      >
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                
               </div>
             </div>
           </div>

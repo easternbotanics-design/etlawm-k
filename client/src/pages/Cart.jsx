@@ -13,7 +13,7 @@ import {
   checkCartConflict,
   mergeGuestCart,
 } from "../services/cartService";
-import Navbar from "../components/NavBar";
+import Navbar from "../components/NavBar2";
 import { colours, fonts } from "../theme/theme";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";

@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
-import NavBar from "../components/NavBar.jsx";
+import NavBar from "../components/NavBar2.jsx";
 import Footer from "../components/Footer.jsx";
-import IngredientsProductGrid from "../components/Ingredients/IngredientsProductGrid.jsx";
+import IngredientsTemplate from "../components/Ingredients/IngredientsTemplate.jsx";
 import IngredientDetailView from "../components/Ingredients/IngredientDetailView.jsx";
 import { colours } from "../theme/theme.js";
 
@@ -23,7 +23,7 @@ const Ingredients = () => {
         {slug ? (
           <IngredientDetailView productSlug={slug} />
         ) : (
-          <IngredientsProductGrid />
+          <IngredientsTemplate />
         )}
       </main>
 

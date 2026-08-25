@@ -1,4 +1,4 @@
-import NavBar from "../components/NavBar.jsx";
+import NavBar from "../components/NavBar2.jsx";
 import HomeHero from "../components/HomePage/HomeHero.jsx";
 import HomePrinciples from "../components/HomePage/HomePrinciples.jsx";
 import HomeSupport from "../components/HomePage/HomeSupport.jsx";
@@ -17,6 +17,7 @@ const Home = () => {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#F7F3EC] text-[#171715]">
       <NavBar />
+      
 
       <main>
         <HomeHero />

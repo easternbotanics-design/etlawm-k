@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import EllipseSeatCarousel from "../components/Template";
 import ritualService from "../services/ritualService";
+import NavBar from "../components/NavBar2";
 
 const Ritual = () => {
   const [rituals, setRituals] = useState([]);
@@ -24,7 +25,10 @@ const Ritual = () => {
   }, []);
 
   return (
+    <>
+    <NavBar />
     <EllipseSeatCarousel rituals={rituals} loading={loading} />
+    </>
   );
 };
 

@@ -84,21 +84,33 @@ export default function EllipseSeatCarousel({ rituals = [], players = [], loadin
 
   const ACTIVE_ANGLE = orientation === "top" ? 90 : 0;
 
-  const seatZoneSize = orientation === "top" ? size.h * SEAT_ZONE_RATIO : size.w * SEAT_ZONE_RATIO;
+  // Clearance for fixed navbar (navbar is ~64px on mobile, ~80px on desktop)
+  const navOffset = isMobile
+    ? Math.max(66, Math.round(size.h * 0.08))
+    : Math.max(88, Math.round(size.h * 0.11));
 
-  let CX, CY, RX, RY, seatSize;
+  const bottomMargin = Math.max(72, Math.round(size.h * 0.1));
+  const usableH = size.h - navOffset - bottomMargin;
+
+  const seatZoneSize = orientation === "top"
+    ? Math.min(size.h * 0.28, 220)
+    : size.w * SEAT_ZONE_RATIO;
+
+  let CX, CY, RX, RY, seatSize, focusY;
   if (orientation === "top") {
     CX = size.w / 2;
-    CY = seatZoneSize * 0.15;
+    CY = navOffset + seatZoneSize * 0.05;
     RX = size.w * 0.44;
-    RY = seatZoneSize - CY;
-    seatSize = Math.min(seatZoneSize * 0.85, size.w * 0.16);
+    RY = seatZoneSize * 0.65;
+    seatSize = Math.min(seatZoneSize * 0.55, size.w * 0.16);
+    focusY = CY + RY;
   } else {
-    CY = size.h / 2;
+    CY = navOffset + usableH / 2;
     CX = seatZoneSize * 0.15;
-    RY = size.h * 0.48;
+    RY = usableH * 0.45;
     RX = seatZoneSize - CX;
-    seatSize = Math.min(seatZoneSize * 0.85, size.h * 0.09);
+    seatSize = Math.min(usableH * 0.12, size.h * 0.09);
+    focusY = CY;
   }
 
   const SCALE_MAX = orientation === "top" ? 1.35 : 2.5;
@@ -107,7 +119,7 @@ export default function EllipseSeatCarousel({ rituals = [], players = [], loadin
   const focusSeatRadius = (seatSize * SCALE_MAX) / 2;
   const desktopContentGap = Math.max(size.w * 0.06, focusSeatRadius + size.w * 0.02);
 
-  const wheelClipExtent = orientation === "top" ? CY + RY + size.h * 0.18 : seatZoneSize + desktopContentGap;
+  const wheelClipExtent = orientation === "top" ? focusY + seatSize / 2 + 15 : seatZoneSize + desktopContentGap;
 
   const cancelAnim = () => {
     if (animRef.current) cancelAnimationFrame(animRef.current);
@@ -149,7 +161,7 @@ export default function EllipseSeatCarousel({ rituals = [], players = [], loadin
     if (!el) return true;
     const rect = el.getBoundingClientRect();
     return orientation === "top"
-      ? clientY - rect.top <= rect.height * INTERACTION_ZONE_RATIO
+      ? clientY - rect.top <= focusY + seatSize / 2 + 10
       : clientX - rect.left <= rect.width * INTERACTION_ZONE_RATIO;
   };
 
@@ -321,8 +333,8 @@ export default function EllipseSeatCarousel({ rituals = [], players = [], loadin
                 absDiff <= 1
                   ? 1
                   : absDiff >= 1 + FADE_WIDTH
-                  ? 0
-                  : 1 - (absDiff - 1) / FADE_WIDTH;
+                    ? 0
+                    : 1 - (absDiff - 1) / FADE_WIDTH;
 
               if (opacity <= 0) return null;
 
@@ -337,9 +349,8 @@ export default function EllipseSeatCarousel({ rituals = [], players = [], loadin
                   onClick={() => {
                     if (dragDistance.current < 6) goToSeat(i);
                   }}
-                  className={`absolute rounded-full flex items-center justify-center font-semibold overflow-hidden pointer-events-auto ${
-                    isActive ? "" : "cursor-pointer"
-                  }`}
+                  className={`absolute rounded-full flex items-center justify-center font-semibold overflow-hidden pointer-events-auto ${isActive ? "" : "cursor-pointer"
+                    }`}
                   style={{
                     left: x,
                     top: y,
@@ -388,19 +399,19 @@ export default function EllipseSeatCarousel({ rituals = [], players = [], loadin
           style={
             orientation === "top"
               ? {
-                  left: size.w * 0.04,
-                  right: size.w * 0.04,
-                  top: CY + RY + size.h * 0.11,
-                  height: size.h * 0.04,
-                  zIndex: 900,
-                }
+                left: size.w * 0.04,
+                right: size.w * 0.04,
+                top: focusY + seatSize / 2 + 14,
+                height: 38,
+                zIndex: 900,
+              }
               : {
-                  left: seatZoneSize + desktopContentGap,
-                  right: size.w * 0.04,
-                  top: size.h * 0.04,
-                  height: size.h * 0.06,
-                  zIndex: 900,
-                }
+                left: seatZoneSize + desktopContentGap,
+                right: size.w * 0.04,
+                top: navOffset,
+                height: 40,
+                zIndex: 900,
+              }
           }
         >
           {loading ? (
@@ -410,9 +421,8 @@ export default function EllipseSeatCarousel({ rituals = [], players = [], loadin
             />
           ) : (
             <div
-              className={`font-semibold tracking-wide uppercase ${
-                isMobile ? "text-xs" : "text-sm"
-              }`}
+              className={`font-semibold tracking-wide uppercase ${isMobile ? "text-xs" : "text-sm"
+                }`}
               style={{
                 fontFamily: fontPrimary,
                 color: colorSecondary,
@@ -456,21 +466,24 @@ export default function EllipseSeatCarousel({ rituals = [], players = [], loadin
         {/* Content panel */}
         <div
           ref={contentRef}
-          className="absolute rounded-2xl flex items-start justify-start overflow-hidden text-sm"
+          data-lenis-prevent
+          data-lenis-prevent-wheel="true"
+          data-lenis-prevent-touch="true"
+          className="absolute rounded-2xl flex items-start justify-start overflow-hidden text-sm no-scrollbar"
           style={{
             ...(orientation === "top"
               ? {
-                  left: size.w * 0.04,
-                  right: size.w * 0.04,
-                  top: CY + RY + size.h * 0.18,
-                  bottom: size.h * 0.10,
-                }
+                left: size.w * 0.04,
+                right: size.w * 0.04,
+                top: focusY + seatSize / 2 + 14 + 38 + 10,
+                bottom: bottomMargin,
+              }
               : {
-                  left: seatZoneSize + desktopContentGap,
-                  right: size.w * 0.04,
-                  top: size.h * 0.04 + size.h * 0.06 + size.h * 0.02,
-                  bottom: size.h * 0.10,
-                }),
+                left: seatZoneSize + desktopContentGap,
+                right: size.w * 0.04,
+                top: navOffset + 40 + 12,
+                bottom: bottomMargin + 10,
+              }),
             backgroundColor: "rgba(247, 243, 236, 0.45)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
@@ -498,7 +511,16 @@ export default function EllipseSeatCarousel({ rituals = [], players = [], loadin
                 No rituals available.
               </div>
             ) : (
-              <div className="w-full h-full p-6 md:p-10 overflow-y-auto">
+              <div
+                data-lenis-prevent
+                data-lenis-prevent-wheel="true"
+                data-lenis-prevent-touch="true"
+                className="w-full h-full p-6 md:p-10 overflow-y-auto no-scrollbar"
+                style={{
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
+                }}
+              >
                 {(() => {
                   let list = [];
                   if (activeTab === "why") list = activePlayer.whys || activePlayer.why || [];
@@ -578,42 +600,6 @@ export default function EllipseSeatCarousel({ rituals = [], players = [], loadin
             )
           )}
         </div>
-
-        {/* Back Button below the content box */}
-        <button
-          type="button"
-          onClick={handleBack}
-          className="absolute flex items-center gap-2 px-5 py-2.5 rounded-full transition-all hover:opacity-90 active:scale-95 cursor-pointer"
-          style={{
-            left: orientation === "top" ? size.w * 0.04 : seatZoneSize + desktopContentGap,
-            bottom: size.h * 0.025,
-            backgroundColor: "rgba(247, 243, 236, 0.55)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
-            border: "1px solid rgba(255, 255, 255, 0.6)",
-            boxShadow: "0 6px 20px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.4)",
-            color: colorSecondary,
-            fontFamily: fontSecondary,
-            fontSize: isMobile ? "12px" : "13px",
-            fontWeight: 600,
-            zIndex: 950,
-          }}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-          <span>Back</span>
-        </button>
       </div>
     </div>
   );
