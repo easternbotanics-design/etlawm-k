@@ -1,0 +1,586 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
+import { colours, fonts } from '../../../theme/theme.js';
+import homepageReviewService from "../../../services/homepageReviewService";
+import { getProducts } from '../../../services/productService.js';
+
+const SCOPED_CSS = `
+  .review-form-input:focus, .review-form-textarea:focus, .review-form-select:focus {
+    border-color: ${colours.accent} !important;
+    background-color: ${colours.background} !important;
+    box-shadow: 0 0 0 1px ${colours.accent} !important;
+  }
+  .review-btn-primary:hover {
+    background-color: ${colours.accent} !important;
+    color: ${colours.background} !important;
+    box-shadow: 0 4px 12px rgba(167, 124, 107, 0.2) !important;
+  }
+  .review-btn-secondary:hover {
+    background-color: ${colours.primary} !important;
+  }
+  .star-display {
+    position: relative;
+    display: inline-flex;
+    gap: 2px;
+  }
+  .star-display .star-icon {
+    width: 18px;
+    height: 18px;
+    color: ${colours.border};
+    transition: color 0.15s ease;
+  }
+  .star-display .star-icon.filled {
+    color: #E8A838;
+  }
+  .star-display .star-icon.half {
+    color: #E8A838;
+  }
+`;
+
+const emptyForm = {
+  customerName: '',
+  productName: '',
+  productLink: '',
+  heading: '',
+  rating: '',
+  review: '',
+};
+
+/* ── Star visual helper ─────────────────────────────────────────────── */
+const StarDisplay = ({ rating }) => {
+  const numRating = Number(rating) || 0;
+  const fullStars = Math.floor(numRating);
+  const hasHalf = numRating - fullStars >= 0.3 && numRating - fullStars < 0.8;
+  const filledCount = hasHalf ? fullStars + 1 : fullStars;
+
+  return (
+    <div className="star-display">
+      {[...Array(5)].map((_, i) => {
+        const isFull = i < fullStars;
+        const isHalf = i === fullStars && hasHalf;
+        const isFilledOrHalf = i < filledCount;
+
+        return (
+          <svg
+            key={i}
+            className={`star-icon ${isFull ? 'filled' : ''} ${isHalf ? 'half' : ''}`}
+            viewBox="0 0 24 24"
+            fill={isFilledOrHalf ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            strokeWidth="1.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"
+            />
+          </svg>
+        );
+      })}
+    </div>
+  );
+};
+
+/* ── Main component ──────────────────────────────────────────────── */
+export default function CMSHomepageReviewForm() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const isEditMode = !!id;
+  
+  const returnTo = location.state?.returnTo || '/admin/content/homepage/reviews';
+
+  const [form, setForm] = useState(emptyForm);
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  /* ── Fetch products list for dropdown ──────────────────────────── */
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoadingProducts(true);
+      try {
+        const data = await getProducts(true);
+        setProducts(data || []);
+      } catch (err) {
+        console.error('Failed to load products for dropdown:', err);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
+  /* ── Fetch existing homepage review in edit mode ───────────────── */
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const loadReview = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await homepageReviewService.getReviewById(id);
+        const review = data.review ?? data;
+
+        setForm({
+          customerName: review.customer_name || '',
+          productName: review.product_name || '',
+          productLink: review.product_link || '',
+          heading: review.heading || '',
+          rating: review.rating != null ? String(review.rating) : '',
+          review: review.review || review.comment || '',
+        });
+      } catch (err) {
+        setError(err.message ?? 'Failed to load homepage review data.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadReview();
+  }, [id, isEditMode]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+  
+    if (name === "rating") {
+      if (value === "") {
+        setForm((prev) => ({ ...prev, rating: "" }));
+        return;
+      }
+  
+      if (!/^[1-5]$/.test(value)) {
+        return;
+      }
+  
+      setForm((prev) => ({ ...prev, rating: value }));
+      return;
+    }
+  
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleRatingKeyDown = (e) => {
+    const allowedControlKeys = [
+      "Backspace",
+      "Delete",
+      "Tab",
+      "ArrowLeft",
+      "ArrowRight",
+      "Home",
+      "End",
+    ];
+  
+    if (allowedControlKeys.includes(e.key)) {
+      return;
+    }
+  
+    if (!/^[1-5]$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+  
+  const handleRatingPaste = (e) => {
+    const pastedValue = e.clipboardData.getData("text");
+  
+    if (!/^[1-5]$/.test(pastedValue)) {
+      e.preventDefault();
+    }
+  };
+
+  const handleSubmit = async (e, mode = 'publish') => {
+    e.preventDefault();
+
+    if (!form.customerName.trim()) {
+      setError('Customer name is required.');
+      return;
+    }
+    if (!form.productName.trim()) {
+      setError('Product name is required.');
+      return;
+    }
+    if (!form.rating || Number(form.rating) <= 0) {
+      setError('Rating is required and must be greater than 0.');
+      return;
+    }
+    if (!form.review.trim()) {
+      setError('Review text is required.');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const payload = {
+        customer_name: form.customerName.trim(),
+        product_name: form.productName.trim(),
+        product_link: form.productLink.trim() || null,
+        heading: form.heading.trim() || null,
+        rating: Number(Number(form.rating).toFixed(1)),
+        review: form.review.trim(),
+        status: mode === 'draft' ? 'draft' : 'published',
+      };
+
+      if (isEditMode) {
+        await homepageReviewService.updateReview(id, payload);
+        setSuccess(mode === 'draft' ? 'Review saved as draft.' : 'Review updated successfully.');
+      } else {
+        await homepageReviewService.createReview(payload);
+        setSuccess(mode === 'draft' ? 'Review saved as draft.' : 'Review published successfully.');
+      }
+
+      setTimeout(() => navigate(returnTo), 1200);
+    } catch (err) {
+      setError(err.message ?? 'An unexpected error occurred.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* ── Shared styles ─────────────────────────────────────────────── */
+  const FieldLabel = ({ children, required }) => (
+    <label
+      style={{ color: colours.mutedText }}
+      className="block text-xs uppercase tracking-widest font-semibold mb-2"
+    >
+      {children}
+      {required ? ' *' : ''}
+    </label>
+  );
+
+  const inputStyle = {
+    color: colours.text,
+    borderColor: colours.border,
+    backgroundColor: `${colours.primary}66`,
+  };
+
+  const cardStyle = {
+    backgroundColor: colours.background,
+    borderColor: colours.border,
+  };
+
+  return (
+    <div
+      style={{
+        backgroundColor: colours.primary,
+        fontFamily: fonts.secondary,
+        color: colours.text,
+      }}
+      className="min-h-screen flex flex-col"
+    >
+      <style>{SCOPED_CSS}</style>
+
+      <main className="flex-1 pt-8 px-4 md:px-8 max-w-7xl mx-auto w-full pb-16">
+        {/* ── Header ─────────────────────────────────────────────── */}
+        <div className="mb-8">
+          <Link
+            to={returnTo}
+            style={{ color: colours.accent }}
+            className="group inline-flex items-center gap-2 text-xs uppercase tracking-widest transition-colors font-semibold mb-4 no-underline"
+          >
+            <svg
+              className="w-4 h-4 duration-100 group-hover:-translate-x-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Back to Homepage Reviews
+          </Link>
+
+          <div
+            style={cardStyle}
+            className="border rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+          >
+            <div>
+              <h1
+                style={{ fontFamily: fonts.primary, color: colours.text }}
+                className="text-3xl md:text-4xl tracking-wide font-normal"
+              >
+                {isEditMode ? 'Edit Homepage Review' : 'Add Homepage Review'}
+              </h1>
+              <p
+                style={{ color: colours.mutedText }}
+                className="text-xs tracking-wider uppercase font-semibold mt-1"
+              >
+                {isEditMode
+                  ? `ID: ${id} • Update homepage review details`
+                  : 'Create a review specifically for the homepage section'}
+              </p>
+            </div>
+
+            <div
+              className="flex items-center gap-2 text-xs"
+              style={{ color: colours.mutedText }}
+            >
+              <span>Content</span>
+              <span>/</span>
+              <span>Homepage</span>
+              <span>/</span>
+              <span>Reviews</span>
+              <span>/</span>
+              <span style={{ color: colours.accent }}>{isEditMode ? 'Edit Review' : 'Add Review'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Alerts ─────────────────────────────────────────────── */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm flex items-start gap-3 rounded shadow-sm">
+            <span>{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 text-sm flex items-start gap-3 rounded shadow-sm">
+            <span>{success}</span>
+          </div>
+        )}
+
+        {/* ── Loading state for edit mode ────────────────────────── */}
+        {loading ? (
+          <div style={cardStyle} className="flex flex-col items-center justify-center py-20 border rounded-2xl">
+            <div style={{ borderTopColor: colours.accent }} className="animate-spin rounded-full h-12 w-12 border-4 border-stone-200 mb-4"></div>
+            <p style={{ fontFamily: fonts.primary, color: colours.text }} className="text-lg">Loading homepage review data...</p>
+          </div>
+        ) : (
+        /* ── Form ───────────────────────────────────────────────── */
+        <form
+          onSubmit={(e) => handleSubmit(e, 'publish')}
+          className="grid grid-cols-1 xl:grid-cols-12 gap-8"
+        >
+          {/* ── Left: fields ─────────────────────────────────────── */}
+          <div className="xl:col-span-8 space-y-8">
+            {/* Customer & Product Info */}
+            <section
+              style={cardStyle}
+              className="border rounded-2xl p-6 md:p-8 shadow-sm space-y-6"
+            >
+              <div>
+                <h2
+                  style={{ fontFamily: fonts.primary }}
+                  className="text-2xl font-semibold"
+                >
+                  Customer & Product
+                </h2>
+                <p
+                  style={{ color: colours.mutedText }}
+                  className="text-xs mt-1"
+                >
+                  Enter the reviewer's details and the product being reviewed.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <FieldLabel required>Name of Customer</FieldLabel>
+                  <input
+                    name="customerName"
+                    value={form.customerName}
+                    onChange={handleChange}
+                    required
+                    placeholder="e.g. Priya Sharma"
+                    style={inputStyle}
+                    className="review-form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <FieldLabel required>Product for Review</FieldLabel>
+                  <select
+                    name="productName"
+                    value={form.productName}
+                    onChange={(e) => {
+                      const selectedName = e.target.value;
+                      const selectedProd = products.find((p) => p.name === selectedName);
+                      setForm((prev) => ({
+                        ...prev,
+                        productName: selectedName,
+                        productLink: selectedProd ? `/product/${selectedProd.slug}` : prev.productLink,
+                      }));
+                    }}
+                    required
+                    style={inputStyle}
+                    className="review-form-select w-full rounded-lg border px-4 py-3 text-sm focus:outline-none transition-all cursor-pointer"
+                  >
+                    <option value="" disabled style={{ backgroundColor: colours.primary, color: colours.mutedText }}>
+                      {loadingProducts ? 'Loading products...' : 'Select a Product'}
+                    </option>
+                    {products.map((prod) => (
+                      <option
+                        key={prod.id}
+                        value={prod.name}
+                        style={{ backgroundColor: colours.primary, color: colours.text }}
+                      >
+                        {prod.name}
+                      </option>
+                    ))}
+                    {form.productName && !products.some((p) => p.name === form.productName) && (
+                      <option
+                        value={form.productName}
+                        style={{ backgroundColor: colours.primary, color: colours.text }}
+                      >
+                        {form.productName}
+                      </option>
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <FieldLabel required>Rating</FieldLabel>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      name="rating"
+                      value={form.rating}
+                      onChange={handleChange}
+                      onKeyDown={handleRatingKeyDown}
+                      onPaste={handleRatingPaste}
+                      required
+                      maxLength="1"
+                      placeholder="5"
+                      style={inputStyle}
+                      className="review-form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all"
+                    />
+                    <div className="shrink-0 flex items-center gap-2">
+                      <StarDisplay rating={form.rating} />
+                      {form.rating && (
+                        <span
+                          style={{ color: colours.mutedText }}
+                          className="text-xs font-semibold"
+                        >
+                          {Number(form.rating).toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p
+                    style={{ color: colours.mutedText }}
+                    className="text-[11px] mt-2"
+                  >
+                    Enter a value between 1 and 5
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Review Text */}
+            <section
+              style={cardStyle}
+              className="border rounded-2xl p-6 md:p-8 shadow-sm space-y-6"
+            >
+              <div>
+                <h2
+                  style={{ fontFamily: fonts.primary }}
+                  className="text-2xl font-semibold"
+                >
+                  Review
+                </h2>
+                <p
+                  style={{ color: colours.mutedText }}
+                  className="text-xs mt-1"
+                >
+                  The customer review text that will appear on the homepage section.
+                </p>
+              </div>
+
+              <div>
+                <FieldLabel>Review Heading / Title</FieldLabel>
+                <input
+                  name="heading"
+                  value={form.heading}
+                  onChange={handleChange}
+                  placeholder="e.g. Amazing results for my hair!"
+                  style={inputStyle}
+                  className="review-form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all"
+                />
+              </div>
+
+              <div>
+                <FieldLabel required>Review</FieldLabel>
+                <textarea
+                  name="review"
+                  value={form.review}
+                  onChange={handleChange}
+                  required
+                  rows="8"
+                  placeholder="Write the customer's review here..."
+                  style={inputStyle}
+                  className="review-form-textarea w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all resize-y"
+                />
+                <p
+                  style={{ color: colours.mutedText }}
+                  className="text-[11px] mt-2"
+                >
+                  {form.review.length} characters
+                </p>
+              </div>
+            </section>
+          </div>
+
+          {/* ── Right: sidebar with actions ──────────────────── */}
+          <aside className="xl:col-span-4 space-y-8">
+            {/* Action Buttons */}
+            <section
+              style={cardStyle}
+              className="border rounded-2xl p-6 shadow-sm space-y-3 sticky top-24"
+            >
+              <button
+                type="submit"
+                disabled={saving}
+                style={{
+                  backgroundColor: colours.secondary,
+                  color: colours.background,
+                }}
+                className="review-btn-primary w-full disabled:opacity-50 transition-all duration-300 text-xs uppercase tracking-widest font-semibold py-4 rounded-lg shadow-md border-none cursor-pointer"
+              >
+                {saving ? 'Saving...' : isEditMode ? 'Save Changes' : 'Post Review'}
+              </button>
+
+              <button
+                type="button"
+                disabled={saving}
+                onClick={(e) => handleSubmit(e, 'draft')}
+                style={{
+                  borderColor: colours.border,
+                  color: colours.text,
+                }}
+                className="review-btn-secondary w-full border transition-colors text-xs uppercase tracking-widest font-semibold py-4 rounded-lg text-center bg-transparent cursor-pointer disabled:opacity-50"
+              >
+                Save to Draft
+              </button>
+
+              <Link
+                to={returnTo}
+                style={{
+                  borderColor: colours.border,
+                  color: colours.mutedText,
+                }}
+                className="review-btn-secondary w-full border transition-colors text-xs uppercase tracking-widest font-semibold py-4 rounded-lg text-center block no-underline"
+              >
+                Cancel
+              </Link>
+            </section>
+          </aside>
+        </form>
+        )}
+      </main>
+    </div>
+  );
+}

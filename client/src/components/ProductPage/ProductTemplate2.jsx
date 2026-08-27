@@ -371,8 +371,8 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
   details.push({
     title: "Additional Information",
     body: product.sizeValue && product.sizeUnit
-      ? `Size: ${product.sizeValue} ${product.sizeUnit}\nShips in 2–4 business days.`
-      : "Ships in 2–4 business days.",
+      ? `Size: ${product.sizeValue} ${product.sizeUnit}`
+      : "...",
     needsRitual: false,
   });
 
@@ -612,7 +612,7 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                   className="h-3.5 w-4 shrink-0"
                 />
                 {/* svg here*/}
-                <span>Ships in 2-4 business days</span>
+                <span>Free shipping in 2-4 days</span>
               </div>
               <div className="flex flex-row items-center gap-3">
                 <AddToCartNumbers

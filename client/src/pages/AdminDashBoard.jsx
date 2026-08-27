@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Route, Routes } from "react-router-dom";
 import HomepageContent from "../components/AdminPanel/AdminContent/CMSHomePage.jsx";
 import CMSHomepageReviews from "../components/AdminPanel/AdminContent/CMSHomepageReviews.jsx";
+import CMSHomepageReviewForm from "../components/AdminPanel/AdminContent/CMSHomepageReviewForm.jsx";
 import ReviewContent from "../components/AdminPanel/AdminContent/CMSReview.jsx";
 import CMSReviewForm from "../components/AdminPanel/AdminContent/CMSReviewForm.jsx";
 import ProductReviews from "../components/AdminPanel/AdminContent/ProductReviews.jsx";
@@ -506,6 +507,8 @@ const AdminDashBoard = () => {
             {/* Content Group */}
             <Route path="/content/homepage" element={<HomepageContent />} />
             <Route path="/content/homepage/reviews" element={<CMSHomepageReviews />} />
+            <Route path="/content/homepage/reviews/add" element={<CMSHomepageReviewForm />} />
+            <Route path="/content/homepage/reviews/edit/:id" element={<CMSHomepageReviewForm />} />
             <Route path="/content/reviews" element={<ReviewContent />} />
             <Route path="/content/reviews/add-review" element={<CMSReviewForm />} />
             <Route path="/content/reviews/edit/:id" element={<CMSReviewForm />} />

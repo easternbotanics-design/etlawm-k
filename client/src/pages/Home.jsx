@@ -11,7 +11,8 @@ import HomePathways from "../components/HomePage/HomePathways.jsx";
 import HomeInsights from "../components/HomePage/HomeInsights.jsx";
 import HomeFinalCTA from "../components/HomePage/HomeFinalCTA.jsx";
 import HomeFooter from "../components/HomePage/HomeFooter.jsx";
-import HomeHeroCarousel from "../components/HomePage/HomeHeroCarousel.jsx";
+import ReviewCarousel from "../components/HomePage/ReviewCarousel.jsx";
+import ReviewSection from "../components/HomePage/ReviewCarousel2.jsx";
 
 const Home = () => {
   return (
@@ -22,7 +23,8 @@ const Home = () => {
       <main>
         <HomeHero />
         <ProductPanel />
-        <HomeHeroCarousel />
+        <ReviewSection />
+        {/* <ReviewCarousel />*/}
         {/* <HomeDirections />*/}
         {/* <HomePathways />*/}
         <HomePrinciples />

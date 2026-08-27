@@ -34,6 +34,13 @@ import {
   deleteScience
 } from '../controllers/scienceController.js';
 import { getAdminAnalytics } from '../controllers/analyticsController.js';
+import {
+  createHomepageReview,
+  getAdminHomepageReviews,
+  getHomepageReviewById,
+  updateHomepageReview,
+  deleteHomepageReview
+} from '../controllers/homepageReviewController.js';
 
 
 const adminRouter = express.Router();
@@ -97,6 +104,12 @@ adminRouter.post("/science", createScience);
 adminRouter.get("/science/:id", getScienceById);
 adminRouter.patch("/science/:id", updateScience);
 adminRouter.delete("/science/:id", deleteScience);
+
+adminRouter.get("/homepage-reviews", getAdminHomepageReviews);
+adminRouter.post("/homepage-reviews", createHomepageReview);
+adminRouter.get("/homepage-reviews/:id", getHomepageReviewById);
+adminRouter.patch("/homepage-reviews/:id", updateHomepageReview);
+adminRouter.delete("/homepage-reviews/:id", deleteHomepageReview);
 
 
 export default adminRouter;

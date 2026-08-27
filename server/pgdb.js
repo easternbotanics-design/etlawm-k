@@ -197,6 +197,132 @@ const cmsReviews = {
         ),
 };
 
+const homepageReviews = {
+    create: ({
+        customer_name,
+        product_name,
+        product_link,
+        heading,
+        rating,
+        review,
+        status = "published",
+        sort_order = 0,
+        is_active = true,
+    }) =>
+        query(
+            `
+      INSERT INTO homepage_reviews (
+        customer_name,
+        product_name,
+        product_link,
+        heading,
+        rating,
+        review,
+        status,
+        sort_order,
+        is_active
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+      `,
+            [
+                customer_name,
+                product_name,
+                product_link ?? null,
+                heading ?? null,
+                rating,
+                review,
+                status,
+                sort_order,
+                is_active,
+            ]
+        ),
+
+    findById: (id) =>
+        query(
+            `
+      SELECT *
+      FROM homepage_reviews
+      WHERE id = $1
+      LIMIT 1
+      `,
+            [id]
+        ),
+
+    findAllAdmin: () =>
+        query(
+            `
+      SELECT *
+      FROM homepage_reviews
+      ORDER BY created_at DESC
+      `
+        ),
+
+    findPublished: () =>
+        query(
+            `
+      SELECT *
+      FROM homepage_reviews
+      WHERE status = 'published'
+        AND is_active = true
+      ORDER BY sort_order ASC, created_at DESC
+      `
+        ),
+
+    update: (id, fields) => {
+        const allowed = [
+            "customer_name",
+            "product_name",
+            "product_link",
+            "heading",
+            "rating",
+            "review",
+            "status",
+            "sort_order",
+            "is_active",
+        ];
+
+        const sets = [];
+        const vals = [];
+        let i = 1;
+
+        for (const key of allowed) {
+            if (fields[key] !== undefined) {
+                sets.push(`${key} = $${i++}`);
+                vals.push(fields[key]);
+            }
+        }
+
+        if (!sets.length) {
+            throw new Error("No valid fields to update");
+        }
+
+        sets.push("updated_at = now()");
+        vals.push(id);
+
+        return query(
+            `
+      UPDATE homepage_reviews
+      SET ${sets.join(", ")}
+      WHERE id = $${i}
+      RETURNING *
+      `,
+            vals
+        );
+    },
+
+    delete: (id) =>
+        query(
+            `
+      DELETE FROM homepage_reviews
+      WHERE id = $1
+      RETURNING *
+      `,
+            [id]
+        ),
+};
+
+
 const cmsFaqs = {
     create: ({
         product_name,
@@ -2385,6 +2511,7 @@ const db = {
     cmsScience,
     rituals,
     cmsReviews,
+    homepageReviews,
     cmsFaqs,
     cmsIngredients,
     productIngredients,

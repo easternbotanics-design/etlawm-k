@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import ProductPage from "../components/ProductPage/ProductTemplate2.jsx";
-import NavBar from "../components/NavBar";
+import NavBar from "../components/NavBar2";
 import ReviewGrid from "../components/ProductPage/ReviewPanel.jsx";
 import SuggestedProducts from "../components/ProductPage/SuggestedProducts.jsx";
 import Footer from "../components/Footer";

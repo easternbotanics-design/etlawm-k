@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReviewsTable from './ReviewsTable';
 import { colours, fonts } from '../../../theme/theme';
-import reviewService from "../../../services/reviewService";
+import homepageReviewService from "../../../services/homepageReviewService";
 
 /* ── Small reusable button (mirrors AdminCollectionProducts) ─────── */
 const ActionButton = ({ name, onClick }) => (
@@ -64,7 +64,7 @@ const CMSHomepageReviews = () => {
         setLoading(true);
         setError('');
 
-        const data = await reviewService.getAdminReviews();
+        const data = await homepageReviewService.getAdminReviews();
         
         setReviews(data.reviews ?? []);
       } catch (err) {
@@ -78,11 +78,15 @@ const CMSHomepageReviews = () => {
   }, []);
 
   const handleEdit = (review) => {
-    navigate(`/admin/content/reviews/edit/${review.id}`, {
+    navigate(`/admin/content/homepage/reviews/edit/${review.id}`, {
       state: {
         returnTo: '/admin/content/homepage/reviews',
       },
     });
+  };
+
+  const handleDelete = async (review) => {
+    await homepageReviewService.deleteReview(review.id);
   };
 
   const handleDeleted = (deletedReview) => {
@@ -131,7 +135,7 @@ const CMSHomepageReviews = () => {
         <ActionButton
           name="Add Review"
           onClick={() =>
-            navigate('/admin/content/reviews/add-review', {
+            navigate('/admin/content/homepage/reviews/add', {
               state: {
                 returnTo: '/admin/content/homepage/reviews',
               },
@@ -159,6 +163,7 @@ const CMSHomepageReviews = () => {
         <ReviewsTable
           reviews={reviews}
           onEdit={handleEdit}
+          onDelete={handleDelete}
           onDeleted={handleDeleted}
         />
       )}
@@ -167,3 +172,4 @@ const CMSHomepageReviews = () => {
 };
 
 export default CMSHomepageReviews;
+

@@ -7,10 +7,13 @@ import { requireAuth } from "../middleware/auth.js";
 import {
   getPublicCmsReviews,
 } from "../controllers/reviewController.js";
+import { getPublicHomepageReviews } from "../controllers/homepageReviewController.js";
 
 const reviewRouter = express.Router();
 
 reviewRouter.get("/cms", getPublicCmsReviews);
+reviewRouter.get("/homepage", getPublicHomepageReviews);
+
 
 reviewRouter.get("/product/:product_id", getProductReviews );
 

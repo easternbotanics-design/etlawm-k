@@ -74,7 +74,7 @@ const DeleteIcon = () => (
 );
 
 /* ── Table component ─────────────────────────────────────────────── */
-const ReviewsTable = ({ reviews = [], onEdit, onDeleted }) => {
+const ReviewsTable = ({ reviews = [], onEdit, onDelete, onDeleted }) => {
   const [deletingId, setDeletingId] = useState(null);
 
   const handleDelete = async (review) => {
@@ -86,7 +86,11 @@ const ReviewsTable = ({ reviews = [], onEdit, onDeleted }) => {
     try {
       setDeletingId(review.id);
 
-      await reviewService.deleteCmsReview(review.id);
+      if (onDelete) {
+        await onDelete(review);
+      } else {
+        await reviewService.deleteCmsReview(review.id);
+      }
 
       onDeleted?.(review);
     } catch (err) {
@@ -95,6 +99,7 @@ const ReviewsTable = ({ reviews = [], onEdit, onDeleted }) => {
       setDeletingId(null);
     }
   };
+
 
   const columns = [
     {

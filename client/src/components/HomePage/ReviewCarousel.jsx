@@ -74,7 +74,7 @@ const buildDesktopFrames = (items) => {
 const desktopFrames = buildDesktopFrames(testimonials);
 const mobileFrames = testimonials.map((item) => [item]);
 
-const HomeHeroCarousel = () => {
+const ReviewCarousel = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(true);
@@ -303,4 +303,4 @@ const HomeHeroCarousel = () => {
   );
 };
 
-export default HomeHeroCarousel;
+export default ReviewCarousel;

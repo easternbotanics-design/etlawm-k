@@ -24,7 +24,7 @@ import FloatingCart from './components/FloatingCart.jsx';
 import Science from './pages/Science.jsx';
 import usePageTracking from './hooks/usePageTracking.js';
 import NotFoundPage from './pages/NotFoundPage.jsx';
-// import Scrap from './pages/Scrap.jsx';
+import Scrap from './pages/Scrap.jsx';
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -66,7 +66,7 @@ function AppRoutes() {
       <Routes>
 
         <Route path="/" element={<Home />} />
-        {/* <Route path="/scrap" element={<Scrap />} />*/}
+        <Route path="/scrap" element={<Scrap />} />
         {/* <Route path="/login"                    element={<Login />} />*/}
         <Route path="/login" element={<Login />} />
         {/* Collection routes */}
