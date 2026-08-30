@@ -56,7 +56,17 @@ const NavBar = () => {
             {/* Desktop Navigation Links */}
             <nav className="hidden md:flex items-center space-x-8">
               {navLinks.map((link) => {
-                const isActive = location.pathname === link.path;
+                let isActive = false;
+                if (link.path === '/') {
+                  isActive = location.pathname === '/';
+                } else if (link.path === '/collection') {
+                  isActive = location.pathname.startsWith('/collection');
+                } else if (link.path === '/ingredients') {
+                  isActive = location.pathname.startsWith('/ingredients') || location.pathname.startsWith('/ingredient');
+                } else {
+                  isActive = location.pathname.startsWith(link.path);
+                }
+
                 return (
                   <Link
                     key={link.name}

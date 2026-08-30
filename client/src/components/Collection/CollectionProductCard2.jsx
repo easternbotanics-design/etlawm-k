@@ -94,7 +94,7 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
         }}
       >
         <Link
-          to={`/product/${product.slug}`}
+          to={`/collection/product/${product.slug}`}
           aria-label={`View ${product.name}`}
           style={{
             position: "relative",
@@ -179,7 +179,7 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
           }}
         >
           <Link
-            to={`/product/${product.slug}`}
+            to={`/collection/product/${product.slug}`}
             className="collection-product-name-link"
             style={{
               textDecoration: "none",

@@ -10,7 +10,7 @@ import CMSFaq from "../components/AdminPanel/AdminContent/CMSFaq.jsx";
 import CMSFaqForm from "../components/AdminPanel/AdminContent/CMSFaqForm.jsx";
 import ProductFaqs from "../components/AdminPanel/AdminContent/ProductFaqs.jsx";
 import AdminCollection from "../components/AdminPanel/AdminCollection/AdminCollection.jsx";
-import AdminProductForm from "../components/AdminPanel/AdminCollection/CMSProductForm.jsx";
+import AdminProductForm from "../components/AdminPanel/AdminCollection/CMSProductForm2.jsx";
 import AdminSidebar from "../components/AdminPanel/AdminSidebar.jsx";
 import AdminTopBar from "../components/AdminPanel/AdminTopBar.jsx";
 import AdminProfile from "../components/AdminPanel/AdminProfile.jsx";
@@ -22,6 +22,8 @@ import CMSRituals from "../components/AdminPanel/AdminContent/CMSRituals.jsx";
 import CMSRitualForm from "../components/AdminPanel/AdminContent/CMSRitualForm.jsx";
 import CMSScience from "../components/AdminPanel/AdminContent/CMSScience.jsx";
 import CMSScienceForm from "../components/AdminPanel/AdminContent/CMSScienceForm.jsx";
+import CMSConcerns from "../components/AdminPanel/AdminContent/CMSConcerns.jsx";
+import CMSConcernForm from "../components/AdminPanel/AdminContent/CMSConcernForm.jsx";
 import AdminOrders from "../components/AdminPanel/AdminOperations/AdminOrders.jsx";
 import AdminCarts from "../components/AdminPanel/AdminOperations/AdminCarts.jsx";
 import AdminCustomers from "../components/AdminPanel/AdminCustomers.jsx";
@@ -523,6 +525,8 @@ const AdminDashBoard = () => {
             <Route path="/content/rituals" element={<CMSRituals />} />
             <Route path="/content/rituals/add" element={<CMSRitualForm />} />
             <Route path="/content/rituals/edit/:id" element={<CMSRitualForm />} />
+            <Route path="/content/concerns" element={<CMSConcerns />} />
+            <Route path="/content/concerns/add" element={<CMSConcernForm />} />
             <Route path="/content/science" element={<CMSScience />} />
             <Route path="/content/science/add" element={<CMSScienceForm />} />
             <Route path="/content/science/edit/:id" element={<CMSScienceForm />} />

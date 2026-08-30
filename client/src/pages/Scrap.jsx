@@ -1,9 +1,16 @@
-import ReviewSection from "../components/HomePage/ReviewCarousel2";
+import Ghost from "../components/FloatingGhost";
+import LoaderTruck from "../components/LoaderTruck";
+import LoaderHamster from "../components/LoaderHamster";
+import LoaderHourGlass from "../components/LoaderHourGlass";
 
 const Scrap = () => {
   return (
     <>
-      <ReviewSection />
+      <Ghost />
+      <LoaderTruck />
+      <LoaderHamster />
+      <LoaderHourGlass />
+      
     </>
   );
 };

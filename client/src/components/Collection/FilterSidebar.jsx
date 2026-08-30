@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { CONCERNS, SORT_OPTIONS } from "../../data/products.js";
 import { getCategories } from "../../services/categoryService.js";
+import concernService from "../../services/concernService.js";
 import { colours, fonts } from "../../theme/theme.js";
 import CustomSelect from "../CustomSelect";
 
@@ -85,6 +86,8 @@ export function FilterContent({ filters, setFilters }) {
   const [categories, setCategories] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [categoryError, setCategoryError] = useState("");
+  const [concerns, setConcerns] = useState(CONCERNS);
+  const [concernLoading, setConcernLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,7 +113,29 @@ export function FilterContent({ filters, setFilters }) {
       }
     };
 
+    const loadConcerns = async () => {
+      try {
+        setConcernLoading(true);
+        const data = await concernService.getPublicConcerns();
+        if (cancelled) return;
+        if (data.success && Array.isArray(data.concerns) && data.concerns.length > 0) {
+          const formatted = data.concerns.map((c) => ({
+            value: c.slug || c.name,
+            label: c.name,
+          }));
+          setConcerns(formatted);
+        }
+      } catch (err) {
+        console.error("Failed to load concerns for filter sidebar", err);
+      } finally {
+        if (!cancelled) {
+          setConcernLoading(false);
+        }
+      }
+    };
+
     loadCategories();
+    loadConcerns();
 
     return () => {
       cancelled = true;
@@ -293,7 +318,20 @@ export function FilterContent({ filters, setFilters }) {
       {/* Concerns */}
       <SectionLabel>Concerns</SectionLabel>
 
-      {CONCERNS.map(({ value, label }) => (
+      {concernLoading && concerns.length === 0 && (
+        <p
+          style={{
+            fontFamily: fonts.secondary,
+            fontSize: "0.75rem",
+            color: BARK,
+            margin: 0,
+          }}
+        >
+          Loading concerns...
+        </p>
+      )}
+
+      {concerns.map(({ value, label }) => (
         <label
           key={value}
           style={{
@@ -307,7 +345,7 @@ export function FilterContent({ filters, setFilters }) {
           <input
             type="checkbox"
             className="filter-checkbox"
-            checked={filters.concerns.includes(value)}
+            checked={filters.concerns.includes(value) || filters.concerns.includes(label)}
             onChange={() => toggle("concerns", value)}
           />
 

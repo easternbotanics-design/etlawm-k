@@ -5,31 +5,31 @@ import { createProduct, updateProduct, uploadImage, addProductImage } from '../.
 import { CONCERNS } from '../../../data/products.js';
 import concernService from '../../../services/concernService.js';
 import { colours, fonts } from '../../../theme/theme.js';
+import {
+  FormStyles,
+  FormCard,
+  TextInput,
+  StepperInput,
+  CompoundInput,
+  SelectField,
+  ExpandableTextarea,
+  ImageUploadCard,
+  TagsCard,
+  ActionButtonsCard,
+  inputStyle,
+  cardStyle,
+} from '../FormComponents.jsx';
 
 const API = import.meta.env.VITE_SERVER_API;
 
-const SCOPED_CSS = `
-  .form-input:focus, .form-textarea:focus, .form-select:focus {
-    border-color: ${colours.accent} !important;
-    background-color: ${colours.background} !important;
-    box-shadow: 0 0 0 1px ${colours.accent} !important;
-  }
-  .form-btn-primary:hover {
-    background-color: ${colours.accent} !important;
-    color: ${colours.background} !important;
-    box-shadow: 0 4px 12px rgba(167, 124, 107, 0.2) !important;
-  }
-  .form-btn-secondary:hover {
-    background-color: ${colours.primary} !important;
-  }
-`;
-
-const BADGES = ['', 'Bestseller', 'New Arrival', 'Limited Edition', 'Award Winner', 'Organic', 'Sale'];
+const BADGE_OPTIONS = ['', 'Bestseller', 'New Arrival', 'Limited Edition', 'Award Winner', 'Organic', 'Sale'].map(
+  (b) => ({ value: b, label: b || 'No Badge' })
+);
 const DISCOUNT_TYPES = [
   { value: 'percentage', label: '%' },
   { value: 'amount', label: '₹ Off' },
 ];
-const SIZE_UNITS = ['g', 'ml', 'units', 'capsules', 'tablets', 'pcs'];
+const SIZE_UNIT_OPTIONS = ['g', 'ml', 'units', 'capsules', 'tablets', 'pcs'].map((u) => ({ value: u, label: u }));
 const PRODUCT_STATUS = [
   { value: 'active', label: 'Active' },
   { value: 'out_of_stock', label: 'Out of Stock' },
@@ -82,7 +82,7 @@ export default function AdminProductForm() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  
+
   const [selectedIngredients, setSelectedIngredients] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -124,7 +124,7 @@ export default function AdminProductForm() {
           setAllIngredients(data.ingredients ?? []);
         }
       } catch (err) {
-        console.error("Failed to load ingredients", err);
+        console.error('Failed to load ingredients', err);
       } finally {
         setLoadingIngredients(false);
       }
@@ -147,7 +147,7 @@ export default function AdminProductForm() {
         setAllIngredients(data.ingredients ?? []);
       }
     } catch (err) {
-      console.error("Failed to refresh ingredients", err);
+      console.error('Failed to refresh ingredients', err);
     } finally {
       setLoadingIngredients(false);
     }
@@ -203,7 +203,7 @@ export default function AdminProductForm() {
         const catRes = await fetch(`${API}/api/categories`);
         if (!catRes.ok) throw new Error('Failed to load categories');
         const catData = await catRes.json();
-        const filteredCats = (catData.categories ?? []).filter(cat => cat.slug !== 'all-products');
+        const filteredCats = (catData.categories ?? []).filter((cat) => cat.slug !== 'all-products');
         setCategories(filteredCats);
 
         if (isEditMode) {
@@ -225,9 +225,7 @@ export default function AdminProductForm() {
             description: product.description || '',
             ingredients: product.ingredients || '',
             usageInstructions: product.usageInstructions || product.usage_instructions || '',
-            benefits: Array.isArray(product.benefits)
-              ? product.benefits.join('\n')
-              : product.benefits || '',
+            benefits: Array.isArray(product.benefits) ? product.benefits.join('\n') : product.benefits || '',
             status: product.status || (product.isActive || product.is_active ? 'active' : 'archived'),
             seoTitle: product.seoTitle || product.seo_title || '',
             seoDescription: product.seoDescription || product.seo_description || '',
@@ -288,16 +286,16 @@ export default function AdminProductForm() {
     });
   };
 
-  const handleFileChange = async (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
+  const handleFileChange = async (files) => {
+    const fileList = Array.from(files ?? []);
+    if (!fileList.length) return;
 
     setUploadingImage(true);
     setError(null);
 
     try {
       const newUrls = [];
-      for (const file of files) {
+      for (const file of fileList) {
         const uploadResult = await uploadImage(file);
         if (uploadResult?.url) newUrls.push(uploadResult.url);
       }
@@ -323,7 +321,6 @@ export default function AdminProductForm() {
       setError(`Image upload failed: ${err.message}`);
     } finally {
       setUploadingImage(false);
-      e.target.value = '';
     }
   };
 
@@ -420,39 +417,39 @@ export default function AdminProductForm() {
         code: form.code.trim() || null,
         category_id: finalCategoryId && finalCategoryId !== 'NEW_CATEGORY' ? Number(finalCategoryId) : null,
         badge: form.badge || null,
-      
+
         price: Number(finalPrice.toFixed(2)),
         original_price: discountValue > 0 ? Number(basePrice.toFixed(2)) : null,
-      
+
         discount_value: discountValue || null,
         discount_type: discountValue > 0 ? form.discountType : 'percentage',
-      
+
         stock_qty: Number(form.stockQty || 0),
-      
+
         size_value: form.sizeValue ? Number(form.sizeValue) : null,
         size_unit: form.sizeValue ? form.sizeUnit : null,
-      
+
         description: form.description,
         ingredients: form.ingredients,
         usage_instructions: form.usageInstructions,
-      
+
         benefits: form.benefits
           ? form.benefits
               .split('\n')
               .map((item) => item.trim())
               .filter(Boolean)
           : [],
-      
+
         status: submitMode === 'draft' ? 'draft' : form.status,
         is_active: submitMode !== 'draft' && form.status === 'active',
         is_draft: submitMode === 'draft',
-      
+
         seo_title: form.seoTitle || form.name,
         seo_description: form.seoDescription || form.description.slice(0, 155),
 
         skin_type: form.skinType.trim() || null,
         suitable_for: form.suitableFor.trim() || null,
-      
+
         concerns: form.concerns,
       };
 
@@ -477,7 +474,6 @@ export default function AdminProductForm() {
 
         setSuccess(submitMode === 'draft' ? 'Draft saved successfully.' : 'Product updated successfully.');
 
-        // Sync ingredients relation
         const token = localStorage.getItem('token');
         await fetch(`${API}/api/admin/products/${id}/ingredients`, {
           method: 'POST',
@@ -485,7 +481,7 @@ export default function AdminProductForm() {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ ingredientIds: selectedIngredients.map(i => i.id) }),
+          body: JSON.stringify({ ingredientIds: selectedIngredients.map((i) => i.id) }),
         });
       } else {
         savedProduct = await createProduct(payload);
@@ -496,7 +492,6 @@ export default function AdminProductForm() {
             await addProductImage(savedProduct.id, img.image_url, i === 0, i);
           }
 
-          // Sync ingredients relation
           const token = localStorage.getItem('token');
           await fetch(`${API}/api/admin/products/${savedProduct.id}/ingredients`, {
             method: 'POST',
@@ -504,7 +499,7 @@ export default function AdminProductForm() {
               'Content-Type': 'application/json',
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
-            body: JSON.stringify({ ingredientIds: selectedIngredients.map(i => i.id) }),
+            body: JSON.stringify({ ingredientIds: selectedIngredients.map((i) => i.id) }),
           });
         }
 
@@ -519,18 +514,15 @@ export default function AdminProductForm() {
     }
   };
 
-  const FieldLabel = ({ children, required }) => (
-    <label style={{ color: colours.mutedText }} className="block text-xs uppercase tracking-widest font-semibold mb-2">
-      {children}{required ? ' *' : ''}
-    </label>
-  );
-
-  const inputStyle = { color: colours.text, borderColor: colours.border, backgroundColor: `${colours.primary}66` };
-  const cardStyle = { backgroundColor: colours.background, borderColor: colours.border };
+  const categoryOptions = [
+    { value: '', label: 'Select a category' },
+    ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
+    { value: 'NEW_CATEGORY', label: '+ Add New Category' },
+  ];
 
   return (
     <div style={{ backgroundColor: colours.primary, fontFamily: fonts.secondary, color: colours.text }} className="min-h-screen flex flex-col">
-      <style>{SCOPED_CSS}</style>
+      <FormStyles />
 
       <main className="flex-1 pt-8 px-4 md:px-8 max-w-7xl mx-auto w-full pb-16">
         <div className="mb-8">
@@ -583,157 +575,105 @@ export default function AdminProductForm() {
         ) : (
           <form onSubmit={(e) => handleSubmit(e, 'publish')} className="grid grid-cols-1 xl:grid-cols-12 gap-8">
             <div className="xl:col-span-8 space-y-8">
-              <section style={cardStyle} className="border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
-                <div>
-                  <h2 style={{ fontFamily: fonts.primary }} className="text-2xl font-semibold">General</h2>
-                  <p style={{ color: colours.mutedText }} className="text-xs mt-1">Core product information shown on the store.</p>
-                </div>
-
+              {/* General */}
+              <FormCard title="General" description="Core product information shown on the store.">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <FieldLabel required>Product Name</FieldLabel>
-                    <input name="name" value={form.name} onChange={handleChange} required placeholder="e.g. Botanical Hair Serum" style={inputStyle} className="form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
-                  </div>
-
-                  <div>
-                    <FieldLabel>Slug</FieldLabel>
-                    <input name="slug" value={form.slug} onChange={handleChange} placeholder="botanical-hair-serum" style={inputStyle} className="form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
-                  </div>
+                  <TextInput label="Product Name" required name="name" value={form.name} onChange={handleChange} placeholder="e.g. Botanical Hair Serum" />
+                  <TextInput label="Slug" name="slug" value={form.slug} onChange={handleChange} placeholder="botanical-hair-serum" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <FieldLabel>Product Code</FieldLabel>
-                    <input name="code" value={form.code} onChange={handleChange} placeholder="BHS-100ML" style={inputStyle} className="form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
-                  </div>
+                  <TextInput label="Product Code" name="code" value={form.code} onChange={handleChange} placeholder="BHS-100ML" />
 
                   <div>
-                    <FieldLabel required>Category</FieldLabel>
-                    <select name="categoryId" value={form.categoryId} onChange={handleChange} style={inputStyle} className="form-select w-full rounded-lg border px-4 py-3 text-sm focus:outline-none transition-all">
-                      <option value="">Select a category</option>
-                      {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                      <option value="NEW_CATEGORY">+ Add New Category</option>
-                    </select>
+                    <SelectField label="Category" required name="categoryId" value={form.categoryId} onChange={handleChange} options={categoryOptions} />
                     {showNewCategoryInput && (
-                      <input value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="Enter new category name" style={inputStyle} className="form-input mt-3 w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
+                      <input
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        placeholder="Enter new category name"
+                        style={inputStyle}
+                        className="form-input mt-3 w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all"
+                      />
                     )}
                   </div>
 
-                  <div>
-                    <FieldLabel>Tag / Badge</FieldLabel>
-                    <select name="badge" value={form.badge} onChange={handleChange} style={inputStyle} className="form-select w-full rounded-lg border px-4 py-3 text-sm focus:outline-none transition-all">
-                      {BADGES.map((badge) => <option key={badge || 'none'} value={badge}>{badge || 'No Badge'}</option>)}
-                    </select>
-                  </div>
+                  <SelectField label="Tag / Badge" name="badge" value={form.badge} onChange={handleChange} options={BADGE_OPTIONS} />
                 </div>
-              </section>
+              </FormCard>
 
-              <section style={cardStyle} className="border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
-                <div>
-                  <h2 style={{ fontFamily: fonts.primary }} className="text-2xl font-semibold">Pricing & Inventory</h2>
-                  <p style={{ color: colours.mutedText }} className="text-xs mt-1">Discount supports percentage or flat rupee amount.</p>
-                </div>
-
+              {/* Pricing & Inventory */}
+              <FormCard title="Pricing & Inventory" description="Discount supports percentage or flat rupee amount.">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div>
-                    <FieldLabel required>Price</FieldLabel>
-                    <input type="number" name="price" value={form.price} onChange={handleChange} required min="1" step="0.01" placeholder="850" style={inputStyle} className="form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
-                  </div>
+                  <TextInput
+                    label="Price" required type="number" name="price" value={form.price} onChange={handleChange}
+                    min="1" step="0.01" placeholder="850"
+                  />
 
                   <div className="md:col-span-2">
-                    <FieldLabel>Discount</FieldLabel>
-                    <div className="grid grid-cols-3 gap-3">
-                      <input type="number" name="discountValue" value={form.discountValue} onChange={handleChange} min="0" step="0.01" placeholder="12" style={inputStyle} className="form-input col-span-2 w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
-                      <select name="discountType" value={form.discountType} onChange={handleChange} style={inputStyle} className="form-select w-full rounded-lg border px-4 py-3 text-sm focus:outline-none transition-all">
-                        {DISCOUNT_TYPES.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
-                      </select>
-                    </div>
+                    <CompoundInput
+                      label="Discount"
+                      selectWidth="w-24"
+                      inputProps={{ type: 'number', name: 'discountValue', value: form.discountValue, onChange: handleChange, min: '0', step: '0.01', placeholder: '12' }}
+                      selectProps={{ name: 'discountType', value: form.discountType, onChange: handleChange }}
+                      options={DISCOUNT_TYPES}
+                    />
                     <p style={{ color: colours.mutedText }} className="text-[11px] mt-2">Final price: ₹{finalPrice.toFixed(2)}</p>
                   </div>
 
-                  <div>
-                    <FieldLabel required>Stock</FieldLabel>
-                    <input type="number" name="stockQty" value={form.stockQty} onChange={handleChange} min="0" placeholder="50" style={inputStyle} className="form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
-                  </div>
+                  <StepperInput label="Stock" required name="stockQty" value={form.stockQty} onChange={handleChange} min={0} placeholder="50" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <FieldLabel>Size / Quantity</FieldLabel>
-                    <div className="grid grid-cols-3 gap-3">
-                      <input type="number" name="sizeValue" value={form.sizeValue} onChange={handleChange} min="0" step="0.01" placeholder="100" style={inputStyle} className="form-input col-span-2 w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
-                      <select name="sizeUnit" value={form.sizeUnit} onChange={handleChange} style={inputStyle} className="form-select w-full rounded-lg border px-4 py-3 text-sm focus:outline-none transition-all">
-                        {SIZE_UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
-                      </select>
-                    </div>
-                  </div>
+                  <CompoundInput
+                    label="Size / Quantity"
+                    selectWidth="w-24"
+                    inputProps={{ type: 'number', name: 'sizeValue', value: form.sizeValue, onChange: handleChange, min: '0', step: '0.01', placeholder: '100' }}
+                    selectProps={{ name: 'sizeUnit', value: form.sizeUnit, onChange: handleChange }}
+                    options={SIZE_UNIT_OPTIONS}
+                  />
 
-                  <div>
-                    <FieldLabel>Status</FieldLabel>
-                    <select name="status" value={form.status} onChange={handleChange} style={inputStyle} className="form-select w-full rounded-lg border px-4 py-3 text-sm focus:outline-none transition-all">
-                      {PRODUCT_STATUS.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
-                    </select>
-                  </div>
+                  <SelectField label="Status" name="status" value={form.status} onChange={handleChange} options={PRODUCT_STATUS} />
                 </div>
-              </section>
+              </FormCard>
 
-              <section style={cardStyle} className="border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
-                <div>
-                  <h2 style={{ fontFamily: fonts.primary }} className="text-2xl font-semibold">Content</h2>
-                  <p style={{ color: colours.mutedText }} className="text-xs mt-1">Separate fields make the product page easier to design.</p>
-                </div>
-
-                <div>
-                  <FieldLabel>Description</FieldLabel>
-                  <textarea name="description" value={form.description} onChange={handleChange} rows="5" placeholder="Enter full product details..." style={inputStyle} className="form-textarea w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all resize-y" />
-                </div>
+              {/* Content */}
+              <FormCard title="Content" description="Separate fields make the product page easier to design.">
+                <ExpandableTextarea
+                  label="Description" name="description" value={form.description} onChange={handleChange}
+                  rows={5} placeholder="Enter full product details..."
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <FieldLabel>Ingredients</FieldLabel>
-                    <textarea name="ingredients" value={form.ingredients} onChange={handleChange} rows="4" placeholder="Amla, Bhringraj, Rosemary..." style={inputStyle} className="form-textarea w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all resize-y" />
-                  </div>
-
-                  <div>
-                    <FieldLabel>Usage Instructions</FieldLabel>
-                    <textarea name="usageInstructions" value={form.usageInstructions} onChange={handleChange} rows="4" placeholder="Apply 2-3 drops and massage gently..." style={inputStyle} className="form-textarea w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all resize-y" />
-                  </div>
+                  <ExpandableTextarea
+                    label="Ingredients" name="ingredients" value={form.ingredients} onChange={handleChange}
+                    rows={4} placeholder="Amla, Bhringraj, Rosemary..."
+                  />
+                  <ExpandableTextarea
+                    label="Usage Instructions" name="usageInstructions" value={form.usageInstructions} onChange={handleChange}
+                    rows={4} placeholder="Apply 2-3 drops and massage gently..."
+                  />
                 </div>
 
-                <div>
-                  <FieldLabel>Benefits / Highlights</FieldLabel>
-                  <textarea name="benefits" value={form.benefits} onChange={handleChange} rows="4" placeholder="One benefit per line is best for rendering bullet points." style={inputStyle} className="form-textarea w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all resize-y" />
-                </div>
+                <ExpandableTextarea
+                  label="Benefits / Highlights" name="benefits" value={form.benefits} onChange={handleChange}
+                  rows={4} placeholder="One benefit per line is best for rendering bullet points."
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <FieldLabel>Skin Type</FieldLabel>
-                    <input name="skinType" value={form.skinType} onChange={handleChange} placeholder="e.g. All Skin Types, Oily, Sensitive" style={inputStyle} className="form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
-                  </div>
-
-                  <div>
-                    <FieldLabel>Suitable For</FieldLabel>
-                    <input name="suitableFor" value={form.suitableFor} onChange={handleChange} placeholder="e.g. Men & Women, Acne-prone skin" style={inputStyle} className="form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
-                  </div>
+                  <TextInput label="Skin Type" name="skinType" value={form.skinType} onChange={handleChange} placeholder="e.g. All Skin Types, Oily, Sensitive" />
+                  <TextInput label="Suitable For" name="suitableFor" value={form.suitableFor} onChange={handleChange} placeholder="e.g. Men & Women, Hair Fall, Acne" />
                 </div>
-              </section>
+              </FormCard>
 
-              <section style={cardStyle} className="border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
-                <div>
-                  <h2 style={{ fontFamily: fonts.primary }} className="text-2xl font-semibold">Ingredients</h2>
-                  <p style={{ color: colours.mutedText }} className="text-xs mt-1">Select and order the ingredients for this product.</p>
-                </div>
-
+              {/* Ingredient relations (bespoke — chips + modal picker, not a fixed tag set) */}
+              <FormCard title="Ingredients" description="Select and order the ingredients for this product.">
                 <div className="flex flex-wrap gap-2 min-h-[50px] p-4 rounded-xl border border-dashed items-center" style={{ borderColor: colours.border, backgroundColor: `${colours.primary}33` }}>
                   {selectedIngredients.length > 0 ? (
                     selectedIngredients.map((ingredient) => (
                       <div
                         key={ingredient.id}
-                        style={{
-                          backgroundColor: colours.accent,
-                          color: colours.background,
-                          fontFamily: fonts.secondary,
-                        }}
+                        style={{ backgroundColor: colours.accent, color: colours.background, fontFamily: fonts.secondary }}
                         className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm transition-all duration-200"
                       >
                         <span>{ingredient.name}</span>
@@ -756,133 +696,64 @@ export default function AdminProductForm() {
 
                 <div className="flex flex-wrap gap-4">
                   <button
-                    type="button"
-                    onClick={() => setShowPopup(true)}
+                    type="button" onClick={() => setShowPopup(true)}
                     style={{ backgroundColor: colours.secondary, color: colours.background }}
                     className="form-btn-primary px-4 py-3 rounded-lg text-xs uppercase tracking-widest font-semibold transition-all cursor-pointer border-none"
                   >
                     Add Existing Ingredient
                   </button>
                   <button
-                    type="button"
-                    onClick={handleCreateNewIngredient}
+                    type="button" onClick={handleCreateNewIngredient}
                     style={{ borderColor: colours.border, color: colours.text }}
                     className="form-btn-secondary border px-4 py-3 rounded-lg text-xs uppercase tracking-widest font-semibold bg-transparent transition-all cursor-pointer"
                   >
                     Create New Ingredient
                   </button>
                 </div>
-              </section>
+              </FormCard>
 
-              <section style={cardStyle} className="border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
-                <div>
-                  <h2 style={{ fontFamily: fonts.primary }} className="text-2xl font-semibold">SEO</h2>
-                  <p style={{ color: colours.mutedText }} className="text-xs mt-1">Optional product-level metadata for the product page.</p>
-                </div>
+              {/* SEO */}
+              <FormCard title="SEO" description="Optional product-level metadata for the product page.">
+                <TextInput label="SEO Title" name="seoTitle" value={form.seoTitle} onChange={handleChange} placeholder="Botanical Hair Serum for Hair Fall" />
 
                 <div>
-                  <FieldLabel>SEO Title</FieldLabel>
-                  <input name="seoTitle" value={form.seoTitle} onChange={handleChange} placeholder="Botanical Hair Serum for Hair Fall" style={inputStyle} className="form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
-                </div>
-
-                <div>
-                  <FieldLabel>SEO Description</FieldLabel>
-                  <textarea name="seoDescription" value={form.seoDescription} onChange={handleChange} rows="3" maxLength="160" placeholder="Short search result description, ideally under 160 characters." style={inputStyle} className="form-textarea w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all resize-y" />
+                  <ExpandableTextarea
+                    label="SEO Description" name="seoDescription" value={form.seoDescription} onChange={handleChange}
+                    rows={3} maxLength="160" placeholder="Short search result description, ideally under 160 characters."
+                  />
                   <p style={{ color: colours.mutedText }} className="text-[11px] mt-2">{form.seoDescription.length}/160 characters</p>
                 </div>
-              </section>
+              </FormCard>
             </div>
 
             <aside className="xl:col-span-4 space-y-8">
-              <section style={cardStyle} className="border rounded-2xl p-6 shadow-sm space-y-4">
-                <div>
-                  <h2 style={{ fontFamily: fonts.primary }} className="text-2xl font-semibold">Images</h2>
-                  <p style={{ color: colours.mutedText }} className="text-xs mt-1">Upload multiple images. First image is used as primary.</p>
-                </div>
+              <ImageUploadCard
+                description="Upload multiple images. First image is used as primary."
+                images={uploadedImages.map((img) => ({ url: img.image_url }))}
+                uploading={uploadingImage}
+                onUpload={handleFileChange}
+                onMove={moveImage}
+                onSetPrimary={handleSetPrimary}
+                onRemove={handleDeleteImage}
+              />
 
-                <label style={{ backgroundColor: colours.secondary, color: colours.background }} className="form-btn-primary cursor-pointer transition-all duration-300 text-xs uppercase tracking-widest font-semibold px-4 py-3.5 rounded-lg text-center block w-full relative">
-                  {uploadingImage ? 'Uploading Images...' : 'Upload Images'}
-                  <input type="file" accept="image/*" onChange={handleFileChange} disabled={uploadingImage} multiple className="hidden" />
-                </label>
+              <TagsCard
+                title="Concern Tags"
+                description="Used for filters such as dandruff, acne and glow."
+                options={concernOptions}
+                selected={form.concerns}
+                onToggle={handleConcernChange}
+              />
 
-                {uploadedImages.length > 0 ? (
-                  <div className="space-y-3 pt-2">
-                    {uploadedImages.map((img, index) => (
-                      <div key={img.image_url ?? index} style={{ borderColor: colours.border, backgroundColor: `${colours.primary}66` }} className="rounded-xl border p-3 flex gap-3">
-                        <div className="w-20 h-24 rounded-lg overflow-hidden border" style={{ borderColor: colours.border }}>
-                          <img src={img.image_url} alt={`Product ${index + 1}`} className="w-full h-full object-cover" />
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="text-sm font-semibold">Image {index + 1}</p>
-                              <p style={{ color: colours.mutedText }} className="text-[11px]">{index === 0 ? 'Primary image' : 'Gallery image'}</p>
-                            </div>
-                            {index === 0 && <span style={{ backgroundColor: colours.accent, color: colours.background }} className="text-[10px] px-2 py-1 rounded-full">Primary</span>}
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 mt-4">
-                            <button type="button" onClick={() => moveImage(index, -1)} disabled={index === 0} className="text-[11px] border rounded px-2 py-1 disabled:opacity-40 cursor-pointer" style={{ borderColor: colours.border, color: colours.text }}>Up</button>
-                            <button type="button" onClick={() => moveImage(index, 1)} disabled={index === uploadedImages.length - 1} className="text-[11px] border rounded px-2 py-1 disabled:opacity-40 cursor-pointer" style={{ borderColor: colours.border, color: colours.text }}>Down</button>
-                            <button type="button" onClick={() => handleSetPrimary(index)} className="text-[11px] border rounded px-2 py-1 cursor-pointer" style={{ borderColor: colours.border, color: colours.text }}>Set Primary</button>
-                            <button type="button" onClick={() => handleDeleteImage(index)} className="text-[11px] border rounded px-2 py-1 cursor-pointer text-red-700 border-red-200">Remove</button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ backgroundColor: colours.background, borderColor: colours.border }} className="aspect-[4/3] w-full rounded-xl border border-dashed flex flex-col items-center justify-center p-4">
-                    <svg className="w-12 h-12 mb-3" style={{ color: colours.mutedText }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Z" />
-                    </svg>
-                    <p style={{ color: colours.accent }} className="text-xs uppercase tracking-wider font-semibold text-center">No Images Uploaded</p>
-                  </div>
-                )}
-              </section>
-
-              <section style={cardStyle} className="border rounded-2xl p-6 shadow-sm space-y-4">
-                <div>
-                  <h2 style={{ fontFamily: fonts.primary }} className="text-2xl font-semibold">Concern Tags</h2>
-                  <p style={{ color: colours.mutedText }} className="text-xs mt-1">Used for filters such as dandruff, acne and glow.</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {concernOptions.map(({ value, label }) => {
-                    const isChecked = form.concerns.includes(value);
-                    return (
-                      <button
-                        type="button"
-                        key={value}
-                        onClick={() => handleConcernChange(value)}
-                        style={{
-                          backgroundColor: isChecked ? colours.accent : `${colours.primary}66`,
-                          color: isChecked ? colours.background : colours.text,
-                          borderColor: isChecked ? colours.accent : colours.border,
-                        }}
-                        className="px-3 py-2 text-left text-xs rounded-lg border transition-all duration-200 cursor-pointer"
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-
-              <section style={cardStyle} className="border rounded-2xl p-6 shadow-sm space-y-3 sticky top-24">
-                <button type="submit" disabled={saving || uploadingImage} style={{ backgroundColor: colours.secondary, color: colours.background }} className="form-btn-primary w-full disabled:opacity-50 transition-all duration-300 text-xs uppercase tracking-widest font-semibold py-4 rounded-lg shadow-md border-none cursor-pointer">
-                  {saving ? 'Saving...' : isEditMode ? 'Update Product' : 'Publish Product'}
-                </button>
-
-                <button type="button" disabled={saving || uploadingImage} onClick={(e) => handleSubmit(e, 'draft')} style={{ borderColor: colours.border, color: colours.text }} className="form-btn-secondary w-full border transition-colors text-xs uppercase tracking-widest font-semibold py-4 rounded-lg text-center bg-transparent cursor-pointer disabled:opacity-50">
-                  Save as Draft
-                </button>
-
-                <Link to="/admin/collection" style={{ borderColor: colours.border, color: colours.mutedText }} className="form-btn-secondary w-full border transition-colors text-xs uppercase tracking-widest font-semibold py-4 rounded-lg text-center block no-underline">
-                  Cancel
-                </Link>
-              </section>
+              <ActionButtonsCard
+                isEditMode={isEditMode}
+                saving={saving}
+                disabled={uploadingImage}
+                submitLabel={saving ? 'Saving...' : isEditMode ? 'Update Product' : 'Publish Product'}
+                onSaveDraft={(e) => handleSubmit(e, 'draft')}
+                cancelHref="/admin/collection"
+                LinkComponent={Link}
+              />
             </aside>
           </form>
         )}
@@ -890,38 +761,25 @@ export default function AdminProductForm() {
 
       {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div
-            style={cardStyle}
-            className="w-full max-w-lg rounded-2xl border shadow-xl flex flex-col max-h-[85vh] overflow-hidden"
-          >
-            {/* Modal Header */}
+          <div style={cardStyle} className="w-full max-w-lg rounded-2xl border shadow-xl flex flex-col max-h-[85vh] overflow-hidden">
             <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: colours.border }}>
-              <h3 style={{ fontFamily: fonts.primary }} className="text-xl font-semibold">
-                Add Existing Ingredients
-              </h3>
+              <h3 style={{ fontFamily: fonts.primary }} className="text-xl font-semibold">Add Existing Ingredients</h3>
               <button
-                type="button"
-                onClick={() => setShowPopup(false)}
+                type="button" onClick={() => setShowPopup(false)}
                 className="text-stone-400 hover:text-stone-600 transition-colors bg-transparent border-none text-2xl p-0 cursor-pointer leading-none"
               >
                 &times;
               </button>
             </div>
 
-            {/* Search Input & Refresh */}
             <div className="p-4 border-b flex gap-3 items-center" style={{ borderColor: colours.border }}>
               <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search ingredients..."
-                style={inputStyle}
+                type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search ingredients..." style={inputStyle}
                 className="form-input flex-1 rounded-lg border px-4 py-2 text-sm placeholder-stone-400 focus:outline-none transition-all"
               />
               <button
-                type="button"
-                onClick={refreshIngredientsList}
-                disabled={loadingIngredients}
+                type="button" onClick={refreshIngredientsList} disabled={loadingIngredients}
                 className="flex items-center gap-1.5 text-xs border rounded-lg px-3 py-2 hover:bg-stone-50 transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap"
                 style={{ borderColor: colours.border, color: colours.text }}
               >
@@ -929,7 +787,6 @@ export default function AdminProductForm() {
               </button>
             </div>
 
-            {/* Ingredients List */}
             <div className="p-4 space-y-2" style={{ maxHeight: '400px', overflowY: 'auto' }} data-lenis-prevent>
               {filteredIngredients.length > 0 ? (
                 filteredIngredients.map((ing) => {
@@ -942,30 +799,20 @@ export default function AdminProductForm() {
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         {ing.image_url ? (
-                          <img
-                            src={ing.image_url}
-                            alt={ing.name}
-                            className="w-10 h-10 rounded-lg object-cover border"
-                            style={{ borderColor: colours.border }}
-                          />
+                          <img src={ing.image_url} alt={ing.name} className="w-10 h-10 rounded-lg object-cover border" style={{ borderColor: colours.border }} />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-stone-100" style={{ borderColor: colours.border }}>
-                            🌱
-                          </div>
+                          <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-stone-100" style={{ borderColor: colours.border }}>🌱</div>
                         )}
                         <div className="min-w-0">
                           <p className="text-sm font-semibold truncate">{ing.name}</p>
                           {ing.scientific_name && (
-                            <p style={{ color: colours.mutedText }} className="text-xs italic truncate">
-                              {ing.scientific_name}
-                            </p>
+                            <p style={{ color: colours.mutedText }} className="text-xs italic truncate">{ing.scientific_name}</p>
                           )}
                         </div>
                       </div>
 
                       <button
-                        type="button"
-                        onClick={() => handleToggleIngredient(ing)}
+                        type="button" onClick={() => handleToggleIngredient(ing)}
                         style={{
                           backgroundColor: isSelected ? colours.accent : 'transparent',
                           color: isSelected ? colours.background : colours.text,
@@ -985,11 +832,9 @@ export default function AdminProductForm() {
               )}
             </div>
 
-            {/* Modal Footer */}
             <div className="p-4 border-t flex justify-end gap-3" style={{ borderColor: colours.border }}>
               <button
-                type="button"
-                onClick={() => setShowPopup(false)}
+                type="button" onClick={() => setShowPopup(false)}
                 style={{ backgroundColor: colours.secondary, color: colours.background }}
                 className="form-btn-primary px-5 py-2.5 rounded-lg text-xs uppercase tracking-widest font-semibold transition-all cursor-pointer border-none"
               >

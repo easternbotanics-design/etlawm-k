@@ -41,6 +41,11 @@ import {
   updateHomepageReview,
   deleteHomepageReview
 } from '../controllers/homepageReviewController.js';
+import {
+  getAdminConcerns,
+  createConcern,
+  deleteConcern
+} from '../controllers/concernController.js';
 
 
 const adminRouter = express.Router();
@@ -111,5 +116,8 @@ adminRouter.get("/homepage-reviews/:id", getHomepageReviewById);
 adminRouter.patch("/homepage-reviews/:id", updateHomepageReview);
 adminRouter.delete("/homepage-reviews/:id", deleteHomepageReview);
 
+adminRouter.get("/concerns", getAdminConcerns);
+adminRouter.post("/concerns", createConcern);
+adminRouter.delete("/concerns/:id", deleteConcern);
 
 export default adminRouter;

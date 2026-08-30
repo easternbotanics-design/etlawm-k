@@ -1,4 +1,4 @@
-const Loader = () => {
+const LoaderHourGlass = () => {
   return (
     <div className="hourglass-loader-wrapper">
       <svg
@@ -268,4 +268,4 @@ const Loader = () => {
   );
 };
 
-export default Loader;
+export default LoaderHourGlass;

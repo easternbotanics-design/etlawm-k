@@ -71,8 +71,9 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         {/* Collection routes */}
         <Route path="/collection" element={<Collection />} />
+        <Route path="/collection/product/:slug" element={<Product />} />
         <Route path="/collection/:category" element={<Collection />} />
-        {/* Individual product */}
+        {/* Individual product (backward compatibility) */}
         <Route path="/product/:slug" element={<Product />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/ritual" element={<Ritual />} />

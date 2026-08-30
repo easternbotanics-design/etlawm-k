@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Minus, Plus, Heart, ChevronRight, ChevronLeft, ShieldCheck, ChevronDown, Check } from "lucide-react";
 import { colours, fonts } from "../../theme/theme";
@@ -16,7 +16,7 @@ function ProductPageSkeleton() {
     <div className="min-h-screen w-full text-[#1B1B18] font-[Inter,sans-serif]">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-24 md:py-32">
         {/* Mobile top breadcrumb skeleton */}
-        <div className="mb-4 h-4 w-48 animate-pulse rounded bg-[#EAE6DB]" />
+        {/* <div className="mb-4 h-4 w-48 animate-pulse rounded bg-[#EAE6DB]" />*/}
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-[88px_1fr_1fr] md:gap-8">
           {/* Thumbnail rail skeleton */}
@@ -368,13 +368,45 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
     details.push({ title: "Benefits", body: benefitsBody, needsRitual: true });
   }
 
-  details.push({
-    title: "Additional Information",
-    body: product.sizeValue && product.sizeUnit
-      ? `Size: ${product.sizeValue} ${product.sizeUnit}`
-      : "...",
-    needsRitual: false,
-  });
+  const additionalInfoItems = [];
+
+  if (product.sizeValue && product.sizeUnit) {
+    additionalInfoItems.push({
+      label: "Quantity",
+      value: `${product.sizeValue} ${product.sizeUnit}`,
+    });
+  }
+
+  const suitableValue = [product.skinType, product.suitableFor].filter(Boolean).join(", ");
+  if (suitableValue) {
+    additionalInfoItems.push({
+      label: "Suitable For",
+      value: suitableValue,
+    });
+  }
+
+  if (Array.isArray(product.concerns) && product.concerns.length > 0) {
+    const formattedConcerns = product.concerns
+      .map((c) =>
+        c
+          .split("-")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ")
+      )
+      .join(", ");
+    additionalInfoItems.push({
+      label: "Concerns",
+      value: formattedConcerns,
+    });
+  }
+
+  if (additionalInfoItems.length > 0) {
+    details.push({
+      title: "Additional Information",
+      items: additionalInfoItems,
+      needsRitual: false,
+    });
+  }
 
   const breadcrumbs = [
     { label: "Home", href: "/" },
@@ -385,33 +417,11 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
   return (
     <div className="min-h-screen w-full text-[#1B1B18] font-[Inter,sans-serif] pb-4 md:pb-0">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-24 pb-4 md:pt-32 md:pb-4">
-        {/* Top breadcrumb bar for immediate context on mobile and desktop */}
-        <nav aria-label="Breadcrumb" className="mb-4 md:mb-6">
-          <ol className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm text-[#6B6656]">
-            {breadcrumbs.map((crumb, i) => {
-              const isLast = i === breadcrumbs.length - 1;
-              return (
-                <li key={crumb.label} className="flex items-center gap-1.5">
-                  <a
-                    href={crumb.href}
-                    aria-current={isLast ? "page" : undefined}
-                    className={
-                      "transition hover:text-[#1F5C52] hover:underline underline-offset-2 " +
-                      (isLast ? "font-medium text-[#1B1B18]" : "")
-                    }
-                  >
-                    {crumb.label}
-                  </a>
-                  {!isLast && <ChevronRight size={14} className="text-[#A39C86]" />}
-                </li>
-              );
-            })}
-          </ol>
-        </nav>
+        
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[88px_1fr_1fr] md:gap-8 items-start">
           {/* ---------------- Left Sticky Media Container (Thumbnails + Hero Image) ---------------- */}
-          <div className="order-1 md:order-1 md:col-span-2 md:sticky md:top-28 md:self-start grid grid-cols-1 gap-4 md:grid-cols-[88px_1fr] md:gap-8 items-start">
+          <div className="order-1 md:order-1 md:col-span-2 md:sticky md:top-32 md:self-start grid grid-cols-1 gap-4 md:grid-cols-[88px_1fr] md:gap-8 items-start">
             {/* ---------------- Thumbnail rail ---------------- */}
             <div className="order-2 flex gap-2.5 overflow-x-auto pb-1 scrollbar-none md:order-1 md:flex-col md:gap-4 md:overflow-visible md:pb-0">
               {displayImages.map((src, i) => {
@@ -718,6 +728,15 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                               <div className="flex flex-col gap-2 pb-4 pt-1">
                                 <div className="h-4 w-3/4 animate-pulse rounded bg-[#EAE6DB]" />
                                 <div className="h-4 w-1/2 animate-pulse rounded bg-[#EAE6DB]" />
+                              </div>
+                            ) : d.items ? (
+                              <div className="pb-4 text-xs sm:text-xs leading-relaxed text-[#6B6656] space-y-1.5">
+                                {d.items.map((item, idx) => (
+                                  <div key={idx}>
+                                    <span className="font-bold text-[#1B1B18]">{item.label}: </span>
+                                    <span className="font-normal text-[#6B6656]">{item.value}</span>
+                                  </div>
+                                ))}
                               </div>
                             ) : (
                               d.body && (

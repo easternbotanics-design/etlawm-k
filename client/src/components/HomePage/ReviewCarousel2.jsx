@@ -69,7 +69,7 @@ const ReviewCard = ({
     widthClass = "max-w-[95%] sm:max-w-xl";
   }
 
-  const targetLink = productLink || (productName ? `/product/${slugify(productName)}` : null);
+  const targetLink = productLink || (productName ? `/collection/product/${slugify(productName)}` : null);
 
   return (
     <div className={`flex flex-col gap-1 w-full ${widthClass} ${className}`} style={style}>

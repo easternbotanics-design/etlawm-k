@@ -309,7 +309,12 @@ const ProductsCollection = ({ categorySlug }) => {
     if (filters.concerns.length > 0) {
       list = list.filter((product) =>
         product.concerns.some((concern) =>
-          filters.concerns.includes(concern)
+          filters.concerns.some(
+            (fc) =>
+              fc === concern ||
+              fc.toLowerCase() === concern.toLowerCase() ||
+              fc.replace(/-/g, " ").toLowerCase() === concern.replace(/-/g, " ").toLowerCase()
+          )
         )
       );
     }

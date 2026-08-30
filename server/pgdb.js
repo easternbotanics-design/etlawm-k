@@ -1093,6 +1093,8 @@ const products = {
         is_draft = false,
         seo_title,
         seo_description,
+        skin_type,
+        suitable_for,
     }) =>
         query(
             `INSERT INTO products (
@@ -1118,14 +1120,16 @@ const products = {
                 is_active,
                 is_draft,
                 seo_title,
-                seo_description
+                seo_description,
+                skin_type,
+                suitable_for
             )
             VALUES (
                 $1, $2, $3, $4, $5,
                 $6, $7, $8, $9, $10,
                 $11, $12, $13, $14, $15,
                 $16, $17, $18, $19, $20,
-                $21, $22, $23
+                $21, $22, $23, $24, $25
             )
             RETURNING *`,
             [
@@ -1153,6 +1157,8 @@ const products = {
                 is_draft,
                 seo_title ?? null,
                 seo_description ?? null,
+                skin_type ?? null,
+                suitable_for ?? null,
             ]
         ),
 
@@ -1336,6 +1342,8 @@ const products = {
             'is_draft',
             'seo_title',
             'seo_description',
+            'skin_type',
+            'suitable_for',
         ];
 
         const sets = [];
@@ -2505,8 +2513,35 @@ const websiteVisits = {
     }
 };
 
+const concerns = {
+    create: ({ name, slug, status = 'published', is_active = true }) =>
+        query(
+            `INSERT INTO concern (name, slug, status, is_active)
+             VALUES ($1, $2, $3, $4)
+             RETURNING *`,
+            [name, slug, status, is_active]
+        ),
+
+    findAll: ({ include_inactive = false } = {}) => {
+        if (include_inactive) {
+            return query(`SELECT * FROM concern ORDER BY id ASC`);
+        }
+        return query(`SELECT * FROM concern WHERE is_active = true AND status = 'published' ORDER BY id ASC`);
+    },
+
+    findById: (id) =>
+        query(`SELECT * FROM concern WHERE id = $1 LIMIT 1`, [id]),
+
+    findBySlug: (slug) =>
+        query(`SELECT * FROM concern WHERE slug = $1 LIMIT 1`, [slug]),
+
+    delete: (id) =>
+        query(`DELETE FROM concern WHERE id = $1`, [id]),
+};
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 const db = {
+    concerns,
     websiteVisits,
     cmsScience,
     rituals,

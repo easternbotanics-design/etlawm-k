@@ -82,6 +82,8 @@ function normalizeProduct(raw) {
             : raw.benefits
                 ? [raw.benefits]
                 : [],
+        skinType: raw.skin_type ?? raw.skinType ?? '',
+        suitableFor: raw.suitable_for ?? raw.suitableFor ?? '',
     
         // Pricing
         price: Number(raw.price) || 0,

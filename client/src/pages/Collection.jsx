@@ -117,9 +117,38 @@ export default function Collection() {
 
         setProducts(productsData);
 
-        setCategories(
-          categoriesData.filter((category) => category.isActive && category.slug !== "all-products")
+        const activeCategories = (categoriesData || []).filter(
+          (category) => category.isActive
         );
+        const existingAllIndex = activeCategories.findIndex(
+          (cat) => cat.slug === "all-products" || cat.slug === "all-categories"
+        );
+
+        let finalCategories = [];
+        if (existingAllIndex !== -1) {
+          const allCat = {
+            ...activeCategories[existingAllIndex],
+            name: "All Categories",
+            slug: activeCategories[existingAllIndex].slug,
+          };
+          finalCategories = [
+            allCat,
+            ...activeCategories.filter((_, idx) => idx !== existingAllIndex),
+          ];
+        } else {
+          finalCategories = [
+            {
+              id: "all-categories-default",
+              name: "All Categories",
+              slug: "all-products",
+              description: "Explore our complete range of pure botanical rituals",
+              image: "/Herbal Hair Oil.webp",
+            },
+            ...activeCategories,
+          ];
+        }
+
+        setCategories(finalCategories);
       } catch (err) {
         if (!cancelled) {
           setError(err.message ?? "Failed to load collection.");
@@ -140,6 +169,14 @@ export default function Collection() {
 
   const activeCategory = useMemo(() => {
     if (!categorySlug) return null;
+    if (categorySlug === "all-products" || categorySlug === "all-categories") {
+      return {
+        id: "all-categories",
+        name: "All Categories",
+        description: "Pure botanical rituals for hair and skin — crafted with Ayurvedic wisdom",
+        slug: "all-products",
+      };
+    }
 
     return (
       categories.find((category) => category.slug === categorySlug) || null
@@ -158,7 +195,12 @@ export default function Collection() {
     if (filters.concerns.length > 0) {
       list = list.filter((product) =>
         product.concerns.some((concern) =>
-          filters.concerns.includes(concern)
+          filters.concerns.some(
+            (fc) =>
+              fc === concern ||
+              fc.toLowerCase() === concern.toLowerCase() ||
+              fc.replace(/-/g, " ").toLowerCase() === concern.replace(/-/g, " ").toLowerCase()
+          )
         )
       );
     }

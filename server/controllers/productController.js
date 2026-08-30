@@ -168,6 +168,8 @@ const addProduct = async (req, res) => {
     status, is_active, is_draft, 
     seo_title, seo_description, 
     is_new, concerns,
+    skin_type, skinType,
+    suitable_for, suitableFor,
   } = req.body;
 
   if (!name?.trim() || price === undefined || price === null) {
@@ -186,6 +188,8 @@ const addProduct = async (req, res) => {
       status, is_active, is_draft, 
       seo_title, seo_description, 
       is_new, concerns,
+      skin_type: skin_type ?? skinType,
+      suitable_for: suitable_for ?? suitableFor,
     }); 
 
     if (!product) {

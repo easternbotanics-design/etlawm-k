@@ -206,7 +206,7 @@ export default function IngredientDetailView({ productSlug }) {
                 </span>
 
                 <Link
-                  to={`/product/${product.slug}`}
+                  to={`/collection/product/${product.slug}`}
                   target='_blank'
                   className="text-3xl md:text-2xl font-normal leading-tight"
                   style={{ color: colours.text, fontFamily: fonts.primary }}

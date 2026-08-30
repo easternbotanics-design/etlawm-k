@@ -56,7 +56,7 @@ export default function SuggestedProducts({ currentSlug, currentProductId, categ
 
   const handleProductClick = (slug) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-    navigate(`/product/${slug}`);
+    navigate(`/collection/product/${slug}`);
   };
 
   if (loading) {

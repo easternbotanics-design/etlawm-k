@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Loader = () => {
+const LoaderHamster = () => {
   return (
     <div className="hamster-loader-wrapper">
       <div aria-label="Orange and tan hamster running in a metal wheel" role="img" className="wheel-and-hamster">
@@ -248,4 +248,4 @@ const Loader = () => {
   );
 };
 
-export default Loader;
+export default LoaderHamster;

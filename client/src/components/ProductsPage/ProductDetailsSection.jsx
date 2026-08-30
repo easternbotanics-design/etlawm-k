@@ -33,9 +33,11 @@ export default function ProductDetailsSection({
   ingredients,
   benefits,
   usageInstructions,
-  concerns,
+  concerns = [],
   productSize,
   code,
+  skinType,
+  suitableFor,
 }) {
   return (
     <section
@@ -87,9 +89,25 @@ export default function ProductDetailsSection({
               <p>{usageInstructions || "Usage instructions are not listed for this product."}</p>
             </DetailBlock>
 
-            {(concerns.length > 0 || productSize || code) && (
+            {(concerns.length > 0 || productSize || code || skinType || suitableFor) && (
               <DetailBlock title="Additional information">
                 <dl className="grid gap-5 sm:grid-cols-2">
+                  {skinType && (
+                    <div>
+                      <dt className="mb-1 font-semibold" style={{ color: colours.text }}>
+                        Skin Type
+                      </dt>
+                      <dd>{skinType}</dd>
+                    </div>
+                  )}
+                  {suitableFor && (
+                    <div>
+                      <dt className="mb-1 font-semibold" style={{ color: colours.text }}>
+                        Suitable For
+                      </dt>
+                      <dd>{suitableFor}</dd>
+                    </div>
+                  )}
                   {productSize && (
                     <div>
                       <dt className="mb-1 font-semibold" style={{ color: colours.text }}>
