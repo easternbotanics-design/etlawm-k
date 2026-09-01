@@ -21,6 +21,7 @@ import scienceRouter from './routes/scienceRoute.js';
 import analyticsRouter from './routes/analyticsRoute.js';
 import faqRouter from './routes/faqRoute.js';
 import concernRouter from './routes/concernRoute.js';
+import videoRouter from './routes/videoRoute.js';
 
 
 const app = express();
@@ -93,6 +94,7 @@ app.use("/api/science", scienceRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/faqs", faqRouter);
 app.use("/api/concerns", concernRouter);
+app.use("/api/videos", videoRouter);
 
 
 

@@ -10,12 +10,7 @@ const getToken = () => {
 
 const authHeaders = () => {
   const token = getToken();
-
-  return token
-    ? {
-        Authorization: `Bearer ${token}`,
-      }
-    : {};
+  return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
 const handleResponse = async (res) => {
@@ -28,32 +23,56 @@ const handleResponse = async (res) => {
   return data;
 };
 
-const concernService = {
-  getPublicConcerns: async () => {
-    const res = await fetch(`${API}/api/concerns`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    return handleResponse(res);
-  },
-
-  getAdminConcerns: async () => {
-    const res = await fetch(`${API}/api/admin/concerns`, {
+const videoService = {
+  getAdminVideos: async () => {
+    const res = await fetch(`${API}/api/videos/admin`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
         ...authHeaders(),
       },
     });
+    return handleResponse(res);
+  },
+
+  getPublishedVideos: async () => {
+    const res = await fetch(`${API}/api/videos`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return handleResponse(res);
+  },
+
+  getVideoById: async (id) => {
+    const res = await fetch(`${API}/api/videos/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(),
+      },
+    });
+    return handleResponse(res);
+  },
+
+  uploadVideoFile: async (file) => {
+    const formData = new FormData();
+    formData.append("video", file);
+
+    const res = await fetch(`${API}/api/videos/upload`, {
+      method: "POST",
+      headers: {
+        ...authHeaders(),
+      },
+      body: formData,
+    });
 
     return handleResponse(res);
   },
 
-  createConcern: async (payload) => {
-    const res = await fetch(`${API}/api/admin/concerns`, {
+  createVideo: async (payload) => {
+    const res = await fetch(`${API}/api/videos`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -65,20 +84,8 @@ const concernService = {
     return handleResponse(res);
   },
 
-  getConcernById: async (id) => {
-    const res = await fetch(`${API}/api/admin/concerns/${id}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders(),
-      },
-    });
-
-    return handleResponse(res);
-  },
-
-  updateConcern: async (id, payload) => {
-    const res = await fetch(`${API}/api/admin/concerns/${id}`, {
+  updateVideo: async (id, payload) => {
+    const res = await fetch(`${API}/api/videos/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -90,8 +97,8 @@ const concernService = {
     return handleResponse(res);
   },
 
-  deleteConcern: async (id) => {
-    const res = await fetch(`${API}/api/admin/concerns/${id}`, {
+  deleteVideo: async (id) => {
+    const res = await fetch(`${API}/api/videos/${id}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -103,4 +110,4 @@ const concernService = {
   },
 };
 
-export default concernService;
+export default videoService;

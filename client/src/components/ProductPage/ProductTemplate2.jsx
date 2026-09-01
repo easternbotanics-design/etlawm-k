@@ -333,9 +333,19 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
     whyBody = ritual.description;
   }
 
+  let howSteps = [];
   let howBody = "";
   if (ritual?.hows && Array.isArray(ritual.hows) && ritual.hows.length > 0) {
-    howBody = ritual.hows.join("\n\n");
+    howSteps = ritual.hows.map((h, idx) => {
+      if (typeof h === 'object' && h !== null) {
+        return {
+          srNo: `${idx + 1}.`,
+          subtitle: h.subtitle || '',
+          body: h.body || ''
+        };
+      }
+      return { srNo: `${idx + 1}.`, subtitle: '', body: h };
+    });
   } else if (product.usageInstructions) {
     howBody = product.usageInstructions;
   }
@@ -361,8 +371,13 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
   if (ingredientsBody) {
     details.push({ title: "Ingredients", body: ingredientsBody, needsRitual: false });
   }
-  if (howBody || ritualLoading || !ritualFetchedRef.current) {
-    details.push({ title: 'How To Use', body: howBody, needsRitual: true });
+  if (howSteps.length > 0 || howBody || ritualLoading || !ritualFetchedRef.current) {
+    details.push({
+      title: 'How To Use',
+      steps: howSteps.length > 0 ? howSteps : null,
+      body: howSteps.length === 0 ? howBody : null,
+      needsRitual: true
+    });
   }
   if (benefitsBody || ritualLoading || !ritualFetchedRef.current) {
     details.push({ title: "Benefits", body: benefitsBody, needsRitual: true });
@@ -604,7 +619,7 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
 
             {/* Quantity + CTA Section */}
             <div ref={ctaRef} className="mt-6 flex flex-col gap-2">
-              <div
+              {/* <div
                 className="flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2.5 text-xs font-semibold tracking-wide"
                 style={{ fontFamily: fonts.secondary }}
               >
@@ -614,15 +629,62 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                     color: colours.green
                   }}
                 />
-                <span>Secured Payments</span>
+                <span>Secure Payments</span>
                 <span>|</span>
                 <img
                   src="/truck.svg"
                   alt="Shipping"
                   className="h-3.5 w-4 shrink-0"
                 />
-                {/* svg here*/}
                 <span>Free shipping in 2-4 days</span>
+              </div>*/}
+              <div
+                className="flex items-center justify-center gap-2 text-xs font-semibold tracking-wide"
+                style={{ fontFamily: fonts.secondary }}
+              >
+                <div
+                  className="flex items-center gap-1.5 rounded-full px-1.5 py-1.5"
+                  style={{
+                    backgroundColor: `${colours.accent}`,
+                  }}
+                >
+                  <ShieldCheck
+                    size={15}
+                    className="shrink-0"
+                    style={{
+                      color: colours.background,
+                    }}
+                  />
+              
+                  <span style={{ color: colours.background }}>
+                    Secure Payments
+                  </span>
+                </div>
+                <span
+                  className="text-[11px]"
+                  style={{ color: colours.border }}
+                >|</span>
+                <div
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5"
+                  style={{
+                    backgroundColor: `${colours.accent}12`,
+                  }}
+                >
+                  <img
+                    src="/truck.svg"
+                    alt="Shipping"
+                    className="h-3.5 w-4 shrink-0"
+                  />
+                  <span style={{ color: colours.text }}>
+                    Free shipping{" "}
+                    <span
+                      className="font-bold"
+                      style={{ color: colours.green }}
+                    >
+                      in 2–4 days
+                    </span>
+                  </span>
+                </div>
               </div>
               <div className="flex flex-row items-center gap-3">
                 <AddToCartNumbers
@@ -702,7 +764,7 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                     <div key={d.title}>
                       <button
                         onClick={() => handleToggleDetail(i)}
-                        className="flex w-full items-center justify-between py-4 text-left text-md sm:text-md font-medium text-[#1B1B18] tracking-wide"
+                        className="flex w-full uppercase items-center justify-between py-4 text-left text-md sm:text-md font-bold text-[#1B1B18] tracking-wider"
                         style={{
                           fontFamily: fonts.primary,
                         }}
@@ -729,6 +791,22 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                                 <div className="h-4 w-3/4 animate-pulse rounded bg-[#EAE6DB]" />
                                 <div className="h-4 w-1/2 animate-pulse rounded bg-[#EAE6DB]" />
                               </div>
+                            ) : d.steps ? (
+                              <div className="pb-4 text-sm sm:text-sm leading-relaxed space-y-3">
+                                {d.steps.map((step, idx) => (
+                                  <div key={idx} className="flex flex-col gap-0.5">
+                                    <div className="font-bold text-[#1B1B18]">
+                                      <span>{step.srNo} </span>
+                                      {step.subtitle && <span>{step.subtitle}</span>}
+                                    </div>
+                                    {step.body && (
+                                      <p className="text-[#454138] text-sm leading-relaxed whitespace-pre-line font-normal">
+                                        {step.body}
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             ) : d.items ? (
                               <div className="pb-4 text-xs sm:text-xs leading-relaxed text-[#6B6656] space-y-1.5">
                                 {d.items.map((item, idx) => (
@@ -740,7 +818,7 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
                               </div>
                             ) : (
                               d.body && (
-                                <p className="pb-4 text-xs sm:text-xs leading-relaxed whitespace-pre-line text-[#6B6656]">
+                                <p className="pb-4 text-sm sm:text-sm leading-relaxed whitespace-pre-line" style={{color: colours.text}}>
                                   {d.body}
                                 </p>
                               )

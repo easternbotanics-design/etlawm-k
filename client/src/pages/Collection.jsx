@@ -169,12 +169,12 @@ export default function Collection() {
 
   const activeCategory = useMemo(() => {
     if (!categorySlug) return null;
-    if (categorySlug === "all-products" || categorySlug === "all-categories") {
+    if (categorySlug === "all-products" || categorySlug === "all-product" || categorySlug === "all-categories") {
       return {
         id: "all-categories",
         name: "All Categories",
         description: "Pure botanical rituals for hair and skin — crafted with Ayurvedic wisdom",
-        slug: "all-products",
+        slug: categorySlug,
       };
     }
 
@@ -186,7 +186,7 @@ export default function Collection() {
   const visibleProducts = useMemo(() => {
     let list = [...products];
 
-    if (filters.categories.length > 0 && !filters.categories.includes("all-products")) {
+    if (filters.categories.length > 0 && !filters.categories.includes("all-products") && !filters.categories.includes("all-product")) {
       list = list.filter((product) =>
         filters.categories.includes(product.category)
       );

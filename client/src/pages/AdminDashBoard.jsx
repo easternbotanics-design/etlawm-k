@@ -24,6 +24,8 @@ import CMSScience from "../components/AdminPanel/AdminContent/CMSScience.jsx";
 import CMSScienceForm from "../components/AdminPanel/AdminContent/CMSScienceForm.jsx";
 import CMSConcerns from "../components/AdminPanel/AdminContent/CMSConcerns.jsx";
 import CMSConcernForm from "../components/AdminPanel/AdminContent/CMSConcernForm.jsx";
+import CMSVideos from "../components/AdminPanel/AdminContent/CMSVideos.jsx";
+import CMSVideoForm from "../components/AdminPanel/AdminContent/CMSVideoForm.jsx";
 import AdminOrders from "../components/AdminPanel/AdminOperations/AdminOrders.jsx";
 import AdminCarts from "../components/AdminPanel/AdminOperations/AdminCarts.jsx";
 import AdminCustomers from "../components/AdminPanel/AdminCustomers.jsx";
@@ -527,6 +529,10 @@ const AdminDashBoard = () => {
             <Route path="/content/rituals/edit/:id" element={<CMSRitualForm />} />
             <Route path="/content/concerns" element={<CMSConcerns />} />
             <Route path="/content/concerns/add" element={<CMSConcernForm />} />
+            <Route path="/content/concerns/edit/:id" element={<CMSConcernForm />} />
+            <Route path="/content/video" element={<CMSVideos />} />
+            <Route path="/content/video/add" element={<CMSVideoForm />} />
+            <Route path="/content/video/edit/:id" element={<CMSVideoForm />} />
             <Route path="/content/science" element={<CMSScience />} />
             <Route path="/content/science/add" element={<CMSScienceForm />} />
             <Route path="/content/science/edit/:id" element={<CMSScienceForm />} />

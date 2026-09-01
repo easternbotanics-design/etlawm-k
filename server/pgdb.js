@@ -720,6 +720,135 @@ const cmsScience = {
         ),
 };
 
+const cmsVideos = {
+    create: ({
+        title,
+        video_url,
+        product_id = null,
+        product_name = null,
+        description = null,
+        thumbnail_url = null,
+        status = "published",
+        sort_order = 0,
+        is_active = true,
+    }) =>
+        query(
+            `
+      INSERT INTO cms_videos (
+        title,
+        video_url,
+        product_id,
+        product_name,
+        description,
+        thumbnail_url,
+        status,
+        sort_order,
+        is_active
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+      `,
+            [
+                title ?? null,
+                video_url,
+                product_id || null,
+                product_name ?? null,
+                description ?? null,
+                thumbnail_url ?? null,
+                status,
+                sort_order,
+                is_active,
+            ]
+        ),
+
+    findById: (id) =>
+        query(
+            `
+      SELECT v.*, p.name AS linked_product_name
+      FROM cms_videos v
+      LEFT JOIN products p ON v.product_id = p.id
+      WHERE v.id = $1
+      LIMIT 1
+      `,
+            [id]
+        ),
+
+    findAllAdmin: () =>
+        query(
+            `
+      SELECT v.*, COALESCE(p.name, v.product_name) AS product_name
+      FROM cms_videos v
+      LEFT JOIN products p ON v.product_id = p.id
+      ORDER BY v.created_at DESC
+      `
+        ),
+
+    findPublished: () =>
+        query(
+            `
+      SELECT v.*, COALESCE(p.name, v.product_name) AS product_name
+      FROM cms_videos v
+      LEFT JOIN products p ON v.product_id = p.id
+      WHERE v.status = 'published'
+        AND v.is_active = true
+      ORDER BY v.sort_order ASC, v.created_at DESC
+      `
+        ),
+
+    update: (id, fields) => {
+        const allowed = [
+            "title",
+            "video_url",
+            "product_id",
+            "product_name",
+            "description",
+            "thumbnail_url",
+            "status",
+            "sort_order",
+            "is_active",
+        ];
+
+        const sets = [];
+        const vals = [];
+        let i = 1;
+
+        for (const key of allowed) {
+            if (fields[key] !== undefined) {
+                sets.push(`${key} = $${i++}`);
+                vals.push(fields[key]);
+            }
+        }
+
+        if (!sets.length) {
+            throw new Error("No valid fields to update");
+        }
+
+        sets.push("updated_at = now()");
+        vals.push(id);
+
+        return query(
+            `
+      UPDATE cms_videos
+      SET ${sets.join(", ")}
+      WHERE id = $${i}
+      RETURNING *
+      `,
+            vals
+        );
+    },
+
+    delete: (id) =>
+        query(
+            `
+      DELETE FROM cms_videos
+      WHERE id = $1
+      RETURNING *
+      `,
+            [id]
+        ),
+};
+
+
 const productIngredients = {
     getByProductId: (productId) =>
         query(
@@ -2285,10 +2414,20 @@ const rituals = {
 
             if (Array.isArray(hows) && hows.length > 0) {
                 for (let i = 0; i < hows.length; i++) {
-                    if (hows[i] && hows[i].trim()) {
+                    const item = hows[i];
+                    let subtitle = '';
+                    let body = '';
+                    if (typeof item === 'object' && item !== null) {
+                        subtitle = item.subtitle ? item.subtitle.trim() : '';
+                        body = item.body ? item.body.trim() : '';
+                    } else if (typeof item === 'string') {
+                        body = item.trim();
+                    }
+                    if (subtitle || body) {
+                        const howsLegacy = body || subtitle;
                         await client.query(
-                            `INSERT INTO ritual_how (ritual_id, hows, sort_order) VALUES ($1, $2, $3)`,
-                            [ritual_id, hows[i].trim(), i]
+                            `INSERT INTO ritual_how (ritual_id, hows, subtitle, body, sort_order) VALUES ($1, $2, $3, $4, $5)`,
+                            [ritual_id, howsLegacy, subtitle, body, i]
                         );
                     }
                 }
@@ -2327,11 +2466,14 @@ const rituals = {
         const ritual = ritualRes.rows[0];
 
         const whysRes = await query(`SELECT whys FROM rituals_why WHERE ritual_id = $1 ORDER BY sort_order ASC`, [id]);
-        const howsRes = await query(`SELECT hows FROM ritual_how WHERE ritual_id = $1 ORDER BY sort_order ASC`, [id]);
+        const howsRes = await query(`SELECT hows, subtitle, body FROM ritual_how WHERE ritual_id = $1 ORDER BY sort_order ASC`, [id]);
         const tipsRes = await query(`SELECT tips FROM ritual_tips WHERE ritual_id = $1 ORDER BY sort_order ASC`, [id]);
 
         ritual.whys = whysRes.rows.map(row => row.whys);
-        ritual.hows = howsRes.rows.map(row => row.hows);
+        ritual.hows = howsRes.rows.map(row => ({
+            subtitle: row.subtitle || '',
+            body: row.body || row.hows || ''
+        }));
         ritual.tips = tipsRes.rows.map(row => row.tips);
 
         return ritual;
@@ -2397,10 +2539,20 @@ const rituals = {
                 await client.query(`DELETE FROM ritual_how WHERE ritual_id = $1`, [id]);
                 if (Array.isArray(fields.hows) && fields.hows.length > 0) {
                     for (let i = 0; i < fields.hows.length; i++) {
-                        if (fields.hows[i] && fields.hows[i].trim()) {
+                        const item = fields.hows[i];
+                        let subtitle = '';
+                        let body = '';
+                        if (typeof item === 'object' && item !== null) {
+                            subtitle = item.subtitle ? item.subtitle.trim() : '';
+                            body = item.body ? item.body.trim() : '';
+                        } else if (typeof item === 'string') {
+                            body = item.trim();
+                        }
+                        if (subtitle || body) {
+                            const howsLegacy = body || subtitle;
                             await client.query(
-                                `INSERT INTO ritual_how (ritual_id, hows, sort_order) VALUES ($1, $2, $3)`,
-                                [id, fields.hows[i].trim(), i]
+                                `INSERT INTO ritual_how (ritual_id, hows, subtitle, body, sort_order) VALUES ($1, $2, $3, $4, $5)`,
+                                [id, howsLegacy, subtitle, body, i]
                             );
                         }
                     }
@@ -2451,11 +2603,14 @@ const rituals = {
         const ritualsList = res.rows;
         for (const ritual of ritualsList) {
             const whysRes = await query(`SELECT whys FROM rituals_why WHERE ritual_id = $1 ORDER BY sort_order ASC`, [ritual.id]);
-            const howsRes = await query(`SELECT hows FROM ritual_how WHERE ritual_id = $1 ORDER BY sort_order ASC`, [ritual.id]);
+            const howsRes = await query(`SELECT hows, subtitle, body FROM ritual_how WHERE ritual_id = $1 ORDER BY sort_order ASC`, [ritual.id]);
             const tipsRes = await query(`SELECT tips FROM ritual_tips WHERE ritual_id = $1 ORDER BY sort_order ASC`, [ritual.id]);
 
             ritual.whys = whysRes.rows.map(row => row.whys);
-            ritual.hows = howsRes.rows.map(row => row.hows);
+            ritual.hows = howsRes.rows.map(row => ({
+                subtitle: row.subtitle || '',
+                body: row.body || row.hows || ''
+            }));
             ritual.tips = tipsRes.rows.map(row => row.tips);
         }
         return { rows: ritualsList };
@@ -2514,12 +2669,26 @@ const websiteVisits = {
 };
 
 const concerns = {
-    create: ({ name, slug, status = 'published', is_active = true }) =>
+    create: ({ name, slug, status = 'published', is_active = true, image_url = null }) =>
         query(
-            `INSERT INTO concern (name, slug, status, is_active)
-             VALUES ($1, $2, $3, $4)
+            `INSERT INTO concern (name, slug, status, is_active, image_url)
+             VALUES ($1, $2, $3, $4, $5)
              RETURNING *`,
-            [name, slug, status, is_active]
+            [name, slug, status, is_active, image_url]
+        ),
+
+    update: (id, { name, slug, status, is_active, image_url }) =>
+        query(
+            `UPDATE concern
+             SET name = COALESCE($2, name),
+                 slug = COALESCE($3, slug),
+                 status = COALESCE($4, status),
+                 is_active = COALESCE($5, is_active),
+                 image_url = $6,
+                 updated_at = now()
+             WHERE id = $1
+             RETURNING *`,
+            [id, name, slug, status, is_active, image_url]
         ),
 
     findAll: ({ include_inactive = false } = {}) => {
@@ -2542,6 +2711,7 @@ const concerns = {
 // ─── Exports ──────────────────────────────────────────────────────────────────
 const db = {
     concerns,
+    cmsVideos,
     websiteVisits,
     cmsScience,
     rituals,

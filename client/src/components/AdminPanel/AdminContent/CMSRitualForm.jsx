@@ -27,7 +27,7 @@ const emptyForm = {
   title: '',
   description: '',
   whys: [''],
-  hows: [''],
+  hows: [{ subtitle: '', body: '' }],
   tips: [''],
 };
 
@@ -77,7 +77,9 @@ export default function CMSRitualForm() {
           title: ritual.title || '',
           description: ritual.description || '',
           whys: Array.isArray(ritual.whys) && ritual.whys.length > 0 ? ritual.whys : [''],
-          hows: Array.isArray(ritual.hows) && ritual.hows.length > 0 ? ritual.hows : [''],
+          hows: Array.isArray(ritual.hows) && ritual.hows.length > 0
+            ? ritual.hows.map(h => typeof h === 'object' && h !== null ? { subtitle: h.subtitle || '', body: h.body || '' } : { subtitle: '', body: h || '' })
+            : [{ subtitle: '', body: '' }],
           tips: Array.isArray(ritual.tips) && ritual.tips.length > 0 ? ritual.tips : [''],
         });
       } catch (err) {
@@ -122,7 +124,7 @@ export default function CMSRitualForm() {
   const handleAddInput = (field) => {
     setForm((prev) => ({
       ...prev,
-      [field]: [...prev[field], ''],
+      [field]: [...prev[field], field === 'hows' ? { subtitle: '', body: '' } : ''],
     }));
   };
 
@@ -130,9 +132,10 @@ export default function CMSRitualForm() {
     setForm((prev) => {
       const list = [...prev[field]];
       list.splice(index, 1);
+      const fallback = field === 'hows' ? { subtitle: '', body: '' } : '';
       return {
         ...prev,
-        [field]: list.length === 0 ? [''] : list,
+        [field]: list.length === 0 ? [fallback] : list,
       };
     });
   };
@@ -144,6 +147,20 @@ export default function CMSRitualForm() {
       return {
         ...prev,
         [field]: list,
+      };
+    });
+  };
+
+  const handleHowInputChange = (index, subfield, value) => {
+    setForm((prev) => {
+      const list = [...prev.hows];
+      list[index] = {
+        ...list[index],
+        [subfield]: value,
+      };
+      return {
+        ...prev,
+        hows: list,
       };
     });
   };
@@ -167,7 +184,7 @@ export default function CMSRitualForm() {
         title: form.title.trim() || null,
         description: form.description.trim() || null,
         whys: form.whys.filter(item => item.trim() !== ''),
-        hows: form.hows.filter(item => item.trim() !== ''),
+        hows: form.hows.filter(item => (item.subtitle && item.subtitle.trim()) || (item.body && item.body.trim())),
         tips: form.tips.filter(item => item.trim() !== ''),
         status: mode === 'draft' ? 'draft' : 'published',
       };
@@ -455,24 +472,53 @@ export default function CMSRitualForm() {
 
               <div className="space-y-4">
                 {form.hows.map((how, idx) => (
-                  <div key={idx} className="flex gap-3 items-center">
-                    <input
-                      value={how}
-                      onChange={(e) => handleInputChange('hows', idx, e.target.value)}
-                      placeholder={`Step #${idx + 1}`}
-                      style={inputStyle}
-                      className="ritual-form-input flex-1 rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveInput('hows', idx)}
-                      className="p-3 text-red-600 border border-stone-200 hover:bg-red-50 rounded-lg transition cursor-pointer bg-white"
-                      title="Remove"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                  <div
+                    key={idx}
+                    className="p-4 border rounded-xl space-y-3 relative"
+                    style={{ borderColor: colours.border, backgroundColor: `${colours.primary}33` }}
+                  >
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-stone-500">
+                        Step #{idx + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveInput('hows', idx)}
+                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer bg-white border border-stone-200"
+                        title="Remove Step"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] uppercase tracking-wider font-semibold mb-1 text-stone-600">
+                        Subtitle
+                      </label>
+                      <input
+                        value={how.subtitle || ''}
+                        onChange={(e) => handleHowInputChange(idx, 'subtitle', e.target.value)}
+                        placeholder={`Step #${idx + 1} Subtitle (e.g. Prep & Scalp Cleansing)`}
+                        style={inputStyle}
+                        className="ritual-form-input w-full rounded-lg border px-4 py-2.5 text-sm placeholder-stone-400 focus:outline-none transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] uppercase tracking-wider font-semibold mb-1 text-stone-600">
+                        Body / Instructions
+                      </label>
+                      <textarea
+                        value={how.body || ''}
+                        onChange={(e) => handleHowInputChange(idx, 'body', e.target.value)}
+                        rows={2}
+                        placeholder="Detailed instructions for this step..."
+                        style={inputStyle}
+                        className="ritual-form-textarea w-full rounded-lg border px-4 py-2.5 text-sm placeholder-stone-400 focus:outline-none transition-all resize-y"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>

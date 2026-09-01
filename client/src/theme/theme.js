@@ -11,7 +11,8 @@ export const colours = {
   hover: '#C8B9A4',
   another: '#F4F1EC',
   grey: '#e9ecef',
-  green: '#1f5c52'
+  green: '#1f5c52',
+  red: '#DD0000',
 }
 
 export const fonts = {

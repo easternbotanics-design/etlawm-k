@@ -43,7 +43,9 @@ import {
 } from '../controllers/homepageReviewController.js';
 import {
   getAdminConcerns,
+  getConcernById,
   createConcern,
+  updateConcern,
   deleteConcern
 } from '../controllers/concernController.js';
 
@@ -118,6 +120,8 @@ adminRouter.delete("/homepage-reviews/:id", deleteHomepageReview);
 
 adminRouter.get("/concerns", getAdminConcerns);
 adminRouter.post("/concerns", createConcern);
+adminRouter.get("/concerns/:id", getConcernById);
+adminRouter.patch("/concerns/:id", updateConcern);
 adminRouter.delete("/concerns/:id", deleteConcern);
 
 export default adminRouter;

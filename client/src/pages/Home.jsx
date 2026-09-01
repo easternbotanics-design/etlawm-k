@@ -4,15 +4,10 @@ import HomePrinciples from "../components/HomePage/HomePrinciples.jsx";
 import HomeSupport from "../components/HomePage/HomeSupport.jsx";
 import HomeQuestions from "../components/HomePage/HomeQuestions.jsx";
 import Footer from "../components/Footer.jsx";
-import Philosophy from "../components/HomePage/Philosophy3.jsx";
+import Philosophy from "../components/HomePage/Philosophy.jsx";
 import ProductPanel from "../components/HomePage/ProductPanel.jsx";
-import HomeDirections from "../components/HomePage/HomeDirections.jsx";
-import HomePathways from "../components/HomePage/HomePathways.jsx";
-import HomeInsights from "../components/HomePage/HomeInsights.jsx";
-import HomeFinalCTA from "../components/HomePage/HomeFinalCTA.jsx";
-import HomeFooter from "../components/HomePage/HomeFooter.jsx";
-import ReviewCarousel from "../components/HomePage/ReviewCarousel.jsx";
-import ReviewSection from "../components/HomePage/ReviewCarousel2.jsx";
+import ReviewSection from "../components/HomePage/ReviewCarousel.jsx";
+import ShopByConcern from "../components/HomePage/ShopByConcern";
 
 const Home = () => {
   return (
@@ -23,16 +18,12 @@ const Home = () => {
       <main>
         <HomeHero />
         <ProductPanel />
+        <ShopByConcern />
         <ReviewSection />
-        {/* <ReviewCarousel />*/}
-        {/* <HomeDirections />*/}
-        {/* <HomePathways />*/}
         <HomePrinciples />
         <Philosophy />
-        {/* <HomeInsights />*/}
         <HomeSupport />
         <HomeQuestions />
-        {/* <HomeFinalCTA />*/}
       </main>
 
       <Footer />

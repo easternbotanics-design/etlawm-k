@@ -570,27 +570,39 @@ export default function EllipseSeatCarousel({ rituals = [], players = [], loadin
                       ) : (
                         // Free-form steps/items for How and Tips sections (NO cards!)
                         <div className="space-y-4">
-                          {list.map((item, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-start gap-3 text-sm md:text-base leading-relaxed"
-                              style={{
-                                fontFamily: fontSecondary,
-                                color: colorText,
-                                lineHeight: 1.8,
-                              }}
-                            >
-                              {list.length > 1 && (
-                                <span
-                                  className="font-medium flex-shrink-0"
-                                  style={{ color: colorAccent }}
-                                >
-                                  {activeTab === "how" ? `${idx + 1}.` : "•"}
-                                </span>
-                              )}
-                              <span>{item}</span>
-                            </div>
-                          ))}
+                          {list.map((item, idx) => {
+                            const isObj = typeof item === 'object' && item !== null;
+                            const subtitle = isObj ? item.subtitle : null;
+                            const bodyText = isObj ? item.body : item;
+                            return (
+                              <div
+                                key={idx}
+                                className="flex items-start gap-3 text-sm md:text-base leading-relaxed"
+                                style={{
+                                  fontFamily: fontSecondary,
+                                  color: colorText,
+                                  lineHeight: 1.8,
+                                }}
+                              >
+                                {list.length > 1 && (
+                                  <span
+                                    className="font-medium flex-shrink-0 mt-0.5"
+                                    style={{ color: colorAccent }}
+                                  >
+                                    {activeTab === "how" ? `${idx + 1}.` : "•"}
+                                  </span>
+                                )}
+                                <div className="flex flex-col gap-0.5">
+                                  {subtitle && (
+                                    <span className="font-semibold" style={{ color: colorSecondary }}>
+                                      {subtitle}
+                                    </span>
+                                  )}
+                                  {bodyText && <span>{bodyText}</span>}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>

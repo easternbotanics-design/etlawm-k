@@ -1,306 +1,387 @@
-import React, { useState, useEffect } from "react";
-import hero from "../../assets/heroBanner3.png";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { colours, fonts } from "../../theme/theme.js";
-import Card from "../CarouselCards/Card.jsx";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import homepageReviewService from "../../services/homepageReviewService.js";
 
-const testimonials = [
-  {
-    id: 1,
-    subtitle: `Hey dear, I can really see a difference in my skin... I can feel the smoothness just in one use\n\nAlso, the pigmentation cream is working so well... redness has reduced a lot and my skin looks much clearer and more even now.`,
-    bgColor: "#144d37",
-    isBig: false,
-  },
-  {
-    id: 2,
-    subtitle: `I have been applying the pigmentation cream on my face and it is very effective.. my face used to be completely red, but after that, the redness subsided and my skin became smooth.\n\nIt also cleared up the dark patches, making my skin look clear and clean now.`,
-    bgColor: "#1c563e",
-    isBig: false,
-  },
-  {
-    id: 3,
-    subtitle: `This product worked well for me. It helped reduce my hair fall gradually, and the consistency is really nice. It feels light, non-sticky, and doesn't make the hair oily. Overall, I had an good experience using it mam`,
-    bgColor: "#0e3b2b",
-    isBig: false,
-  },
-  {
-    id: 4,
-    subtitle: `My mom has pigmentation and she tried so many Korean products as well but nothing worked. She used one bottle each of vitamin c and depigmentation and she's seeing results. Your products are great.`,
-    bgColor: "#164536",
-    isBig: false,
-  },
-  {
-    id: 5,
-    subtitle: `My personal feedback so far is helping with itchy scalp and I don't look greasy.\n\nMy sister recommending to my other sister's that it dont get oily and more like serum so women can use`,
-    bgColor: "#124233",
-    isBig: false,
-  },
-  {
-    id: 6,
-    subtitle: `I used this hair oil just three times and noticed a wonderful reduction in my dandruff (of course to reduce 100% need to apply several time). What I really liked is that its not thick or heavy it feels light, absorbs well and is gentle on the scalp. Seeing such quick results truly impressed me, and I would confidently recommend it to anyone dealing with dandruff.`,
-    bgColor: "#184f39",
-    isBig: true,
-  },
-];
+// Helper to resolve product image from /public folder based on product name
+const getProductImage = (productName = '') => {
+  if (!productName) return '/Herbal Hair Oil.webp';
+  const nameLower = productName.toLowerCase().trim();
 
-// Helper to build desktop frames (2 per frame, 1 for big)
-const buildDesktopFrames = (items) => {
-  const result = [];
-  let currentGroup = [];
-
-  items.forEach((item) => {
-    if (item.isBig || item.subtitle.length > 300) {
-      if (currentGroup.length > 0) {
-        result.push(currentGroup);
-        currentGroup = [];
-      }
-      result.push([item]);
-    } else {
-      currentGroup.push(item);
-      if (currentGroup.length === 2) {
-        result.push(currentGroup);
-        currentGroup = [];
-      }
-    }
-  });
-
-  if (currentGroup.length > 0) {
-    result.push(currentGroup);
+  if (nameLower.includes('pigmentation')) {
+    return '/De - Pigmentation Cream.webp';
+  }
+  if (nameLower.includes('herbal hair oil') || nameLower.includes('hair oil')) {
+    return '/Herbal Hair Oil.webp';
+  }
+  if (nameLower.includes('face serum')) {
+    return '/products/face-serum.png';
+  }
+  if (nameLower.includes('face wash')) {
+    return '/products/face-wash.png';
+  }
+  if (nameLower.includes('hair mask')) {
+    return '/products/hair-mask.png';
+  }
+  if (nameLower.includes('hair serum')) {
+    return '/products/hair-serum.png';
+  }
+  if (nameLower.includes('skin cream') || nameLower.includes('cream')) {
+    return '/products/skin-cream.png';
+  }
+  if (nameLower.includes('skin')) {
+    return '/products/skin-category.png';
+  }
+  if (nameLower.includes('hair')) {
+    return '/products/hair-category.png';
   }
 
-  return result;
+  return '/Herbal Hair Oil.webp';
 };
 
-const desktopFrames = buildDesktopFrames(testimonials);
-const mobileFrames = testimonials.map((item) => [item]);
+const slugify = (text = '') => {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
 
-const ReviewCarousel = () => {
-  const [isMobile, setIsMobile] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(1);
-  const [isTransitioning, setIsTransitioning] = useState(true);
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
+// ── Card — product name above card bubble, chat bubble review, verified buyer tag below right ──
+const ReviewCard = ({
+  name,
+  productName,
+  productLink,
+  heading,
+  subtitle = "",
+  bgColor = colours.green,
+  className = "",
+  style = {},
+}) => {
+  const cardColor = bgColor || colours.green;
+
+  // Determine dynamic max width based on content length
+  const contentLength = (subtitle || "").length + (heading || "").length;
+  let widthClass = "max-w-[92%] sm:max-w-md";
+  if (contentLength > 250) {
+    widthClass = "max-w-[95%] sm:max-w-2xl";
+  } else if (contentLength > 130) {
+    widthClass = "max-w-[95%] sm:max-w-xl";
+  }
+
+  const targetLink = productLink || (productName ? `/collection/product/${slugify(productName)}` : null);
+
+  return (
+    <div className={`flex flex-col gap-1 w-full ${widthClass} ${className}`} style={style}>
+      {/* Product Name placed above the card bubble (clickable link) */}
+      {productName && (
+        <div className="pl-0.5 text-[#fafafa] drop-shadow-sm">
+          {/* Customer name is commented out as requested */}
+          {/* {name && (
+            <p
+              className="text-base sm:text-lg font-semibold tracking-wide"
+              style={{ fontFamily: fonts?.title || fonts?.primary || "serif" }}
+            >
+              {name}
+            </p>
+          )} */}
+          {targetLink ? (
+            <Link
+              to={targetLink}
+              className="text-[11px] sm:text-xs md:text-sm font-medium opacity-90 hover:opacity-100 hover:underline text-[#fafafa] no-underline inline-flex items-center gap-1 transition-all"
+              style={{ fontFamily: fonts?.secondary || "sans-serif" }}
+            >
+              <span>{productName}</span>
+              
+            </Link>
+          ) : (
+            <p
+              className="text-[11px] sm:text-xs md:text-sm opacity-90 text-[#fafafa]"
+              style={{ fontFamily: fonts?.secondary || "sans-serif" }}
+            >
+              {productName}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Main Review Card Bubble */}
+      <div
+        className={`relative p-3.5 sm:p-5 md:p-6 rounded-t-xl sm:rounded-t-2xl rounded-br-xl sm:rounded-br-2xl shadow-xl text h-auto w-full ${widthClass}`}
+        style={{ backgroundColor: cardColor }}
+      >
+        {heading && (
+          <h4
+            className="text-[11px] sm:text-xs md:text-sm font-semibold uppercase tracking-wider text-[#fafafa] mb-1 opacity-90"
+            style={{ fontFamily: fonts?.primary || "serif" }}
+          >
+            {heading}
+          </h4>
+        )}
+        <p
+          className="text-[11px] sm:text-xs md:text-base text-[#fafafa] leading-relaxed whitespace-pre-line"
+          style={{ fontFamily: fonts?.secondary || "sans-serif" }}
+        >
+          {subtitle}
+        </p>
+
+        {/* Inverted right-angled triangle chat box tail at bottom left corner */}
+        <div
+          className="absolute left-0 top-full w-0 h-0 border-t-[12px] sm:border-t-[16px] md:border-t-[20px] border-r-[12px] sm:border-r-[16px] md:border-r-[20px] border-r-transparent"
+          style={{ borderTopColor: cardColor }}
+        />
+      </div>
+
+      {/* Verified buyer tag placed below the card on the right side */}
+      <div className="flex justify-end pr-0.5 pt-0.5">
+        <span
+          className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] md:text-xs text-[#fafafa]/85 font-medium tracking-wide drop-shadow-sm"
+          style={{ fontFamily: fonts?.secondary || "sans-serif" }}
+        >
+          Verified buyer
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const EXIT_MS = 250;
+const ENTER_DELAY_MS = 20;
+const ENTER_MS = 500;
+const SETTLE_MS = EXIT_MS + ENTER_DELAY_MS + ENTER_MS;
+const SWIPE_THRESHOLD = 50;
+
+const ReviewSection = () => {
+  const [reviewsList, setReviewsList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [index, setIndex] = useState(0);
+  const [bgIndex, setBgIndex] = useState(0);
+  const [phase, setPhase] = useState("idle"); // idle | exit | enter-start | enter
+  const [direction, setDirection] = useState("right"); // side the incoming card slides in from
+  const [bgVisible, setBgVisible] = useState(true);
+
   const [isPaused, setIsPaused] = useState(false);
 
-  const minSwipeDistance = 40;
+  const touchStartX = useRef(null);
+  const timers = useRef([]);
 
+  const clearTimers = () => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+  };
+
+  useEffect(() => clearTimers, []);
+
+  // Fetch published homepage reviews from backend API
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const fetchHomepageReviews = async () => {
+      setLoading(true);
+      try {
+        const data = await homepageReviewService.getPublicHomepageReviews();
+        if (data?.success && Array.isArray(data.reviews)) {
+          const formatted = data.reviews.map((r) => ({
+            id: r.id,
+            name: r.customer_name,
+            productName: r.product_name,
+            productLink: r.product_link,
+            heading: r.heading,
+            subtitle: r.review,
+            bgColor: colours.green,
+            image: getProductImage(r.product_name),
+          }));
+          setReviewsList(formatted);
+        }
+      } catch (err) {
+        console.error("Failed to load public homepage reviews for carousel:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+
+    fetchHomepageReviews();
   }, []);
 
-  const activeFrames = isMobile ? mobileFrames : desktopFrames;
+  const goTo = (nextIndex, dir) => {
+    if (phase !== "idle" || nextIndex === index) return;
 
-  // Extended frames array for infinite seamless looping: [Last frame, ...activeFrames, First frame]
-  const extendedFrames =
-    activeFrames.length > 1
-      ? [activeFrames[activeFrames.length - 1], ...activeFrames, activeFrames[0]]
-      : activeFrames;
+    setDirection(dir);
+    setPhase("exit"); // card fades out in place
+    setBgVisible(false); // background starts cross-fading out
 
-  // Reset index when switching between mobile and desktop layouts
-  useEffect(() => {
-    setIsTransitioning(false);
-    setCurrentIndex(1);
-  }, [isMobile]);
+    timers.current.push(
+      setTimeout(() => {
+        setIndex(nextIndex);
+        setBgIndex(nextIndex);
+        setPhase("enter-start"); // new card placed off to the `dir` side, invisible
 
-  // Re-enable transitions after reset
-  useEffect(() => {
-    if (!isTransitioning) {
-      const timer = setTimeout(() => {
-        setIsTransitioning(true);
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [isTransitioning]);
+        timers.current.push(
+          setTimeout(() => {
+            setPhase("enter"); // slide + fade the new card into place
+            setBgVisible(true); // new background image fades in
+          }, ENTER_DELAY_MS)
+        );
+      }, EXIT_MS)
+    );
 
-  const handleNext = () => {
-    if (currentIndex >= extendedFrames.length - 1) return;
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => prev + 1);
+    timers.current.push(setTimeout(() => setPhase("idle"), SETTLE_MS));
   };
 
-  const handlePrev = () => {
-    if (currentIndex <= 0) return;
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => prev - 1);
-  };
+  const handleNext = () => goTo((index + 1) % reviewsList.length, "right");
+  const handlePrev = () => goTo((index - 1 + reviewsList.length) % reviewsList.length, "left");
 
-  const handleTransitionEnd = () => {
-    if (currentIndex === extendedFrames.length - 1) {
-      // Reached clone of first frame at end -> seamlessly jump to real first frame
-      setIsTransitioning(false);
-      setCurrentIndex(1);
-    } else if (currentIndex === 0) {
-      // Reached clone of last frame at start -> seamlessly jump to real last frame
-      setIsTransitioning(false);
-      setCurrentIndex(activeFrames.length);
-    }
-  };
-
-  // Auto-slide every 4 seconds when not paused
+  // Autoscroll timer - automatically advances card by card
   useEffect(() => {
-    if (isPaused || activeFrames.length <= 1) return;
+    if (reviewsList.length <= 1 || isPaused || phase !== "idle") return;
+
     const interval = setInterval(() => {
       handleNext();
     }, 4000);
+
     return () => clearInterval(interval);
-  }, [isPaused, activeFrames.length, currentIndex]);
+  }, [index, reviewsList.length, isPaused, phase]);
 
   const handleTouchStart = (e) => {
     setIsPaused(true);
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
+    touchStartX.current = e.touches[0].clientX;
   };
 
-  const handleTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    setIsPaused(false);
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    if (distance > minSwipeDistance) {
-      handleNext();
-    } else if (distance < -minSwipeDistance) {
-      handlePrev();
-    }
-  };
-
-  const handleMouseDown = (e) => {
-    setIsPaused(true);
-    setIsDragging(true);
-    setDragStartX(e.clientX);
-  };
-
-  const handleMouseUp = (e) => {
-    setIsPaused(false);
-    if (!isDragging) return;
-    setIsDragging(false);
-    const distance = dragStartX - e.clientX;
-    if (distance > minSwipeDistance) {
-      handleNext();
-    } else if (distance < -minSwipeDistance) {
-      handlePrev();
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setIsDragging(false);
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (delta > SWIPE_THRESHOLD) handlePrev();
+    else if (delta < -SWIPE_THRESHOLD) handleNext();
+    touchStartX.current = null;
     setIsPaused(false);
   };
+
+  // Skeleton loading state
+  if (loading) {
+    return (
+      <section className="relative w-full min-h-[480px] sm:min-h-[560px] overflow-hidden select-none bg-stone-900/40 animate-pulse">
+        <div className="absolute inset-0 bg-stone-800/60" />
+        <div className="relative z-10 flex h-full min-h-[480px] sm:min-h-[560px] items-center px-4 sm:px-10 md:px-14">
+          <div className="w-full max-w-md pl-1 sm:pl-4 md:pl-12 lg:pl-20 space-y-3 pt-12 sm:pt-0">
+            <div className="h-4 w-32 bg-white/20 rounded-md" />
+            <div className="h-36 sm:h-44 w-full bg-white/15 rounded-t-xl sm:rounded-t-2xl rounded-br-xl sm:rounded-br-2xl p-4 sm:p-6 space-y-2.5">
+              <div className="h-3.5 w-3/4 bg-white/20 rounded" />
+              <div className="h-3.5 w-full bg-white/20 rounded" />
+              <div className="h-3.5 w-5/6 bg-white/20 rounded" />
+            </div>
+            <div className="flex justify-end pr-1 pt-1">
+              <div className="h-3.5 w-24 bg-white/20 rounded" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // If no reviews found in DB, do not render empty space
+  if (!reviewsList.length) {
+    return null;
+  }
+
+  const current = reviewsList[index] || reviewsList[0];
+  const bgReview = reviewsList[bgIndex] || reviewsList[0];
+
+  // Dynamic max-width based on character count
+  const contentLength = (current?.subtitle || "").length + (current?.heading || "").length;
+  let containerWidthClass = "max-w-md";
+  if (contentLength > 250) {
+    containerWidthClass = "max-w-2xl";
+  } else if (contentLength > 130) {
+    containerWidthClass = "max-w-xl";
+  }
+
+  // Exit is a quick, snappy fade in place; entry is a longer, eased slide + fade
+  let cardOpacity = "opacity-100";
+  let cardTranslate = "translate-x-0";
+  let cardTransition = "transition-all duration-500 ease-out";
+
+  if (phase === "exit") {
+    cardOpacity = "opacity-0";
+    cardTransition = "transition-opacity duration-200 ease-in";
+  } else if (phase === "enter-start") {
+    cardOpacity = "opacity-0";
+    cardTranslate = direction === "right" ? "translate-x-[110%]" : "-translate-x-[110%]";
+    cardTransition = "transition-none"; // snap to the start position with no animation
+  }
 
   return (
     <section
-      className="relative w-full py-8 md:py-16 px-4 sm:px-6 md:px-10 flex flex-col items-center justify-center select-none"
-      style={{ backgroundColor: colours.primary }}
+      className="relative w-full min-h-[480px] sm:min-h-[560px] overflow-hidden select-none"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
-      {/* Box Container enclosing Header, Cards Carousel, and Background Image */}
-      <div className="relative w-full max-w-6xl rounded-2xl overflow-hidden py-8 md:py-12 px-2 sm:px-6 md:px-8 shadow-2xl bg-[#171715]">
-        {/* Background Image with Ambient Overlay inside Box Only */}
-        <img
-          src={hero}
-          alt="ETLAWM hero background"
-          className="absolute inset-0 h-full w-full object-cover object-center opacity-30 pointer-events-none"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#171715]/80 via-transparent to-[#171715]/90 pointer-events-none" />
+      {/* Background image — cross-fades only, never slides */}
+      <img
+        key={bgReview.id || bgIndex}
+        src={bgReview.image}
+        alt={bgReview.productName || "Product Review"}
+        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ease-in-out ${
+          bgVisible ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      <div className="absolute inset-0 bg-black/35" />
 
-        {/* Header Overlay */}
-        <div className="relative z-10 text-center px-4 mb-3 md:mb-8">
-          <p
-            className="text-[10px] md:text-sm uppercase tracking-[0.25em] md:tracking-[0.3em] font-medium"
-            style={{ color: colours.accent, fontFamily: fonts.secondary }}
+      {/* Prev / Next controls (hidden on mobile, visible on sm and up) */}
+      {reviewsList.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={handlePrev}
+            aria-label="Previous review"
+            className="absolute left-3 top-1/2 z-20 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-lg font-semibold shadow-md transition hover:bg-white active:scale-95 sm:left-5 sm:h-11 sm:w-11"
+            style={{ color: colours.green }}
           >
-            Real Experiences & Love
-          </p>
-          <h2
-            className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-normal mt-0.5 md:mt-1 tracking-wide"
-            style={{ color: colours.primary, fontFamily: fonts.sail }}
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={handleNext}
+            aria-label="Next review"
+            className="absolute right-3 top-1/2 z-20 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-lg font-semibold shadow-md transition hover:bg-white active:scale-95 sm:right-5 sm:h-11 sm:w-11"
+            style={{ color: colours.green }}
           >
-            Customer Testimonials
-          </h2>
-        </div>
+            ›
+          </button>
+        </>
+      )}
 
-        {/* Carousel Track with Drag & Touch Support */}
-        <div
-          className="relative z-10 w-full max-w-6xl mx-auto px-10 sm:px-14 md:px-20 overflow-hidden cursor-grab active:cursor-grabbing touch-pan-y"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          onMouseEnter={() => setIsPaused(true)}
-        >
-          <div
-            className={`flex items-center ${
-              isTransitioning ? "transition-transform duration-500 ease-in-out" : ""
-            }`}
-            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-            onTransitionEnd={handleTransitionEnd}
-          >
-            {extendedFrames.map((pair, frameIdx) => (
-              <div
-                key={frameIdx}
-                className="w-full shrink-0 flex-none px-2 py-4 md:py-6 flex items-center justify-center"
-              >
-                <div
-                  className={`w-full grid items-center gap-6 md:gap-10 ${
-                    pair.length === 1
-                      ? "grid-cols-1 max-w-md sm:max-w-xl mx-auto justify-items-center"
-                      : "grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto justify-items-center"
-                  }`}
-                >
-                  {pair.map((item, idx) => (
-                    <div
-                      key={`${item.id}-${frameIdx}-${idx}`}
-                      className={`w-full flex justify-center transform transition-transform ${
-                        pair.length > 1
-                          ? idx === 0
-                            ? "md:-translate-y-5"
-                            : "md:translate-y-5"
-                          : ""
-                      }`}
-                    >
-                      <Card
-                        subtitle={item.subtitle}
-                        bgColor={item.bgColor}
-                        className="w-full max-w-xs sm:max-w-md h-auto pointer-events-none"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Carousel Navigation Buttons */}
-          <div className="flex items-center justify-between pointer-events-none absolute inset-y-0 left-1 right-1 sm:left-2 sm:right-2 md:left-4 md:right-4">
-            <button
-              onClick={handlePrev}
-              aria-label="Previous frame"
-              className="pointer-events-auto p-2 sm:p-2.5 md:p-3 rounded-full bg-[#171715]/80 hover:bg-[#171715] text-[#F7F3EC] border border-[#F7F3EC]/20 backdrop-blur-md shadow-xl transition hover:scale-110 active:scale-95 z-20"
-            >
-              <ChevronLeft className="w-4 h-4 md:w-6 md:h-6" />
-            </button>
-            <button
-              onClick={handleNext}
-              aria-label="Next frame"
-              className="pointer-events-auto p-2 sm:p-2.5 md:p-3 rounded-full bg-[#171715]/80 hover:bg-[#171715] text-[#F7F3EC] border border-[#F7F3EC]/20 backdrop-blur-md shadow-xl transition hover:scale-110 active:scale-95 z-20"
-            >
-              <ChevronRight className="w-4 h-4 md:w-6 md:h-6" />
-            </button>
-          </div>
+      {/* Card, anchored to the left and shifted lower on mobile */}
+      <div className="relative z-10 flex h-full min-h-[480px] sm:min-h-[560px] items-center px-3 sm:px-10 md:px-14 pt-28 sm:pt-0">
+        <div className={`w-full ${containerWidthClass} pl-1 sm:pl-4 md:pl-12 lg:pl-20 ${cardTransition} ${cardOpacity} ${cardTranslate}`}>
+          <ReviewCard
+            name={current.name}
+            productName={current.productName}
+            productLink={current.productLink}
+            heading={current.heading}
+            subtitle={current.subtitle}
+            bgColor={current.bgColor || colours.green}
+          />
         </div>
       </div>
+
+      {/* Pagination dots */}
+      {reviewsList.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2 sm:bottom-6">
+          {reviewsList.map((r, i) => (
+            <button
+              key={r.id || i}
+              type="button"
+              aria-label={`Go to review ${i + 1}`}
+              onClick={() => goTo(i, i > index ? "right" : "left")}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === index ? "w-6 bg-white" : "w-2 bg-white/50"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 };
 
-export default ReviewCarousel;
+export default ReviewSection;

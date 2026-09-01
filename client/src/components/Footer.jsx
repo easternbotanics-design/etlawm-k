@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { colours, fonts } from "../theme/theme.js";
 
 const InstagramIcon = () => (
@@ -59,9 +60,22 @@ export default function Footer() {
     }
   };
 
-  const shopLinks = ["All Products", "Collections", "Best Sellers", "New Arrivals"];
-  const companyLinks = ["Our Story", "The Science", "The Ritual", "Sustainability"];
-  const supportLinks = ["My Account", "Track Order", "FAQs", "Shipping"];
+  const shopLinks = [
+    { label: "All Products", href: "/collection/all-products" },
+    { label: "Collections", href: "/collection" },
+    { label: "Best Sellers", href: "/collection" },
+    { label: "New Arrivals", href: "/collection" },
+  ];
+  const companyLinks = [
+    { label: "Our Story", href: "/science" },
+    { label: "The Science", href: "/science" },
+    { label: "The Ritual", href: "/ritual" },
+    { label: "Sustainability", href: "/ingredients" },
+  ];
+  const supportLinks = [
+    { label: "My Account", href: "/dashboard" },
+    { label: "Track Order", href: "/dashboard/orders" },
+  ];
 
   return (
     <footer className="bg-[#0d0d0d] text-white" style={{ fontFamily: fonts.secondary }}>
@@ -70,9 +84,9 @@ export default function Footer() {
         <div className="flex flex-col lg:flex-row lg:justify-between gap-12">
           {/* Brand block */}
           <div className="max-w-xs">
-            <div className="text-2xl font-bold mb-1 tracking-[0.085em]" style={{ fontFamily: fonts.logo }}>
+            <Link to="/" className="text-2xl font-bold mb-1 tracking-[0.085em] inline-block hover:opacity-80 transition-opacity" style={{ fontFamily: fonts.logo }}>
               ETLAWM
-            </div>
+            </Link>
             <div className="text-[10px] tracking-[0.3em] text-gray-400 mb-5 uppercase">
               Herbal Rituals
             </div>
@@ -100,7 +114,7 @@ export default function Footer() {
               />
               <button
                 onClick={handleSubscribe}
-              className="flex items-center gap-2 rounded-sm px-6 py-3 text-sm font-semibold tracking-wide whitespace-nowrap transition-colors"
+                className="flex items-center gap-2 rounded-sm px-6 py-3 text-sm font-semibold tracking-wide whitespace-nowrap transition-colors"
                 style={{ background: colours.accent, color: colours.background }}
                 onMouseEnter={e => e.currentTarget.style.background = colours.secondary}
                 onMouseLeave={e => e.currentTarget.style.background = colours.accent}
@@ -129,10 +143,10 @@ export default function Footer() {
             </div>
             <ul className="space-y-3">
               {shopLinks.map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-                    {link}
-                  </a>
+                <li key={link.label}>
+                  <Link to={link.href} className="text-sm text-gray-300 hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -145,10 +159,10 @@ export default function Footer() {
             </div>
             <ul className="space-y-3">
               {companyLinks.map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-                    {link}
-                  </a>
+                <li key={link.label}>
+                  <Link to={link.href} className="text-sm text-gray-300 hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -161,10 +175,10 @@ export default function Footer() {
             </div>
             <ul className="space-y-3">
               {supportLinks.map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-sm text-gray-300 hover:text-white transition-colors">
-                    {link}
-                  </a>
+                <li key={link.label}>
+                  <Link to={link.href} className="text-sm text-gray-300 hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -222,9 +236,9 @@ export default function Footer() {
         <div className="flex items-center gap-1 text-xs text-gray-500 flex-wrap justify-center sm:justify-end">
           <span>© 2026 ETLAWM. All rights reserved.</span>
           <span className="mx-1">·</span>
-          <a href="#" className="hover:text-gray-300 transition-colors">Privacy Policy</a>
+          <Link to="/" className="hover:text-gray-300 transition-colors">Privacy Policy</Link>
           <span className="mx-1">·</span>
-          <a href="#" className="hover:text-gray-300 transition-colors">Terms of Use</a>
+          <Link to="/" className="hover:text-gray-300 transition-colors">Terms of Use</Link>
         </div>
       </div>
     </footer>

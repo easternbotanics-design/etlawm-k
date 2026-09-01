@@ -22,6 +22,22 @@ const DeleteIcon = () => (
   </svg>
 );
 
+const EditIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
+);
+
 const TagIcon = () => (
   <svg
     width="18"
@@ -148,30 +164,48 @@ export default function CMSConcerns() {
                 }}
                 className="group relative rounded-xl border p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between"
               >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <span
-                    className="p-2 rounded-lg text-xs"
-                    style={{
-                      backgroundColor: `${colours.accent}15`,
-                      color: colours.accent,
-                    }}
-                  >
-                    <TagIcon />
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(item)}
-                    disabled={isDeleting}
-                    style={{ color: "#A44A3F" }}
-                    className="p-1.5 rounded-lg opacity-60 hover:opacity-100 hover:bg-red-50 transition-all cursor-pointer border-none bg-transparent"
-                    title={`Delete ${item.name}`}
-                  >
-                    {isDeleting ? (
-                      <span className="text-[10px]">...</span>
-                    ) : (
-                      <DeleteIcon />
-                    )}
-                  </button>
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  {item.image_url ? (
+                    <div className="w-10 h-10 rounded-lg overflow-hidden border shrink-0" style={{ borderColor: colours.border }}>
+                      <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <span
+                      className="p-2 rounded-lg text-xs"
+                      style={{
+                        backgroundColor: `${colours.accent}15`,
+                        color: colours.accent,
+                      }}
+                    >
+                      <TagIcon />
+                    </span>
+                  )}
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/admin/content/concerns/edit/${item.id}`)}
+                      disabled={isDeleting}
+                      style={{ color: colours.accent }}
+                      className="p-1.5 rounded-lg opacity-70 hover:opacity-100 hover:bg-stone-100 transition-all cursor-pointer border-none bg-transparent"
+                      title={`Edit ${item.name}`}
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(item)}
+                      disabled={isDeleting}
+                      style={{ color: "#A44A3F" }}
+                      className="p-1.5 rounded-lg opacity-60 hover:opacity-100 hover:bg-red-50 transition-all cursor-pointer border-none bg-transparent"
+                      title={`Delete ${item.name}`}
+                    >
+                      {isDeleting ? (
+                        <span className="text-[10px]">...</span>
+                      ) : (
+                        <DeleteIcon />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div>

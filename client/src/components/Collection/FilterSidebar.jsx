@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { CONCERNS, SORT_OPTIONS } from "../../data/products.js";
 import { getCategories } from "../../services/categoryService.js";
 import concernService from "../../services/concernService.js";
 import { colours, fonts } from "../../theme/theme.js";
@@ -8,6 +7,13 @@ import CustomSelect from "../CustomSelect";
 const INK = colours.text;
 const BARK = colours.accent;
 const CREAM = colours.background;
+
+const SORT_OPTIONS = [
+  { value: "newest",       label: "Newest"            },
+  { value: "price-asc",    label: "Price: Low to High" },
+  { value: "price-desc",   label: "Price: High to Low" },
+  { value: "best-selling", label: "Best Selling"       },
+];
 
 const SCOPED_CSS = `
   .filter-checkbox {
@@ -86,7 +92,7 @@ export function FilterContent({ filters, setFilters }) {
   const [categories, setCategories] = useState([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [categoryError, setCategoryError] = useState("");
-  const [concerns, setConcerns] = useState(CONCERNS);
+  const [concerns, setConcerns] = useState([]);
   const [concernLoading, setConcernLoading] = useState(true);
 
   useEffect(() => {
@@ -118,7 +124,7 @@ export function FilterContent({ filters, setFilters }) {
         setConcernLoading(true);
         const data = await concernService.getPublicConcerns();
         if (cancelled) return;
-        if (data.success && Array.isArray(data.concerns) && data.concerns.length > 0) {
+        if (data.success && Array.isArray(data.concerns)) {
           const formatted = data.concerns.map((c) => ({
             value: c.slug || c.name,
             label: c.name,
@@ -345,7 +351,17 @@ export function FilterContent({ filters, setFilters }) {
           <input
             type="checkbox"
             className="filter-checkbox"
-            checked={filters.concerns.includes(value) || filters.concerns.includes(label)}
+            checked={
+              filters.concerns.includes(value) ||
+              filters.concerns.includes(label) ||
+              filters.concerns.some(
+                (fc) =>
+                  fc.toLowerCase() === value.toLowerCase() ||
+                  fc.toLowerCase() === label.toLowerCase() ||
+                  fc.replace(/-/g, " ").toLowerCase() === label.toLowerCase() ||
+                  fc.toLowerCase() === label.replace(/-/g, " ").toLowerCase()
+              )
+            }
             onChange={() => toggle("concerns", value)}
           />
 

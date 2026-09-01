@@ -165,7 +165,7 @@ const ProductPanel = ({ limit = 4 }) => {
 
   return (
     <section
-      className="relative overflow-hidden px-5 py-16 md:py-24 md:px-10 lg:px-16"
+      className="relative overflow-hidden px-5 py-16 md:pt-24 md:px-10 lg:px-16"
       style={{
         background: colours.primary,
         color: colours.text,

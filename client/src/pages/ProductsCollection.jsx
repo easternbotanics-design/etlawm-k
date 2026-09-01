@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import ProductGrid from "../components/Collection/ProductGrid.jsx";
 import {
   FilterSidebar,
@@ -241,18 +242,35 @@ const ProductsCollection = ({ categorySlug }) => {
 
   const [fetchKey, setFetchKey] = useState(0);
 
-  const [filters, setFilters] = useState({
-    categories: categorySlug ? [categorySlug] : [],
-    concerns: [],
-    sort: "newest",
+  const location = useLocation();
+
+  const [filters, setFilters] = useState(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const initialConcerns = searchParams
+      .getAll("concern")
+      .flatMap((c) => c.split(","))
+      .filter(Boolean);
+
+    return {
+      categories: categorySlug ? [categorySlug] : [],
+      concerns: initialConcerns,
+      sort: "newest",
+    };
   });
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const concernParams = searchParams
+      .getAll("concern")
+      .flatMap((c) => c.split(","))
+      .filter(Boolean);
+
     setFilters((prev) => ({
       ...prev,
       categories: categorySlug ? [categorySlug] : [],
+      concerns: concernParams.length > 0 ? concernParams : prev.concerns,
     }));
-  }, [categorySlug]);
+  }, [categorySlug, location.search]);
 
   useEffect(() => {
     let cancelled = false;
@@ -270,7 +288,7 @@ const ProductsCollection = ({ categorySlug }) => {
         if (cancelled) return;
 
         setProducts(productsData);
-        setCategories(categoriesData.filter((category) => category.isActive && category.slug !== "all-products"));
+        setCategories(categoriesData.filter((category) => category.isActive && category.slug !== "all-products" && category.slug !== "all-product"));
       } catch (err) {
         if (!cancelled) {
           setError(err.message || "Failed to load products.");
@@ -300,7 +318,7 @@ const ProductsCollection = ({ categorySlug }) => {
   const visibleProducts = useMemo(() => {
     let list = [...products];
 
-    if (filters.categories.length > 0 && !filters.categories.includes("all-products")) {
+    if (filters.categories.length > 0 && !filters.categories.includes("all-products") && !filters.categories.includes("all-product")) {
       list = list.filter((product) =>
         filters.categories.includes(product.category)
       );
@@ -308,12 +326,13 @@ const ProductsCollection = ({ categorySlug }) => {
 
     if (filters.concerns.length > 0) {
       list = list.filter((product) =>
-        product.concerns.some((concern) =>
+        (product.concerns || []).some((concern) =>
           filters.concerns.some(
             (fc) =>
               fc === concern ||
               fc.toLowerCase() === concern.toLowerCase() ||
-              fc.replace(/-/g, " ").toLowerCase() === concern.replace(/-/g, " ").toLowerCase()
+              fc.replace(/-/g, " ").toLowerCase() === concern.replace(/-/g, " ").toLowerCase() ||
+              fc.toLowerCase() === concern.replace(/-/g, " ").toLowerCase()
           )
         )
       );

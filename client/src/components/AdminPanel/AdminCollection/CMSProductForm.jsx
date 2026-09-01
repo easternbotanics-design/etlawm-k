@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getProductById } from '../../../services/productService.js';
 import { createProduct, updateProduct, uploadImage, addProductImage } from '../../../services/adminService.js';
-import { CONCERNS } from '../../../data/products.js';
 import concernService from '../../../services/concernService.js';
 import { colours, fonts } from '../../../theme/theme.js';
 
@@ -88,7 +87,7 @@ export default function AdminProductForm() {
   const [searchQuery, setSearchQuery] = useState('');
   const [allIngredients, setAllIngredients] = useState([]);
   const [loadingIngredients, setLoadingIngredients] = useState(false);
-  const [concernOptions, setConcernOptions] = useState(CONCERNS);
+  const [concernOptions, setConcernOptions] = useState([]);
 
   useEffect(() => {
     const loadDynamicConcerns = async () => {
