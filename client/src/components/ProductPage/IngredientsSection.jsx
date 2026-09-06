@@ -49,7 +49,8 @@ const IngredientSection = ({ slug: propSlug, productId: propProductId, product: 
         }
 
         if (!cancelled) {
-          setIngredients(loadedList);
+          const uniqueList = Array.from(new Map(loadedList.map((i) => [String(i.id), i])).values());
+          setIngredients(uniqueList);
         }
       } catch (err) {
         console.error("Error loading ingredients section:", err);

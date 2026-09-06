@@ -7,7 +7,6 @@ import { getProducts, getProductBySlug, getProductById } from "../../services/pr
 import { addToCart } from "../../services/cartService";
 import ritualService from "../../services/ritualService";
 import AddToCartNumbers from "../AddToCartNumbers.jsx";
-import ProductFAQSection from "./ProductFAQSection.jsx";
 
 const API = import.meta.env.VITE_SERVER_API || "";
 
@@ -30,8 +29,14 @@ function ProductPageSkeleton() {
           </div>
 
           {/* Hero image skeleton */}
-          <div className="order-1 md:order-2">
-            <div className="aspect-[4/5] sm:aspect-[5/6] w-full animate-pulse rounded-xl bg-[#EAE6DB]" />
+          <div className="order-1 md:order-2 flex justify-center">
+            <div
+              className="aspect-[4/5] sm:aspect-[5/6] w-full animate-pulse rounded-xl bg-[#EAE6DB]"
+              style={{
+                maxHeight: "calc(100vh - 9rem)",
+                maxWidth: "calc((100vh - 9rem) * (5 / 6))",
+              }}
+            />
           </div>
 
           {/* Product info skeleton */}
@@ -326,13 +331,6 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
   const categoryLabel = product.subtitle || product.category || "";
   const displayImages = images.length > 0 ? images : (product.image ? [product.image] : []);
 
-  let whyBody = "";
-  if (ritual?.whys && Array.isArray(ritual.whys) && ritual.whys.length > 0) {
-    whyBody = ritual.whys.join("\n\n");
-  } else if (ritual?.description) {
-    whyBody = ritual.description;
-  }
-
   let howSteps = [];
   let howBody = "";
   if (ritual?.hows && Array.isArray(ritual.hows) && ritual.hows.length > 0) {
@@ -368,6 +366,10 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
 
   const details = [];
 
+  if (benefitsBody || ritualLoading || !ritualFetchedRef.current) {
+    details.push({ title: "Benefits", body: benefitsBody, needsRitual: true });
+  }
+
   if (ingredientsBody) {
     details.push({ title: "Ingredients", body: ingredientsBody, needsRitual: false });
   }
@@ -379,9 +381,7 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
       needsRitual: true
     });
   }
-  if (benefitsBody || ritualLoading || !ritualFetchedRef.current) {
-    details.push({ title: "Benefits", body: benefitsBody, needsRitual: true });
-  }
+  
 
   const additionalInfoItems = [];
 
@@ -423,22 +423,21 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
     });
   }
 
-  const breadcrumbs = [
-    { label: "Home", href: "/" },
-    { label: "Collection", href: "/collection" },
-    { label: product.name, href: "#" },
-  ];
+  additionalInfoItems.push({
+    label: "Note",
+    value: "NO RETURNS",
+  })
 
   return (
     <div className="min-h-screen w-full text-[#1B1B18] font-[Inter,sans-serif] pb-4 md:pb-0">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-24 pb-4 md:pt-32 md:pb-4">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-20 pb-4 md:pt-28 md:pb-6">
         
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[88px_1fr_1fr] md:gap-8 items-start">
           {/* ---------------- Left Sticky Media Container (Thumbnails + Hero Image) ---------------- */}
-          <div className="order-1 md:order-1 md:col-span-2 md:sticky md:top-32 md:self-start grid grid-cols-1 gap-4 md:grid-cols-[88px_1fr] md:gap-8 items-start">
+          <div className="order-1 md:order-1 md:col-span-2 md:sticky md:top-24 md:self-start grid grid-cols-1 gap-4 md:grid-cols-[88px_1fr] md:gap-8 items-start">
             {/* ---------------- Thumbnail rail ---------------- */}
-            <div className="order-2 flex gap-2.5 overflow-x-auto pb-1 scrollbar-none md:order-1 md:flex-col md:gap-4 md:overflow-visible md:pb-0">
+            <div className="order-2 flex gap-2.5 overflow-x-auto pb-1 scrollbar-none md:order-1 md:flex-col md:gap-4 md:max-h-[calc(100vh-9rem)] md:overflow-y-auto md:pb-0">
               {displayImages.map((src, i) => {
                 const isActive = i === activeImage;
                 return (
@@ -474,9 +473,13 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
             </div>
 
             {/* ---------------- Hero image ---------------- */}
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 flex justify-center">
               <div
                 className="relative aspect-[4/5] sm:aspect-[5/6] w-full overflow-hidden rounded-2xl md:rounded-xl bg-[#EAE6DB] touch-pan-y"
+                style={{
+                  maxHeight: "calc(100vh - 9rem)",
+                  maxWidth: "calc((100vh - 9rem) * (5 / 6))",
+                }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={() => handleTouchEnd(displayImages)}
@@ -834,8 +837,6 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
           </div>
         </div>
       </div>
-
-      <ProductFAQSection product={product} />
 
       {/* Sticky Mobile Bottom Bar */}
       <AnimatePresence>

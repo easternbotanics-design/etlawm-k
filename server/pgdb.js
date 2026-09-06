@@ -852,11 +852,11 @@ const cmsVideos = {
 const productIngredients = {
     getByProductId: (productId) =>
         query(
-            `SELECT DISTINCT i.*, p.name AS product_name
+            `SELECT i.*, p.name AS product_name
        FROM cms_ingredients i
-       LEFT JOIN products_ingredient pi ON pi.ingredient_id = i.id
-       LEFT JOIN products p ON (i.product_id = p.id OR pi.product_id = p.id)
-       WHERE i.product_id = $1 OR pi.product_id = $1
+       LEFT JOIN products p ON p.id = $1
+       WHERE i.product_id = $1
+          OR i.id IN (SELECT ingredient_id FROM products_ingredient WHERE product_id = $1)
        ORDER BY i.sort_order ASC, i.name ASC`,
             [productId]
         ),

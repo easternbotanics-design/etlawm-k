@@ -20,12 +20,12 @@ const FAQSkeleton = () => {
   );
 };
 
-export default function ProductFAQSection({ product }) {
+export default function ProductFAQSection({ product, slug }) {
   const [openIndex, setOpenIndex] = useState(0);
   const [faqs, setFaqs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const productIdentifier = product?.slug || product?.name;
+  const productIdentifier = product?.slug || product?.name || slug;
 
   useEffect(() => {
     if (!productIdentifier) {

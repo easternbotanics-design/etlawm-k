@@ -4,7 +4,8 @@ import NavBar from "../components/NavBar2";
 import ReviewGrid from "../components/ProductPage/ReviewPanel.jsx";
 import SuggestedProducts from "../components/ProductPage/SuggestedProducts.jsx";
 import Footer from "../components/Footer";
-import IngredientSection from "../components/ProductPage/IngredientsSection.jsx";
+import IngredientSection from "../components/ProductPage/IngredientsSection2.jsx";
+import ProductFAQSection from "../components/ProductPage/ProductFAQSection.jsx";
 import { colours, fonts } from "../theme/theme.js";
 
 const Product = () => {
@@ -19,8 +20,9 @@ const Product = () => {
     >
       <NavBar />
       <ProductPage />
-      <IngredientSection slug={slug} />
       <ReviewGrid />
+      <IngredientSection slug={slug} />
+      <ProductFAQSection slug={slug} />
       <SuggestedProducts currentSlug={slug} />
       <Footer />
     </div>

@@ -154,9 +154,9 @@ export default function AdminProductForm() {
 
   const handleToggleIngredient = (ingredient) => {
     setSelectedIngredients((prev) => {
-      const exists = prev.some((item) => item.id === ingredient.id);
+      const exists = prev.some((item) => String(item.id) === String(ingredient.id));
       if (exists) {
-        return prev.filter((item) => item.id !== ingredient.id);
+        return prev.filter((item) => String(item.id) !== String(ingredient.id));
       } else {
         return [...prev, ingredient];
       }
@@ -164,7 +164,7 @@ export default function AdminProductForm() {
   };
 
   const handleRemoveIngredient = (ingredientId) => {
-    setSelectedIngredients((prev) => prev.filter((item) => item.id !== ingredientId));
+    setSelectedIngredients((prev) => prev.filter((item) => String(item.id) !== String(ingredientId)));
   };
 
   const handleCreateNewIngredient = () => {
@@ -244,7 +244,9 @@ export default function AdminProductForm() {
           const ingRes = await fetch(`${API}/api/product/${id}/ingredients`);
           if (ingRes.ok) {
             const ingData = await ingRes.json();
-            setSelectedIngredients(ingData.ingredients ?? []);
+            const raw = ingData.ingredients ?? [];
+            const unique = Array.from(new Map(raw.map((i) => [String(i.id), i])).values());
+            setSelectedIngredients(unique);
           }
         }
       } catch (err) {
@@ -789,7 +791,7 @@ export default function AdminProductForm() {
             <div className="p-4 space-y-2" style={{ maxHeight: '400px', overflowY: 'auto' }} data-lenis-prevent>
               {filteredIngredients.length > 0 ? (
                 filteredIngredients.map((ing) => {
-                  const isSelected = selectedIngredients.some((item) => item.id === ing.id);
+                  const isSelected = selectedIngredients.some((item) => String(item.id) === String(ing.id));
                   return (
                     <div
                       key={ing.id}
