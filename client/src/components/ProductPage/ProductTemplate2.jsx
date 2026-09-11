@@ -400,6 +400,13 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
     });
   }
 
+  if (product.texture) {
+    additionalInfoItems.push({
+      label: "Texture",
+      value: product.texture,
+    });
+  }
+
   if (Array.isArray(product.concerns) && product.concerns.length > 0) {
     const formattedConcerns = product.concerns
       .map((c) =>
@@ -617,6 +624,27 @@ const ProductPage = ({ product: initialProduct, slug: propSlug, productId }) => 
             {product.description && (
               <p className="mt-4 max-w-md text-sm sm:text-[15px] leading-relaxed text-[#454138]">
                 {product.description}
+              </p>
+            )}
+
+            {Array.isArray(product.concerns) && product.concerns.length > 0 && (
+              <p
+                className="mt-3 text-xs sm:text-sm text-[#6B6656]"
+                style={{ fontFamily: fonts.secondary }}
+              >
+                <span className="font-semibold text-[#1B1B18]">Concerns: </span>
+                {product.concerns
+                  .map((c) => {
+                    const raw =
+                      typeof c === "string"
+                        ? c
+                        : c?.name || c?.label || String(c);
+                    return raw
+                      .split("-")
+                      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                      .join(" ");
+                  })
+                  .join(", ")}
               </p>
             )}
 

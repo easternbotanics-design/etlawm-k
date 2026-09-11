@@ -8,11 +8,11 @@ const API = import.meta.env.VITE_SERVER_API;
  * e.g. "Botanical Hair Serum" → "botanical-hair-serum"
  */
 function slugify(name = '') {
-    return name
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-');
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-');
 }
 
 /**
@@ -22,21 +22,21 @@ function slugify(name = '') {
  *   Vite dev-server public folder (which mirrors the same origin).
  * - Falls back to a neutral placeholder so the UI never shows a broken image.
  */
- function resolveImage(url) {
-   if (!url) {
-     return "/products/placeholder.png";
-   }
- 
-   if (
-     url.startsWith("http://") ||
-     url.startsWith("https://")
-   ) {
-     return url;
-   }
- 
-   return `${API}${url.startsWith("/") ? url : `/${url}`}`;
- }
- 
+function resolveImage(url) {
+  if (!url) {
+    return "/products/placeholder.png";
+  }
+
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://")
+  ) {
+    return url;
+  }
+
+  return `${API}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
 /**
  * Map a raw DB product row → the shape the UI components expect.
  *
@@ -49,83 +49,84 @@ function slugify(name = '') {
  *                     isNew, rating, reviews
  */
 function normalizeProduct(raw) {
-    if (!raw) return null;
+  if (!raw) return null;
 
-    const slug = raw.slug ?? slugify(raw.name);
+  const slug = raw.slug ?? slugify(raw.name);
 
-    // Derive a frontend-style category slug from the DB category name.
-    // e.g. "Hair Care" → "hair-care"
-    const categorySlug = raw.category_slug
-        ?? (raw.category_name ? slugify(raw.category_name) : 'uncategorized');
+  // Derive a frontend-style category slug from the DB category name.
+  // e.g. "Hair Care" → "hair-care"
+  const categorySlug = raw.category_slug
+    ?? (raw.category_name ? slugify(raw.category_name) : 'uncategorized');
 
-    return {
-        // Core identity
-        id: raw.id,
-        slug,
-    
-        // Display strings
-        name: raw.name ?? '',
-        subtitle: raw.category_name ?? '',
-        category: categorySlug,
-        categoryId: raw.category_id ?? null,
-    
-        // CMS fields
-        code: raw.code ?? null,
-        status: raw.status ?? 'active',
-    
-        // Long copy
-        description: raw.description ?? '',
-        ingredients: raw.ingredients ?? '',
-        usageInstructions: raw.usage_instructions ?? raw.usageInstructions ?? '',
-        benefits: Array.isArray(raw.benefits)
-            ? raw.benefits
-            : raw.benefits
-                ? [raw.benefits]
-                : [],
-        skinType: raw.skin_type ?? raw.skinType ?? '',
-        suitableFor: raw.suitable_for ?? raw.suitableFor ?? '',
-    
-        // Pricing
-        price: Number(raw.price) || 0,
-        originalPrice: raw.original_price ? Number(raw.original_price) : null,
-        discountValue: raw.discount_value ? Number(raw.discount_value) : null,
-        discountType: raw.discount_type ?? null,
-    
-        // Size / quantity
-        sizeValue: raw.size_value ? Number(raw.size_value) : null,
-        sizeUnit: raw.size_unit ?? null,
-    
-        // Image — primary_image is the URL stored in product_images
-        image: resolveImage(raw.primary_image ?? raw.image_url),
-    
-        // Badge / flags
-        badge: raw.badge ?? null,
-        concerns: Array.isArray(raw.concerns) ? raw.concerns : [],
-        isNew: raw.is_new ?? false,
-        isActive: raw.is_active ?? true,
-        isDraft: raw.is_draft ?? false,
-    
-        // SEO
-        seoTitle: raw.seo_title ?? '',
-        seoDescription: raw.seo_description ?? '',
-    
-        // Ratings
-        rating: raw.avg_rating !== undefined && raw.avg_rating !== null
-            ? Number(raw.avg_rating)
-            : raw.rating !== undefined && raw.rating !== null
-                ? Number(raw.rating)
-                : 0,
-        reviews: raw.total !== undefined && raw.total !== null
-            ? Number(raw.total)
-            : raw.reviews_count !== undefined && raw.reviews_count !== null
-                ? Number(raw.reviews_count)
-                : raw.reviews !== undefined && raw.reviews !== null
-                    ? Number(raw.reviews)
-                    : 0,
-    
-        // Stock
-        stockQty: raw.stock_qty ?? 0,
-    };
+  return {
+    // Core identity
+    id: raw.id,
+    slug,
+
+    // Display strings
+    name: raw.name ?? '',
+    subtitle: raw.category_name ?? '',
+    category: categorySlug,
+    categoryId: raw.category_id ?? null,
+
+    // CMS fields
+    code: raw.code ?? null,
+    status: raw.status ?? 'active',
+
+    // Long copy
+    description: raw.description ?? '',
+    ingredients: raw.ingredients ?? '',
+    usageInstructions: raw.usage_instructions ?? raw.usageInstructions ?? '',
+    benefits: Array.isArray(raw.benefits)
+      ? raw.benefits
+      : raw.benefits
+        ? [raw.benefits]
+        : [],
+    skinType: raw.skin_type ?? raw.skinType ?? '',
+    suitableFor: raw.suitable_for ?? raw.suitableFor ?? '',
+    texture: raw.texture ?? '',
+
+    // Pricing
+    price: Number(raw.price) || 0,
+    originalPrice: raw.original_price ? Number(raw.original_price) : null,
+    discountValue: raw.discount_value ? Number(raw.discount_value) : null,
+    discountType: raw.discount_type ?? null,
+
+    // Size / quantity
+    sizeValue: raw.size_value ? Number(raw.size_value) : null,
+    sizeUnit: raw.size_unit ?? null,
+
+    // Image — primary_image is the URL stored in product_images
+    image: resolveImage(raw.primary_image ?? raw.image_url),
+
+    // Badge / flags
+    badge: raw.badge ?? null,
+    concerns: Array.isArray(raw.concerns) ? raw.concerns : [],
+    isNew: raw.is_new ?? false,
+    isActive: raw.is_active ?? true,
+    isDraft: raw.is_draft ?? false,
+
+    // SEO
+    seoTitle: raw.seo_title ?? '',
+    seoDescription: raw.seo_description ?? '',
+
+    // Ratings
+    rating: raw.avg_rating !== undefined && raw.avg_rating !== null
+      ? Number(raw.avg_rating)
+      : raw.rating !== undefined && raw.rating !== null
+        ? Number(raw.rating)
+        : 0,
+    reviews: raw.total !== undefined && raw.total !== null
+      ? Number(raw.total)
+      : raw.reviews_count !== undefined && raw.reviews_count !== null
+        ? Number(raw.reviews_count)
+        : raw.reviews !== undefined && raw.reviews !== null
+          ? Number(raw.reviews)
+          : 0,
+
+    // Stock
+    stockQty: raw.stock_qty ?? 0,
+  };
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -139,39 +140,39 @@ function normalizeProduct(raw) {
  * @param {boolean} includeInactive Whether to request inactive products (requires admin permissions).
  * @returns {Promise<Array>}  Array of normalised product objects.
  */
- export async function getProducts(includeInactive = false) {
-   const token = localStorage.getItem("token");
-   const headers = {};
- 
-   if (token) {
-     headers.Authorization = `Bearer ${token}`;
-   }
- 
-   const query = includeInactive
-     ? "?include_inactive=true"
-     : "";
- 
-   const response = await fetch(
-     `${API}/api/product${query}`,
-     { headers },
-   );
- 
-   if (!response.ok) {
-     const err = await response.json().catch(() => ({}));
- 
-     throw new Error(
-       err.message ??
-         `Failed to fetch products (${response.status})`,
-     );
-   }
- 
-   const data = await response.json();
-   const raw = Array.isArray(data.products)
-     ? data.products
-     : [];
- 
-   return raw.map(normalizeProduct);
- }
+export async function getProducts(includeInactive = false) {
+  const token = localStorage.getItem("token");
+  const headers = {};
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const query = includeInactive
+    ? "?include_inactive=true"
+    : "";
+
+  const response = await fetch(
+    `${API}/api/product${query}`,
+    { headers },
+  );
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+
+    throw new Error(
+      err.message ??
+      `Failed to fetch products (${response.status})`,
+    );
+  }
+
+  const data = await response.json();
+  const raw = Array.isArray(data.products)
+    ? data.products
+    : [];
+
+  return raw.map(normalizeProduct);
+}
 
 /**
  * Fetch a single product by its slug.
@@ -185,8 +186,8 @@ function normalizeProduct(raw) {
  * @returns {Promise<object|null>}  Normalised product, or null if not found.
  */
 export async function getProductBySlug(slug) {
-    const products = await getProducts();
-    return products.find(p => p.slug === slug) ?? null;
+  const products = await getProducts();
+  return products.find(p => p.slug === slug) ?? null;
 }
 
 /**
@@ -195,24 +196,24 @@ export async function getProductBySlug(slug) {
  * @param {number|string} id
  * @returns {Promise<object|null>} Normalised product, or null if not found.
  */
- export async function getProductById(id) {
-   const response = await fetch(
-     `${API}/api/product/${id}`,
-   );
- 
-   if (!response.ok) {
-     const err = await response.json().catch(() => ({}));
- 
-     throw new Error(
-       err.message ??
-         `Failed to fetch product (${response.status})`,
-     );
-   }
- 
-   const data = await response.json();
- 
-   return normalizeProduct(data.product);
- }
+export async function getProductById(id) {
+  const response = await fetch(
+    `${API}/api/product/${id}`,
+  );
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+
+    throw new Error(
+      err.message ??
+      `Failed to fetch product (${response.status})`,
+    );
+  }
+
+  const data = await response.json();
+
+  return normalizeProduct(data.product);
+}
 
 
 /**
@@ -221,31 +222,31 @@ export async function getProductBySlug(slug) {
  * @param {number|string} id
  * @returns {Promise<object>} Backend response.
  */
- export async function deleteProduct(id) {
-   const token = localStorage.getItem("token");
- 
-   if (!token) {
-     throw new Error("Admin authentication is required.");
-   }
- 
-   const response = await fetch(
-     `${API}/api/admin/products/${id}`,
-     {
-       method: "DELETE",
-       headers: {
-         Authorization: `Bearer ${token}`,
-       },
-     },
-   );
- 
-   if (!response.ok) {
-     const err = await response.json().catch(() => ({}));
- 
-     throw new Error(
-       err.message ??
-         `Failed to delete product (${response.status})`,
-     );
-   }
- 
-   return response.json();
- }
+export async function deleteProduct(id) {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    throw new Error("Admin authentication is required.");
+  }
+
+  const response = await fetch(
+    `${API}/api/admin/products/${id}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+
+    throw new Error(
+      err.message ??
+      `Failed to delete product (${response.status})`,
+    );
+  }
+
+  return response.json();
+}

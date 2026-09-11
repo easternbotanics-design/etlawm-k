@@ -111,6 +111,19 @@ const reviewService = {
     return handleResponse(res);
   },
 
+  updateProductReviewsBgImage: async (slug, reviews_bg_image) => {
+    const res = await fetch(`${API}/api/admin/reviews/product/${slug}/bg-image`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(),
+      },
+      body: JSON.stringify({ reviews_bg_image }),
+    });
+
+    return handleResponse(res);
+  },
+
   getReviewById: async (id) => {
     const res = await fetch(`${API}/api/admin/reviews/${id}`, {
       method: "GET",

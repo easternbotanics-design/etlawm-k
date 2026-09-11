@@ -63,6 +63,7 @@ const emptyForm = {
   seoDescription: '',
   skinType: '',
   suitableFor: '',
+  texture: '',
   concerns: [],
 };
 
@@ -232,6 +233,7 @@ export default function AdminProductForm() {
             seoDescription: product.seoDescription || product.seo_description || '',
             skinType: product.skinType || product.skin_type || '',
             suitableFor: product.suitableFor || product.suitable_for || '',
+            texture: product.texture || '',
             concerns: product.concerns || [],
           });
 
@@ -453,6 +455,7 @@ export default function AdminProductForm() {
 
         skin_type: form.skinType.trim() || null,
         suitable_for: form.suitableFor.trim() || null,
+        texture: form.texture.trim() || null,
       
         concerns: form.concerns,
       };
@@ -706,7 +709,7 @@ export default function AdminProductForm() {
                   <textarea name="benefits" value={form.benefits} onChange={handleChange} rows="4" placeholder="One benefit per line is best for rendering bullet points." style={inputStyle} className="form-textarea w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all resize-y" />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <FieldLabel>Skin Type</FieldLabel>
                     <input name="skinType" value={form.skinType} onChange={handleChange} placeholder="e.g. All Skin Types, Oily, Sensitive" style={inputStyle} className="form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
@@ -715,6 +718,11 @@ export default function AdminProductForm() {
                   <div>
                     <FieldLabel>Suitable For</FieldLabel>
                     <input name="suitableFor" value={form.suitableFor} onChange={handleChange} placeholder="e.g. Men & Women, Acne-prone skin" style={inputStyle} className="form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
+                  </div>
+
+                  <div>
+                    <FieldLabel>Texture</FieldLabel>
+                    <input name="texture" value={form.texture} onChange={handleChange} placeholder="e.g. Lightweight Gel, Serum, Cream" style={inputStyle} className="form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all" />
                   </div>
                 </div>
               </section>

@@ -140,9 +140,14 @@ const getPublicCmsReviews = async (req, res) => {
 
   try {
     let reviews;
+    let reviews_bg_image = null;
     if (productIdentifier) {
       const { rows } = await db.cmsReviews.findPublishedByProduct(productIdentifier);
       reviews = rows;
+      const { rows: productRows } = await db.products.findBySlug(productIdentifier);
+      if (productRows && productRows.length > 0) {
+        reviews_bg_image = productRows[0].reviews_bg_image || null;
+      }
     } else {
       const { rows } = await db.cmsReviews.findPublished();
       reviews = rows;
@@ -151,6 +156,7 @@ const getPublicCmsReviews = async (req, res) => {
     return res.json({
       success: true,
       reviews,
+      reviews_bg_image,
     });
   } catch (err) {
     console.error("[get public cms reviews]", err);
@@ -166,13 +172,17 @@ const getCmsReviewsByProduct = async (req, res) => {
 
   try {
     const { rows: reviews } = await db.cmsReviews.findByProductNameOrSlug(slug);
+    const { rows: productRows } = await db.products.findBySlug(slug);
+    const product = productRows && productRows.length ? productRows[0] : null;
 
     return res.json({
       success: true,
-      product_name: slug
+      product_id: product?.id ?? null,
+      product_name: product?.name || slug
         .split("-")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" "),
+      reviews_bg_image: product?.reviews_bg_image ?? null,
       reviews,
     });
   } catch (err) {
@@ -180,6 +190,40 @@ const getCmsReviewsByProduct = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error.",
+    });
+  }
+};
+
+const updateCmsReviewsBgImage = async (req, res) => {
+  const { slug } = req.params;
+  const { reviews_bg_image } = req.body;
+
+  try {
+    const { rows: productRows } = await db.products.findBySlug(slug);
+
+    if (!productRows || productRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found.",
+      });
+    }
+
+    const productId = productRows[0].id;
+    const { rows: [updatedProduct] } = await db.products.update(productId, {
+      reviews_bg_image: reviews_bg_image || null,
+    });
+
+    return res.json({
+      success: true,
+      message: "Review background image updated successfully.",
+      reviews_bg_image: updatedProduct?.reviews_bg_image || null,
+      product: updatedProduct,
+    });
+  } catch (err) {
+    console.error("[update cms reviews bg image]", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Server error updating review background image.",
     });
   }
 };
@@ -274,6 +318,7 @@ export { upsertReview, getProductReviews, deleteReview, createCmsReview,
   getAdminCmsReviews,
   getPublicCmsReviews,
   getCmsReviewsByProduct,
+  updateCmsReviewsBgImage,
   updateCmsReview,
   deleteCmsReview,
   getCmsReviewById

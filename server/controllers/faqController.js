@@ -4,6 +4,7 @@ const createCmsFaq = async (req, res) => {
   const {
     product_name,
     product_link,
+    faqs,
     question,
     answer,
     status = "published",
@@ -11,14 +12,53 @@ const createCmsFaq = async (req, res) => {
     is_active = true,
   } = req.body;
 
-  if (!product_name || !question || !answer) {
-    return res.status(400).json({
-      success: false,
-      message: "product_name, question, and answer are required.",
-    });
-  }
-
   try {
+    // If an array of faqs is provided inside req.body
+    if (Array.isArray(faqs) && faqs.length > 0) {
+      if (!product_name) {
+        return res.status(400).json({
+          success: false,
+          message: "product_name is required.",
+        });
+      }
+
+      for (let i = 0; i < faqs.length; i++) {
+        if (!faqs[i].question || !faqs[i].question.trim() || !faqs[i].answer || !faqs[i].answer.trim()) {
+          return res.status(400).json({
+            success: false,
+            message: `Question and answer are required for all FAQ items (check entry #${i + 1}).`,
+          });
+        }
+      }
+
+      const itemsToInsert = faqs.map((f, idx) => ({
+        product_name,
+        product_link: product_link || null,
+        question: f.question.trim(),
+        answer: f.answer.trim(),
+        status,
+        sort_order: f.sort_order !== undefined ? f.sort_order : idx,
+        is_active: f.is_active !== undefined ? f.is_active : true,
+      }));
+
+      const { rows: createdFaqs } = await db.cmsFaqs.createMany(itemsToInsert);
+
+      return res.status(201).json({
+        success: true,
+        count: createdFaqs.length,
+        faqs: createdFaqs,
+        faq: createdFaqs[0],
+      });
+    }
+
+    // Single FAQ creation
+    if (!product_name || !question || !answer) {
+      return res.status(400).json({
+        success: false,
+        message: "product_name, question, and answer are required.",
+      });
+    }
+
     const {
       rows: [createdFaq],
     } = await db.cmsFaqs.create({
@@ -34,6 +74,7 @@ const createCmsFaq = async (req, res) => {
     return res.status(201).json({
       success: true,
       faq: createdFaq,
+      faqs: [createdFaq],
     });
   } catch (err) {
     console.error("[create cms faq]", err);

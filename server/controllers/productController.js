@@ -59,7 +59,7 @@ const upload = multer({
   },
 
   fileFilter: (req, file, cb) => {
-    const allowedTypes = [ "image/jpeg", "image/png", "image/webp", "image/svg+xml" ];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
 
     if (!allowedTypes.includes(file.mimetype)) {
       return cb(new Error("Only JPEG, PNG, WebP and SVG images are allowed."));
@@ -109,8 +109,8 @@ const uploadImage = async (req, res) => {
     )
       ? originalExtension
       : originalExtension === ".svg" || req.file.mimetype === "image/svg+xml"
-      ? ".svg"
-      : `.${req.file.mimetype.split("/")[1]}`;
+        ? ".svg"
+        : `.${req.file.mimetype.split("/")[1]}`;
 
     const prefix = bucketName === "category-images" ? "category" : "product";
     const fileName =
@@ -121,7 +121,7 @@ const uploadImage = async (req, res) => {
 
     await axios.post(
       `${supabaseUrl}/storage/v1/object/` +
-        `${bucketName}/${encodedFileName}`,
+      `${bucketName}/${encodedFileName}`,
       req.file.buffer,
       {
         headers: {
@@ -165,11 +165,12 @@ const addProduct = async (req, res) => {
     price, original_price, discount_value, discount_type,
     stock_qty, size_value, size_unit,
     description, ingredients, usage_instructions, benefits,
-    status, is_active, is_draft, 
-    seo_title, seo_description, 
+    status, is_active, is_draft,
+    seo_title, seo_description,
     is_new, concerns,
     skin_type, skinType,
     suitable_for, suitableFor,
+    texture,
   } = req.body;
 
   if (!name?.trim() || price === undefined || price === null) {
@@ -185,12 +186,13 @@ const addProduct = async (req, res) => {
       price, original_price, discount_value, discount_type,
       stock_qty, size_value, size_unit,
       description, ingredients, usage_instructions, benefits,
-      status, is_active, is_draft, 
-      seo_title, seo_description, 
+      status, is_active, is_draft,
+      seo_title, seo_description,
       is_new, concerns,
       skin_type: skin_type ?? skinType,
       suitable_for: suitable_for ?? suitableFor,
-    }); 
+      texture,
+    });
 
     if (!product) {
       return res.status(500).json({
@@ -219,7 +221,7 @@ const updateProduct = async (req, res) => {
         message: "Product not found.",
       });
     }
-    
+
     res.json({ success: true, product });
   } catch (err) {
     console.error("[update product]", err);

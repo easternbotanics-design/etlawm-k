@@ -63,6 +63,7 @@ const emptyForm = {
   seoDescription: '',
   skinType: '',
   suitableFor: '',
+  texture: '',
   concerns: [],
 };
 
@@ -230,6 +231,7 @@ export default function AdminProductForm() {
             seoDescription: product.seoDescription || product.seo_description || '',
             skinType: product.skinType || product.skin_type || '',
             suitableFor: product.suitableFor || product.suitable_for || '',
+            texture: product.texture || '',
             concerns: product.concerns || [],
           });
 
@@ -436,9 +438,9 @@ export default function AdminProductForm() {
 
         benefits: form.benefits
           ? form.benefits
-              .split('\n')
-              .map((item) => item.trim())
-              .filter(Boolean)
+            .split('\n')
+            .map((item) => item.trim())
+            .filter(Boolean)
           : [],
 
         status: submitMode === 'draft' ? 'draft' : form.status,
@@ -450,6 +452,7 @@ export default function AdminProductForm() {
 
         skin_type: form.skinType.trim() || null,
         suitable_for: form.suitableFor.trim() || null,
+        texture: form.texture.trim() || null,
 
         concerns: form.concerns,
       };
@@ -661,9 +664,10 @@ export default function AdminProductForm() {
                   rows={4} placeholder="One benefit per line is best for rendering bullet points."
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <TextInput label="Skin Type" name="skinType" value={form.skinType} onChange={handleChange} placeholder="e.g. All Skin Types, Oily, Sensitive" />
                   <TextInput label="Suitable For" name="suitableFor" value={form.suitableFor} onChange={handleChange} placeholder="e.g. Men & Women, Hair Fall, Acne" />
+                  <TextInput label="Texture" name="texture" value={form.texture} onChange={handleChange} placeholder="e.g. Lightweight Gel, Serum, Cream" />
                 </div>
               </FormCard>
 

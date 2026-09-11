@@ -2,6 +2,9 @@ import React from "react";
 import { Star, Quote } from "lucide-react";
 import { colours, fonts } from "../../theme/theme.js";
 
+// Whitish textured glass background noise SVG data URI
+const glassTextureSvg = `data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E`;
+
 export default function ReviewCard({
   review = {},
   name,
@@ -22,9 +25,13 @@ export default function ReviewCard({
   return (
     <div
       className={`relative flex flex-col justify-between h-auto w-full ${compact ? "p-2.5 sm:p-5" : "p-2.5 sm:p-7"
-        } rounded-lg sm:rounded-2xl transition-all duration-300 select-none overflow-hidden text-left ${className}`}
+        } rounded-lg sm:rounded-2xl [corner-shape:squircle] transition-all duration-300 select-none overflow-hidden text-left ${className}`}
       style={{
-        backgroundColor: colours.primary,
+        background: `linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.48) 100%), url("${glassTextureSvg}")`,
+        backdropFilter: "blur(12px) saturate(180%)",
+        WebkitBackdropFilter: "blur(12px) saturate(180%)",
+        border: "1px solid rgba(255, 255, 255, 0.65)",
+        boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.05), inset 0 1px 1px 0 rgba(255, 255, 255, 0.8)",
       }}
     >
       {/* Decorative subtle Quote Icon in background using theme accent */}
@@ -79,7 +86,7 @@ export default function ReviewCard({
               className={`${compact ? "text-[9.5px] sm:text-xs leading-tight sm:leading-relaxed" : "text-[10px] sm:text-sm leading-tight sm:leading-relaxed"
                 } ${clampText ? "line-clamp-4" : ""}`}
               style={{
-                color: colours.mutedText || "#7C7770",
+                color: colours.text || "#7C7770",
                 fontFamily: fonts.secondary || "sans-serif",
               }}
             >

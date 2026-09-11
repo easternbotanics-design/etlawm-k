@@ -358,6 +358,58 @@ const cmsFaqs = {
             ]
         ),
 
+    createMany: async (faqsList) => {
+        if (!faqsList || faqsList.length === 0) {
+            return { rows: [] };
+        }
+
+        const valueTuples = [];
+        const params = [];
+        let paramIdx = 1;
+
+        for (const item of faqsList) {
+            const {
+                product_name,
+                product_link = null,
+                question,
+                answer,
+                status = "published",
+                sort_order = 0,
+                is_active = true,
+            } = item;
+
+            valueTuples.push(
+                `($${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++})`
+            );
+            params.push(
+                product_name,
+                product_link ?? null,
+                question,
+                answer,
+                status,
+                sort_order,
+                is_active
+            );
+        }
+
+        return query(
+            `
+      INSERT INTO cms_faqs (
+        product_name,
+        product_link,
+        question,
+        answer,
+        status,
+        sort_order,
+        is_active
+      )
+      VALUES ${valueTuples.join(", ")}
+      RETURNING *
+      `,
+            params
+        );
+    },
+
     findById: (id) =>
         query(
             `
@@ -898,10 +950,10 @@ const productIngredients = {
 
 // helper function, just write query( -- sql query -- ) wherever in the code to access the database
 const query = async (text, params = []) => {
-  const start = Date.now();
-  const res = await pool.query(text, params);
-  console.log(`[pgdb] (${Date.now() - start}ms)`, text.slice(0, 80));
-  return res;
+    const start = Date.now();
+    const res = await pool.query(text, params);
+    console.log(`[pgdb] (${Date.now() - start}ms)`, text.slice(0, 80));
+    return res;
 }
 
 // helper function to access the users table
@@ -1224,6 +1276,7 @@ const products = {
         seo_description,
         skin_type,
         suitable_for,
+        texture,
     }) =>
         query(
             `INSERT INTO products (
@@ -1251,14 +1304,16 @@ const products = {
                 seo_title,
                 seo_description,
                 skin_type,
-                suitable_for
+                suitable_for,
+                texture
             )
             VALUES (
                 $1, $2, $3, $4, $5,
                 $6, $7, $8, $9, $10,
                 $11, $12, $13, $14, $15,
                 $16, $17, $18, $19, $20,
-                $21, $22, $23, $24, $25
+                $21, $22, $23, $24, $25,
+                $26
             )
             RETURNING *`,
             [
@@ -1288,6 +1343,7 @@ const products = {
                 seo_description ?? null,
                 skin_type ?? null,
                 suitable_for ?? null,
+                texture ?? null,
             ]
         ),
 
@@ -1473,6 +1529,8 @@ const products = {
             'seo_description',
             'skin_type',
             'suitable_for',
+            'texture',
+            'reviews_bg_image',
         ];
 
         const sets = [];

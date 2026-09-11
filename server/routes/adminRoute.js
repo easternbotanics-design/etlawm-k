@@ -7,6 +7,7 @@ import {
   getAdminCmsReviews,
   getPublicCmsReviews,
   getCmsReviewsByProduct,
+  updateCmsReviewsBgImage,
   updateCmsReview,
   deleteCmsReview,
   getCmsReviewById
@@ -90,6 +91,7 @@ adminRouter.delete("/products/:product_id/images/:id", deleteProductImage);
 adminRouter.get("/reviews", getAdminCmsReviews);
 adminRouter.post("/reviews", createCmsReview);
 adminRouter.get("/reviews/product/:slug", getCmsReviewsByProduct);
+adminRouter.patch("/reviews/product/:slug/bg-image", updateCmsReviewsBgImage);
 adminRouter.get("/reviews/:id", getCmsReviewById);
 adminRouter.patch("/reviews/:id", updateCmsReview);
 adminRouter.delete("/reviews/:id", deleteCmsReview);

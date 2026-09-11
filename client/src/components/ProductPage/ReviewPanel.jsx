@@ -13,6 +13,7 @@ const ReviewGrid = ({ reviews: propReviews, product, productName, productSlug })
   const paramsSlug = params?.slug;
 
   const [dbReviews, setDbReviews] = useState([]);
+  const [reviewsBgImage, setReviewsBgImage] = useState(null);
   const [loading, setLoading] = useState(!propReviews);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -20,26 +21,29 @@ const ReviewGrid = ({ reviews: propReviews, product, productName, productSlug })
   const targetName = productName || product?.name;
 
   useEffect(() => {
-    if (propReviews && Array.isArray(propReviews)) return;
-
     let isMounted = true;
     const fetchDbReviews = async () => {
       try {
         setLoading(true);
         const data = await reviewService.getPublicReviews(targetSlug);
-        if (isMounted && data && Array.isArray(data.reviews)) {
-          let fetched = data.reviews;
-          if (targetSlug || targetName) {
-            const tSlug = (targetSlug || "").toLowerCase();
-            const tName = (targetName || (targetSlug ? targetSlug.replace(/-/g, " ") : "")).toLowerCase();
-
-            fetched = fetched.filter((r) => {
-              const rName = (r.product_name || "").toLowerCase();
-              const rLink = (r.product_link || "").toLowerCase();
-              return rName === tName || rName === tSlug || (tSlug && rLink.includes(tSlug));
-            });
+        if (isMounted && data) {
+          if (data.reviews_bg_image) {
+            setReviewsBgImage(data.reviews_bg_image);
           }
-          setDbReviews(fetched);
+          if (Array.isArray(data.reviews)) {
+            let fetched = data.reviews;
+            if (targetSlug || targetName) {
+              const tSlug = (targetSlug || "").toLowerCase();
+              const tName = (targetName || (targetSlug ? targetSlug.replace(/-/g, " ") : "")).toLowerCase();
+
+              fetched = fetched.filter((r) => {
+                const rName = (r.product_name || "").toLowerCase();
+                const rLink = (r.product_link || "").toLowerCase();
+                return rName === tName || rName === tSlug || (tSlug && rLink.includes(tSlug));
+              });
+            }
+            setDbReviews(fetched);
+          }
         }
       } catch (err) {
         console.error("Failed to load public reviews for ReviewGrid:", err);
@@ -56,6 +60,7 @@ const ReviewGrid = ({ reviews: propReviews, product, productName, productSlug })
   }, [propReviews, targetSlug, targetName]);
 
   const displayReviews = propReviews && Array.isArray(propReviews) ? propReviews : dbReviews;
+  const bgImage = product?.reviews_bg_image || reviewsBgImage;
 
   if (loading) {
     return (
@@ -70,8 +75,19 @@ const ReviewGrid = ({ reviews: propReviews, product, productName, productSlug })
   }
 
   return (
-    <div className="w-full px-2.5 sm:px-12 md:px-24 lg:px-48 py-4 sm:py-10">
-      <div className="columns-2 md:columns-2 lg:columns-3 gap-2.5 sm:gap-6 space-y-2.5 sm:space-y-6 max-w-7xl mx-auto">
+    <div className="w-full px-2.5 sm:px-12 md:px-24 lg:px-48 py-6 sm:py-14 relative overflow-hidden transition-all duration-500">
+      {/* Background image layer with reduced opacity */}
+      {bgImage && (
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-opacity duration-500"
+          style={{
+            backgroundImage: `url("${bgImage}")`,
+            opacity: 0.9,
+          }}
+        />
+      )}
+
+      <div className="columns-2 md:columns-2 lg:columns-3 gap-2.5 sm:gap-6 space-y-2.5 sm:space-y-6 max-w-7xl mx-auto relative z-10">
         {displayReviews.map((review, index) => {
           const isHiddenMobile = !isExpanded && index >= 3;
 
@@ -89,7 +105,7 @@ const ReviewGrid = ({ reviews: propReviews, product, productName, productSlug })
       </div>
 
       {displayReviews.length > 3 && (
-        <div className="mt-8 text-center sm:hidden">
+        <div className="mt-8 text-center sm:hidden relative z-10">
           <button
             type="button"
             onClick={() => setIsExpanded((prev) => !prev)}

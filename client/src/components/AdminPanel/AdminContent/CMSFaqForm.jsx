@@ -23,8 +23,9 @@ const SCOPED_CSS = `
 const emptyForm = {
   productName: '',
   productLink: '',
-  question: '',
-  answer: '',
+  faqs: [
+    { question: '', answer: '' }
+  ],
 };
 
 export default function CMSFaqForm() {
@@ -74,8 +75,12 @@ export default function CMSFaqForm() {
         setForm({
           productName: faq.product_name || '',
           productLink: faq.product_link || '',
-          question: faq.question || '',
-          answer: faq.answer || '',
+          faqs: [
+            {
+              question: faq.question || '',
+              answer: faq.answer || '',
+            },
+          ],
         });
       } catch (err) {
         setError(err.message ?? 'Failed to load FAQ data.');
@@ -87,9 +92,26 @@ export default function CMSFaqForm() {
     loadFaq();
   }, [id, isEditMode]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+  const handleFaqChange = (index, field, value) => {
+    setForm((prev) => {
+      const updatedFaqs = [...prev.faqs];
+      updatedFaqs[index] = { ...updatedFaqs[index], [field]: value };
+      return { ...prev, faqs: updatedFaqs };
+    });
+  };
+
+  const handleAddFaq = () => {
+    setForm((prev) => ({
+      ...prev,
+      faqs: [...prev.faqs, { question: '', answer: '' }],
+    }));
+  };
+
+  const handleRemoveFaq = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      faqs: prev.faqs.filter((_, i) => i !== index),
+    }));
   };
 
   const handleSubmit = async (e, mode = 'publish') => {
@@ -99,13 +121,16 @@ export default function CMSFaqForm() {
       setError('Product name is required.');
       return;
     }
-    if (!form.question.trim()) {
-      setError('Question is required.');
-      return;
-    }
-    if (!form.answer.trim()) {
-      setError('Answer is required.');
-      return;
+
+    for (let i = 0; i < form.faqs.length; i++) {
+      if (!form.faqs[i].question.trim()) {
+        setError(`Question is required for FAQ #${i + 1}.`);
+        return;
+      }
+      if (!form.faqs[i].answer.trim()) {
+        setError(`Answer is required for FAQ #${i + 1}.`);
+        return;
+      }
     }
 
     setSaving(true);
@@ -113,20 +138,49 @@ export default function CMSFaqForm() {
     setSuccess(null);
 
     try {
-      const payload = {
-        product_name: form.productName.trim(),
-        product_link: form.productLink.trim() || null,
-        question: form.question.trim(),
-        answer: form.answer.trim(),
-        status: mode === 'draft' ? 'draft' : 'published',
-      };
-
       if (isEditMode) {
+        // Editing single FAQ
+        const payload = {
+          product_name: form.productName.trim(),
+          product_link: form.productLink.trim() || null,
+          question: form.faqs[0].question.trim(),
+          answer: form.faqs[0].answer.trim(),
+          status: mode === 'draft' ? 'draft' : 'published',
+        };
         await faqService.updateCmsFaq(id, payload);
+
+        // If extra FAQs were added in edit mode, create them as well
+        if (form.faqs.length > 1) {
+          const extraFaqsPayload = {
+            product_name: form.productName.trim(),
+            product_link: form.productLink.trim() || null,
+            faqs: form.faqs.slice(1).map((f) => ({
+              question: f.question.trim(),
+              answer: f.answer.trim(),
+            })),
+            status: mode === 'draft' ? 'draft' : 'published',
+          };
+          await faqService.createCmsFaq(extraFaqsPayload);
+        }
+
         setSuccess(mode === 'draft' ? 'FAQ saved as draft.' : 'FAQ updated successfully.');
       } else {
+        // Multi-FAQ Creation
+        const payload = {
+          product_name: form.productName.trim(),
+          product_link: form.productLink.trim() || null,
+          faqs: form.faqs.map((f) => ({
+            question: f.question.trim(),
+            answer: f.answer.trim(),
+          })),
+          status: mode === 'draft' ? 'draft' : 'published',
+        };
         await faqService.createCmsFaq(payload);
-        setSuccess(mode === 'draft' ? 'FAQ saved as draft.' : 'FAQ published successfully.');
+        setSuccess(
+          mode === 'draft'
+            ? `${form.faqs.length} FAQ(s) saved to draft.`
+            : `${form.faqs.length} FAQ(s) published successfully.`
+        );
       }
 
       setTimeout(() => navigate(returnTo), 1200);
@@ -202,7 +256,7 @@ export default function CMSFaqForm() {
                 style={{ fontFamily: fonts.primary, color: colours.text }}
                 className="text-3xl md:text-4xl tracking-wide font-normal"
               >
-                {isEditMode ? 'Edit FAQ' : 'Add FAQ'}
+                {isEditMode ? 'Edit FAQ' : 'Add Product FAQs'}
               </h1>
               <p
                 style={{ color: colours.mutedText }}
@@ -210,7 +264,7 @@ export default function CMSFaqForm() {
               >
                 {isEditMode
                   ? `ID: ${id} • Update FAQ details`
-                  : 'Create a product FAQ entry for the website'}
+                  : 'Create one or multiple product FAQ entries for the website'}
               </p>
             </div>
 
@@ -222,7 +276,7 @@ export default function CMSFaqForm() {
               <span>/</span>
               <span>FAQs</span>
               <span>/</span>
-              <span style={{ color: colours.accent }}>{isEditMode ? 'Edit FAQ' : 'Add FAQ'}</span>
+              <span style={{ color: colours.accent }}>{isEditMode ? 'Edit FAQ' : 'Add FAQs'}</span>
             </div>
           </div>
         </div>
@@ -270,7 +324,7 @@ export default function CMSFaqForm() {
                   style={{ color: colours.mutedText }}
                   className="text-xs mt-1"
                 >
-                  Select the product this FAQ applies to.
+                  Select the product these FAQs apply to.
                 </p>
               </div>
 
@@ -316,52 +370,132 @@ export default function CMSFaqForm() {
               </div>
             </section>
 
-            {/* Question & Answer */}
+            {/* Questions & Answers Section */}
             <section
               style={cardStyle}
               className="border rounded-2xl p-6 md:p-8 shadow-sm space-y-6"
             >
-              <div>
-                <h2
-                  style={{ fontFamily: fonts.primary }}
-                  className="text-2xl font-semibold"
+              {/* Section Header with top + Add FAQ button */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/60">
+                <div>
+                  <h2
+                    style={{ fontFamily: fonts.primary }}
+                    className="text-2xl font-semibold"
+                  >
+                    FAQ Details
+                  </h2>
+                  <p
+                    style={{ color: colours.mutedText }}
+                    className="text-xs mt-1"
+                  >
+                    Add multiple question and answer pairs for this product.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddFaq}
+                  className="px-4 py-2.5 rounded-lg text-xs uppercase tracking-widest font-semibold transition-all duration-200 border flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow hover:-translate-y-0.5"
+                  style={{
+                    backgroundColor: colours.secondary,
+                    color: colours.background,
+                    borderColor: colours.secondary,
+                  }}
                 >
-                  FAQ Details
-                </h2>
-                <p
-                  style={{ color: colours.mutedText }}
-                  className="text-xs mt-1"
-                >
-                  Enter the question and detailed answer.
-                </p>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Add FAQ</span>
+                </button>
               </div>
 
-              <div>
-                <FieldLabel required>Question</FieldLabel>
-                <input
-                  name="question"
-                  value={form.question}
-                  onChange={handleChange}
-                  required
-                  placeholder="e.g. How often should I use this product?"
-                  style={inputStyle}
-                  className="faq-form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all"
-                />
+              {/* Dynamic FAQ Cards */}
+              <div className="space-y-6">
+                {form.faqs.map((faqItem, index) => (
+                  <div
+                    key={index}
+                    className="p-5 rounded-xl border relative transition-all duration-200"
+                    style={{
+                      backgroundColor: `${colours.primary}33`,
+                      borderColor: colours.border,
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-4 pb-2 border-b border-stone-200/40">
+                      <span
+                        className="text-xs uppercase tracking-wider font-semibold px-3 py-1 rounded-full"
+                        style={{
+                          backgroundColor: `${colours.accent}20`,
+                          color: colours.accent,
+                        }}
+                      >
+                        FAQ #{index + 1}
+                      </span>
+
+                      {form.faqs.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFaq(index)}
+                          className="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1 bg-transparent border-none cursor-pointer transition-colors"
+                          title="Remove this FAQ"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          <span>Remove</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <FieldLabel required>Question {form.faqs.length > 1 ? `#${index + 1}` : ''}</FieldLabel>
+                        <input
+                          value={faqItem.question}
+                          onChange={(e) => handleFaqChange(index, 'question', e.target.value)}
+                          required
+                          placeholder="e.g. How often should I use this product?"
+                          style={inputStyle}
+                          className="faq-form-input w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <FieldLabel required>Answer {form.faqs.length > 1 ? `#${index + 1}` : ''}</FieldLabel>
+                        <textarea
+                          value={faqItem.answer}
+                          onChange={(e) => handleFaqChange(index, 'answer', e.target.value)}
+                          required
+                          rows="4"
+                          placeholder="Provide a clear, helpful answer..."
+                          style={inputStyle}
+                          className="faq-form-textarea w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all resize-y"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              <div>
-                <FieldLabel required>Answer</FieldLabel>
-                <textarea
-                  name="answer"
-                  value={form.answer}
-                  onChange={handleChange}
-                  required
-                  rows="6"
-                  placeholder="Provide a clear, helpful answer..."
-                  style={inputStyle}
-                  className="faq-form-textarea w-full rounded-lg border px-4 py-3 text-sm placeholder-stone-400 focus:outline-none transition-all resize-y"
-                />
-              </div>
+              {/* Secondary Bottom Add Button for Convenience */}
+              {form.faqs.length > 1 && (
+                <div className="pt-2 text-center">
+                  <button
+                    type="button"
+                    onClick={handleAddFaq}
+                    className="w-full py-3 rounded-xl border border-dashed text-xs uppercase tracking-widest font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer hover:bg-stone-50"
+                    style={{
+                      borderColor: colours.accent,
+                      color: colours.accent,
+                      backgroundColor: 'transparent',
+                    }}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>+ Add Another FAQ</span>
+                  </button>
+                </div>
+              )}
             </section>
           </div>
 
@@ -380,7 +514,13 @@ export default function CMSFaqForm() {
                 }}
                 className="faq-btn-primary w-full disabled:opacity-50 transition-all duration-300 text-xs uppercase tracking-widest font-semibold py-4 rounded-lg shadow-md border-none cursor-pointer"
               >
-                {saving ? 'Saving...' : isEditMode ? 'Save Changes' : 'Post FAQ'}
+                {saving
+                  ? 'Saving...'
+                  : isEditMode
+                  ? 'Save Changes'
+                  : form.faqs.length > 1
+                  ? `Post ${form.faqs.length} FAQs`
+                  : 'Post FAQ'}
               </button>
 
               <button
@@ -414,3 +554,4 @@ export default function CMSFaqForm() {
     </div>
   );
 }
+
