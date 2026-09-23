@@ -195,8 +195,12 @@ function normalizeCart(data) {
         calculatedSubtotal,
     ),
 
+    comboDiscount: Number(cart.combo_discount ?? cart.comboDiscount ?? 0),
+    combo: cart.combo ?? null,
+
     items: rawItems.map(normalizeCartItem),
     coupon: cart.coupon ?? null,
+    total: cart.total != null ? Number(cart.total) : null,
   };
 }
 

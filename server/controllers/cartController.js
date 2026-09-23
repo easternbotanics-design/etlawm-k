@@ -30,6 +30,86 @@ const resolveCart = async (req) => {
   return { cart, type: "guest" };
 };
 
+const evaluateCartCombos = async (items) => {
+  if (!items || items.length === 0) {
+    return { comboDiscount: 0, appliedCombo: null };
+  }
+  try {
+    const herbalOil = items.find(
+      (item) =>
+        /herbal.*hair.*oil/i.test(item.name || "") ||
+        /herbal.*oil/i.test(item.name || "") ||
+        (/hair/i.test(item.name || "") && /oil/i.test(item.name || "") && !/argan/i.test(item.name || ""))
+    );
+    const hairElixir = items.find(
+      (item) =>
+        /elixir/i.test(item.name || "") ||
+        /elixir/i.test(item.slug || "")
+    );
+
+    if (herbalOil && hairElixir) {
+      const comboBase = (Number(herbalOil.price) * Number(herbalOil.quantity)) + (Number(hairElixir.price) * Number(hairElixir.quantity));
+      const discountVal = Math.floor(comboBase * 0.20);
+      return {
+        comboDiscount: discountVal,
+        appliedCombo: {
+          name: "Botanical Hair Care Combo",
+          discount_type: "percentage",
+          discount_value: 20,
+        },
+      };
+    }
+
+    const activeCombos = await db.combos.findActive();
+    let bestDiscount = 0;
+    let bestCombo = null;
+
+    for (const combo of activeCombos) {
+      if (!combo.products || combo.products.length === 0) continue;
+
+      const meetsCombo = combo.products.every((comboProd) => {
+        const minQty = comboProd.min_quantity || 1;
+        const cartItem = items.find((item) => item.product_id === comboProd.product_id);
+        return cartItem && Number(cartItem.quantity) >= minQty;
+      });
+
+      if (meetsCombo) {
+        let comboSubtotal = 0;
+        for (const comboProd of combo.products) {
+          const minQty = comboProd.min_quantity || 1;
+          const cartItem = items.find((item) => item.product_id === comboProd.product_id);
+          if (cartItem) {
+            comboSubtotal += Number(cartItem.price) * minQty;
+          }
+        }
+
+        let discount = 0;
+        if (combo.discount_type === "percentage") {
+          discount = Math.floor(comboSubtotal * (Number(combo.discount_value) / 100));
+        } else if (combo.discount_type === "fixed") {
+          discount = Number(combo.discount_value);
+        }
+        discount = Math.min(discount, comboSubtotal);
+
+        if (discount > bestDiscount) {
+          bestDiscount = discount;
+          bestCombo = {
+            id: combo.id,
+            name: combo.name,
+            discount_type: combo.discount_type,
+            discount_value: combo.discount_value,
+          };
+        }
+      }
+    }
+
+    return { comboDiscount: bestDiscount, appliedCombo: bestCombo };
+  } catch (err) {
+    console.error("[evaluateCartCombos]", err);
+    return { comboDiscount: 0, appliedCombo: null };
+  }
+};
+
 const getCart = async (req, res) => {
   try {
     const { cart, type } = await resolveCart(req);
@@ -46,8 +126,12 @@ const getCart = async (req, res) => {
       0,
     );
 
+    const { comboDiscount, appliedCombo } = await evaluateCartCombos(items);
+
     // Fetch applied coupon (regular or early bird)
     let appliedCoupon = null;
+    let couponDiscount = 0;
+
     if (cart.coupon_id) {
       const { rows: [c] } = await db.query(
         `SELECT * FROM coupons WHERE id = $1 LIMIT 1`,
@@ -97,6 +181,18 @@ const getCart = async (req, res) => {
       }
     }
 
+    if (appliedCoupon) {
+      const netSubtotal = Math.max(0, subtotal - comboDiscount);
+      if (appliedCoupon.discount_type === "percentage") {
+        couponDiscount = Math.floor(netSubtotal * (Number(appliedCoupon.discount_value) / 100));
+      } else if (appliedCoupon.discount_type === "fixed") {
+        couponDiscount = Number(appliedCoupon.discount_value);
+      }
+      couponDiscount = Math.min(couponDiscount, netSubtotal);
+    }
+
+    const total = Math.max(0, subtotal - comboDiscount - couponDiscount);
+
     res.json({
       success: true,
       cart: {
@@ -105,7 +201,12 @@ const getCart = async (req, res) => {
         items,
         item_count: itemCount,
         subtotal,
+        combo_discount: comboDiscount,
+        combo: appliedCombo,
         coupon: appliedCoupon,
+        coupon_discount: couponDiscount,
+        discount: comboDiscount + couponDiscount,
+        total,
       },
     });
   } catch (err) {

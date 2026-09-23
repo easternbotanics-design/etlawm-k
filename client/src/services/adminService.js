@@ -381,3 +381,53 @@ export async function getAdminAnalytics() {
   });
   return handleResponse(response, "Failed to fetch analytics");
 }
+
+// Combos Services
+export async function getAllCombos() {
+  const response = await fetch(`${API}/api/combos`, {
+    headers: getHeaders(false),
+  });
+  return handleResponse(response, "Failed to fetch combos");
+}
+
+export async function getComboById(id) {
+  const response = await fetch(`${API}/api/combos/${id}`, {
+    headers: getHeaders(false),
+  });
+  return handleResponse(response, "Failed to fetch combo details");
+}
+
+export async function createCombo(data) {
+  const response = await fetch(`${API}/api/combos`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response, "Failed to create combo");
+}
+
+export async function updateCombo(id, data) {
+  const response = await fetch(`${API}/api/combos/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response, "Failed to update combo");
+}
+
+export async function toggleComboStatus(id, isActive) {
+  const response = await fetch(`${API}/api/combos/${id}/status`, {
+    method: "PATCH",
+    headers: getHeaders(),
+    body: JSON.stringify({ is_active: isActive }),
+  });
+  return handleResponse(response, "Failed to toggle combo status");
+}
+
+export async function deleteCombo(id) {
+  const response = await fetch(`${API}/api/combos/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(false),
+  });
+  return handleResponse(response, "Failed to delete combo");
+}

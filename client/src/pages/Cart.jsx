@@ -220,8 +220,8 @@ function Cart() {
           name: addressDetails.fullName,
           line1: [
             addressDetails.addressLine,
-              addressDetails.locality,
-              addressDetails.landmark,
+            addressDetails.locality,
+            addressDetails.landmark,
           ]
             .filter(Boolean)
             .join(", "),
@@ -419,6 +419,24 @@ function Cart() {
   const allSelected =
     items.length > 0 && selectedCount === items.length;
 
+  const [activeCombos, setActiveCombos] = useState([]);
+
+  useEffect(() => {
+    const fetchActiveCombos = async () => {
+      try {
+        const API = import.meta.env.VITE_SERVER_API?.replace(/\/$/, "") || "http://localhost:5000";
+        const res = await fetch(`${API}/api/combos/public`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.combos)) {
+          setActiveCombos(data.combos);
+        }
+      } catch (err) {
+        console.error("Failed to fetch active combos:", err);
+      }
+    };
+    fetchActiveCombos();
+  }, []);
+
   const subtotal = useMemo(
     () =>
       selectedItems.reduce(
@@ -428,12 +446,59 @@ function Cart() {
     [selectedItems],
   );
 
+  const { comboDiscount, appliedCombo } = useMemo(() => {
+    if (!selectedItems || selectedItems.length === 0 || !activeCombos || activeCombos.length === 0) {
+      return { comboDiscount: 0, appliedCombo: null };
+    }
+
+    let bestDiscount = 0;
+    let bestCombo = null;
+
+    for (const combo of activeCombos) {
+      if (!combo.products || combo.products.length === 0) continue;
+
+      const meetsCombo = combo.products.every((comboProd) => {
+        const minQty = comboProd.min_quantity || 1;
+        const cartItem = selectedItems.find((item) => item.productId === comboProd.product_id);
+        return cartItem && Number(cartItem.quantity) >= minQty;
+      });
+
+      if (meetsCombo) {
+        let comboSubtotal = 0;
+        for (const comboProd of combo.products) {
+          const minQty = comboProd.min_quantity || 1;
+          const cartItem = selectedItems.find((item) => item.productId === comboProd.product_id);
+          if (cartItem) {
+            comboSubtotal += Number(cartItem.price) * minQty;
+          }
+        }
+
+        let discountVal = 0;
+        if (combo.discount_type === "percentage") {
+          discountVal = Math.floor(comboSubtotal * (Number(combo.discount_value) / 100));
+        } else if (combo.discount_type === "fixed") {
+          discountVal = Number(combo.discount_value);
+        }
+        discountVal = Math.min(discountVal, comboSubtotal);
+
+        if (discountVal > bestDiscount) {
+          bestDiscount = discountVal;
+          bestCombo = combo;
+        }
+      }
+    }
+
+    return { comboDiscount: bestDiscount, appliedCombo: bestCombo };
+  }, [selectedItems, activeCombos]);
+
+  const netSubtotal = Math.max(0, subtotal - comboDiscount);
+
   const discount = useMemo(() => {
     if (!coupon) return 0;
 
     if (coupon.discountType === "percentage") {
       const calculated =
-        Math.floor(subtotal * (Number(coupon.discountValue) / 100));
+        Math.floor(netSubtotal * (Number(coupon.discountValue) / 100));
 
       return coupon.maxDiscount
         ? Math.min(calculated, Number(coupon.maxDiscount))
@@ -442,15 +507,15 @@ function Cart() {
 
     return Math.min(
       Number(coupon.discountValue ?? coupon.discount ?? 0),
-      subtotal,
+      netSubtotal,
     );
-  }, [coupon, subtotal]);
+  }, [coupon, netSubtotal]);
 
   const deliveryCharge =
     selectedItems.length === 0 || subtotal >= 500 ? 0 : 1;
 
   const total = Math.max(
-    subtotal - discount + deliveryCharge,
+    subtotal - comboDiscount - discount + deliveryCharge,
     0,
   );
 
@@ -463,7 +528,7 @@ function Cart() {
       "city",
       "state",
     ];
-  
+
     const hasRequiredFields = requiredFields.every((field) =>
       String(addressDetails[field] ?? "").trim(),
     );
@@ -473,7 +538,7 @@ function Cart() {
       sanitizePhone(addressDetails.phoneNumber) === sanitizePhone(user.phone_number) ||
       addressDetails.phoneVerified === true
     );
-  
+
     return (
       hasRequiredFields &&
       String(addressDetails.pincode || "").length === 6 &&
@@ -794,12 +859,12 @@ function Cart() {
   function handleAddressDetailsChange(updater) {
     setCheckoutOrder(null);
     sessionStorage.removeItem("checkoutOrder");
-  
+
     setAddressDetails((current) => {
       if (typeof updater === "function") {
         return updater(current);
       }
-  
+
       return updater;
     });
   }
@@ -882,6 +947,8 @@ function Cart() {
               setCouponCode={setCouponCode}
               subtotal={subtotal}
               discount={discount}
+              comboDiscount={comboDiscount}
+              combo={appliedCombo}
               deliveryCharge={deliveryCharge}
               total={total}
               isApplyingCoupon={isApplyingCoupon}

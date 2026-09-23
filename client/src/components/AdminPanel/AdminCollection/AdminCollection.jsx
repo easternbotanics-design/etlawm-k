@@ -232,6 +232,18 @@ const AdminCollection = () => {
 
       {!loading && !error && (
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <AdminCard
+            key="combos-card"
+            title="Combos"
+            editMode={editMode}
+            onClick={() => {
+              if (!editMode) {
+                navigate("/admin/collection/combos");
+              }
+            }}
+            showDelete={false}
+          />
+
           {categories.map((category) => (
             <AdminCard
               key={category.id}

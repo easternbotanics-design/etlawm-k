@@ -9,6 +9,8 @@ function CartSummary({
   setCouponCode,
   subtotal,
   discount,
+  comboDiscount = 0,
+  combo = null,
   deliveryCharge,
   total,
   isApplyingCoupon,
@@ -47,9 +49,10 @@ function CartSummary({
   }, [selectedItems]);
 
   const totalSavings = useMemo(() => {
-    const discountedProductTotal = Math.max(0, subtotal - discount);
+    const totalDiscounts = discount + comboDiscount;
+    const discountedProductTotal = Math.max(0, subtotal - totalDiscounts);
     return Math.max(0, totalOriginalPrice - discountedProductTotal);
-  }, [totalOriginalPrice, subtotal, discount]);
+  }, [totalOriginalPrice, subtotal, discount, comboDiscount]);
 
   const isButtonDisabled =
     selectedItems.length === 0 || checkoutDisabled;
@@ -226,6 +229,14 @@ function CartSummary({
                 label="Subtotal"
                 value={`₹${subtotal.toFixed(2)}`}
               />
+
+              {comboDiscount > 0 && (
+                <PriceRow
+                  label={combo?.name ? `Combo discount (${combo.name})` : "Combo discount"}
+                  value={`-₹${comboDiscount.toFixed(2)}`}
+                  highlight
+                />
+              )}
 
               <PriceRow
                 label={coupon?.isEarlyBird ? "Launch discount" : "Coupon discount"}

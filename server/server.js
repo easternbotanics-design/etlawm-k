@@ -22,7 +22,7 @@ import analyticsRouter from './routes/analyticsRoute.js';
 import faqRouter from './routes/faqRoute.js';
 import concernRouter from './routes/concernRoute.js';
 import videoRouter from './routes/videoRoute.js';
-
+import comboRouter from './routes/comboRoute.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -95,6 +95,9 @@ app.use("/api/analytics", analyticsRouter);
 app.use("/api/faqs", faqRouter);
 app.use("/api/concerns", concernRouter);
 app.use("/api/videos", videoRouter);
+app.use("/api/combos", comboRouter);
+app.use("/api/admin/combos", comboRouter);
+
 
 
 

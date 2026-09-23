@@ -1,5 +1,6 @@
 import NavBar from "../components/NavBar2.jsx";
-import HomeHero from "../components/HomePage/HomeHero.jsx";
+import HomeHero from "../components/HomePage/HomeHero2.jsx";
+import ProductCombo from "../components/HomePage/ProductCombo.jsx";
 import HomePrinciples from "../components/HomePage/HomePrinciples.jsx";
 import HomeSupport from "../components/HomePage/HomeSupport.jsx";
 import HomeQuestions from "../components/HomePage/HomeQuestions.jsx";
@@ -17,6 +18,7 @@ const Home = () => {
 
       <main>
         <HomeHero />
+        <ProductCombo />
         <ProductPanel />
         <ShopByConcern />
         <ReviewSection />

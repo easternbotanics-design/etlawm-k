@@ -2766,8 +2766,314 @@ const concerns = {
         query(`DELETE FROM concern WHERE id = $1`, [id]),
 };
 
+// ─── Combos ───────────────────────────────────────────────────────────────────
+const combos = {
+    findAll: async () => {
+        const { rows: comboRows } = await query(
+            `SELECT c.* FROM combos c ORDER BY c.created_at DESC`
+        );
+        for (const combo of comboRows) {
+            const { rows: productRows } = await query(
+                `SELECT cp.product_id, cp.min_quantity, p.name, p.slug, p.price,
+                        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = true LIMIT 1) AS primary_image
+                 FROM combo_products cp
+                 JOIN products p ON p.id = cp.product_id
+                 WHERE cp.combo_id = $1`,
+                [combo.id]
+            );
+            combo.products = productRows;
+
+            const { rows: imageRows } = await query(
+                `SELECT * FROM combo_images WHERE combo_id = $1 ORDER BY sort_order, id`,
+                [combo.id]
+            );
+            combo.images = imageRows;
+            if (!combo.image_url && imageRows.length > 0) {
+                const primary = imageRows.find((i) => i.is_primary) || imageRows[0];
+                combo.image_url = primary.image_url;
+            }
+        }
+        return comboRows;
+    },
+
+    findActive: async () => {
+        const { rows: comboRows } = await query(
+            `SELECT c.* FROM combos c
+             WHERE c.is_active = true
+               AND c.starts_at <= NOW()
+               AND (c.expires_at IS NULL OR c.expires_at >= NOW())
+             ORDER BY c.created_at DESC`
+        );
+        for (const combo of comboRows) {
+            const { rows: productRows } = await query(
+                `SELECT cp.product_id, cp.min_quantity, p.name, p.slug, p.price,
+                        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = true LIMIT 1) AS primary_image
+                 FROM combo_products cp
+                 JOIN products p ON p.id = cp.product_id
+                 WHERE cp.combo_id = $1`,
+                [combo.id]
+            );
+            combo.products = productRows;
+
+            const { rows: imageRows } = await query(
+                `SELECT * FROM combo_images WHERE combo_id = $1 ORDER BY sort_order, id`,
+                [combo.id]
+            );
+            combo.images = imageRows;
+            if (!combo.image_url && imageRows.length > 0) {
+                const primary = imageRows.find((i) => i.is_primary) || imageRows[0];
+                combo.image_url = primary.image_url;
+            }
+        }
+        return comboRows;
+    },
+
+    findById: async (id) => {
+        const { rows } = await query(
+            `SELECT c.* FROM combos c WHERE c.id = $1 LIMIT 1`,
+            [id]
+        );
+        if (rows.length === 0) return null;
+        const combo = rows[0];
+        const { rows: productRows } = await query(
+            `SELECT cp.product_id, cp.min_quantity, p.name, p.slug, p.price,
+                    (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = true LIMIT 1) AS primary_image
+             FROM combo_products cp
+             JOIN products p ON p.id = cp.product_id
+             WHERE cp.combo_id = $1`,
+            [combo.id]
+        );
+        combo.products = productRows;
+
+        const { rows: imageRows } = await query(
+            `SELECT * FROM combo_images WHERE combo_id = $1 ORDER BY sort_order, id`,
+            [combo.id]
+        );
+        combo.images = imageRows;
+        if (!combo.image_url && imageRows.length > 0) {
+            const primary = imageRows.find((i) => i.is_primary) || imageRows[0];
+            combo.image_url = primary.image_url;
+        }
+        return combo;
+    },
+
+    create: async ({ name, slug, badge = 'combo', price, original_price, description, image_url, discount_type, discount_value, starts_at, active_days = -1, is_active = true, products = [], images = [] }) => {
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
+
+            let computedStartsAt = starts_at ? new Date(starts_at) : new Date();
+            let computedExpiresAt = null;
+            const daysNum = Number(active_days);
+            if (!isNaN(daysNum) && daysNum > 0) {
+                computedExpiresAt = new Date(computedStartsAt.getTime() + daysNum * 24 * 60 * 60 * 1000);
+            }
+
+            let mainImageUrl = image_url || null;
+            if (!mainImageUrl && Array.isArray(images) && images.length > 0) {
+                const prim = images.find(img => typeof img === 'object' ? img.is_primary : false) || images[0];
+                mainImageUrl = typeof prim === 'object' ? prim.image_url || prim.url : prim;
+            }
+
+            const { rows } = await client.query(
+                `INSERT INTO combos (name, slug, badge, price, original_price, description, image_url, discount_type, discount_value, starts_at, active_days, expires_at, is_active)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                 RETURNING *`,
+                [name, slug || null, badge || 'combo', price !== undefined && price !== null ? Number(price) : null, original_price !== undefined && original_price !== null ? Number(original_price) : null, description || null, mainImageUrl, discount_type, discount_value, computedStartsAt, daysNum, computedExpiresAt, is_active]
+            );
+            const combo = rows[0];
+
+            if (Array.isArray(products) && products.length > 0) {
+                for (const prod of products) {
+                    const prodId = typeof prod === 'object' ? prod.product_id || prod.id : prod;
+                    const minQty = typeof prod === 'object' && prod.min_quantity ? Number(prod.min_quantity) : 1;
+                    if (prodId) {
+                        await client.query(
+                            `INSERT INTO combo_products (combo_id, product_id, min_quantity)
+                             VALUES ($1, $2, $3)
+                             ON CONFLICT (combo_id, product_id) DO UPDATE SET min_quantity = EXCLUDED.min_quantity`,
+                            [combo.id, prodId, minQty]
+                        );
+                    }
+                }
+            }
+
+            if (Array.isArray(images) && images.length > 0) {
+                for (let idx = 0; idx < images.length; idx++) {
+                    const img = images[idx];
+                    const url = typeof img === 'object' ? img.image_url || img.url : img;
+                    const isPrim = typeof img === 'object' ? Boolean(img.is_primary) : idx === 0;
+                    if (url) {
+                        await client.query(
+                            `INSERT INTO combo_images (combo_id, image_url, is_primary, sort_order)
+                             VALUES ($1, $2, $3, $4)`,
+                            [combo.id, url, isPrim, idx]
+                        );
+                    }
+                }
+            }
+
+            // Sync to products table so combo can be treated as a single product in cart
+            const comboSlug = combo.slug || combo.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+            await client.query(
+                `INSERT INTO products (id, name, slug, price, original_price, badge, description, stock_qty, is_active)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, 9999, $8)
+                 ON CONFLICT (id) DO UPDATE SET
+                   name = EXCLUDED.name,
+                   slug = EXCLUDED.slug,
+                   price = EXCLUDED.price,
+                   original_price = EXCLUDED.original_price,
+                   badge = EXCLUDED.badge,
+                   description = EXCLUDED.description,
+                   is_active = EXCLUDED.is_active`,
+                [combo.id, combo.name, comboSlug, combo.price || 999, combo.original_price, combo.badge || 'combo', combo.description, combo.is_active]
+            );
+
+            if (mainImageUrl) {
+                await client.query(
+                    `INSERT INTO product_images (product_id, image_url, is_primary)
+                     VALUES ($1, $2, true)
+                     ON CONFLICT DO NOTHING`,
+                    [combo.id, mainImageUrl]
+                );
+            }
+
+            await client.query("COMMIT");
+            return combo;
+        } catch (err) {
+            await client.query("ROLLBACK");
+            throw err;
+        } finally {
+            client.release();
+        }
+    },
+
+    update: async (id, fields) => {
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
+
+            const allowed = ["name", "slug", "badge", "price", "original_price", "description", "image_url", "discount_type", "discount_value", "starts_at", "active_days", "is_active"];
+            const sets = [];
+            const vals = [];
+            let paramIdx = 1;
+
+            let startsAtVal = fields.starts_at;
+            let activeDaysVal = fields.active_days;
+
+            for (const key of allowed) {
+                if (fields[key] !== undefined) {
+                    sets.push(`${key} = $${paramIdx++}`);
+                    vals.push(fields[key]);
+                }
+            }
+
+            if (startsAtVal !== undefined || activeDaysVal !== undefined) {
+                const { rows: currRows } = await client.query(`SELECT starts_at, active_days FROM combos WHERE id = $1`, [id]);
+                const curr = currRows[0];
+                const finalStarts = startsAtVal ? new Date(startsAtVal) : new Date(curr.starts_at);
+                const finalDays = activeDaysVal !== undefined ? Number(activeDaysVal) : Number(curr.active_days);
+                let finalExpires = null;
+                if (!isNaN(finalDays) && finalDays > 0) {
+                    finalExpires = new Date(finalStarts.getTime() + finalDays * 24 * 60 * 60 * 1000);
+                }
+                sets.push(`expires_at = $${paramIdx++}`);
+                vals.push(finalExpires);
+            }
+
+            let combo;
+            if (sets.length > 0) {
+                sets.push("updated_at = now()");
+                vals.push(id);
+                const res = await client.query(
+                    `UPDATE combos SET ${sets.join(", ")} WHERE id = $${paramIdx} RETURNING *`,
+                    vals
+                );
+                combo = res.rows[0];
+            } else {
+                const res = await client.query(`SELECT * FROM combos WHERE id = $1`, [id]);
+                combo = res.rows[0];
+            }
+
+            if (fields.products !== undefined && Array.isArray(fields.products)) {
+                await client.query(`DELETE FROM combo_products WHERE combo_id = $1`, [id]);
+                for (const prod of fields.products) {
+                    const prodId = typeof prod === 'object' ? prod.product_id || prod.id : prod;
+                    const minQty = typeof prod === 'object' && prod.min_quantity ? Number(prod.min_quantity) : 1;
+                    if (prodId) {
+                        await client.query(
+                            `INSERT INTO combo_products (combo_id, product_id, min_quantity)
+                             VALUES ($1, $2, $3)
+                             ON CONFLICT (combo_id, product_id) DO UPDATE SET min_quantity = EXCLUDED.min_quantity`,
+                            [id, prodId, minQty]
+                        );
+                    }
+                }
+            }
+
+            if (fields.images !== undefined && Array.isArray(fields.images)) {
+                await client.query(`DELETE FROM combo_images WHERE combo_id = $1`, [id]);
+                for (let idx = 0; idx < fields.images.length; idx++) {
+                    const img = fields.images[idx];
+                    const url = typeof img === 'object' ? img.image_url || img.url : img;
+                    const isPrim = typeof img === 'object' ? Boolean(img.is_primary) : idx === 0;
+                    if (url) {
+                        await client.query(
+                            `INSERT INTO combo_images (combo_id, image_url, is_primary, sort_order)
+                             VALUES ($1, $2, $3, $4)`,
+                            [id, url, isPrim, idx]
+                        );
+                    }
+                }
+            }
+
+            // Sync to products table
+            const comboSlug = combo.slug || combo.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+            await client.query(
+                `INSERT INTO products (id, name, slug, price, original_price, badge, description, stock_qty, is_active)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, 9999, $8)
+                 ON CONFLICT (id) DO UPDATE SET
+                   name = EXCLUDED.name,
+                   slug = EXCLUDED.slug,
+                   price = EXCLUDED.price,
+                   original_price = EXCLUDED.original_price,
+                   badge = EXCLUDED.badge,
+                   description = EXCLUDED.description,
+                   is_active = EXCLUDED.is_active`,
+                [combo.id, combo.name, comboSlug, combo.price || 999, combo.original_price, combo.badge || 'combo', combo.description, combo.is_active]
+            );
+
+            if (combo.image_url) {
+                await client.query(
+                    `DELETE FROM product_images WHERE product_id = $1`,
+                    [combo.id]
+                );
+                await client.query(
+                    `INSERT INTO product_images (product_id, image_url, is_primary)
+                     VALUES ($1, $2, true)`,
+                    [combo.id, combo.image_url]
+                );
+            }
+
+            await client.query("COMMIT");
+            return combo;
+        } catch (err) {
+            await client.query("ROLLBACK");
+            throw err;
+        } finally {
+            client.release();
+        }
+    },
+
+    delete: async (id) => {
+        await query(`DELETE FROM products WHERE id = $1`, [id]);
+        return query(`DELETE FROM combos WHERE id = $1 RETURNING *`, [id]);
+    },
+};
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 const db = {
+    combos,
     concerns,
     cmsVideos,
     websiteVisits,

@@ -16,6 +16,8 @@ import AdminTopBar from "../components/AdminPanel/AdminTopBar.jsx";
 import AdminProfile from "../components/AdminPanel/AdminProfile.jsx";
 import AdminSettings from "../components/AdminPanel/AdminSettings.jsx";
 import AdminCollectionProducts from "../components/AdminPanel/AdminCollection/AdminCollectionProducts.jsx";
+import AdminCollectionCombos from "../components/AdminPanel/AdminCollection/AdminCollectionCombos.jsx";
+import CMSComboForm from "../components/AdminPanel/AdminCollection/CMSComboForm.jsx";
 import CMSIngredients from "../components/AdminPanel/AdminContent/CMSIngredients.jsx";
 import CMSIngredientForm from "../components/AdminPanel/AdminContent/CMSIngredientForm.jsx";
 import CMSRituals from "../components/AdminPanel/AdminContent/CMSRituals.jsx";
@@ -31,6 +33,7 @@ import AdminCarts from "../components/AdminPanel/AdminOperations/AdminCarts.jsx"
 import AdminCustomers from "../components/AdminPanel/AdminCustomers.jsx";
 import AdminQuestions from "../components/AdminPanel/AdminQuestions.jsx";
 import AdminCoupons from "../components/AdminPanel/AdminOperations/AdminCoupons.jsx";
+import AdminCombos from "../components/AdminPanel/AdminOperations/AdminCombos.jsx";
 import AdminShipments from "../components/AdminPanel/AdminOperations/AdminShipments.jsx";
 import AdminInventory from "../components/AdminPanel/AdminOperations/AdminInventory.jsx";
 import { colours, fonts } from "../theme/theme.js";
@@ -543,12 +546,16 @@ const AdminDashBoard = () => {
             <Route path="collection" element={<AdminCollection />} />
             <Route path="collection/add-product" element={<AdminProductForm />} />
             <Route path="collection/edit/:id" element={<AdminProductForm />} />
+            <Route path="collection/combos" element={<AdminCollectionCombos />} />
+            <Route path="collection/combos/add-combo" element={<CMSComboForm />} />
+            <Route path="collection/combos/edit/:id" element={<CMSComboForm />} />
             <Route path="collection/:slug" element={<AdminCollectionProducts />} />
   
             {/* Operations Group */}
             <Route path="operations/orders" element={<AdminOrders />} />
             <Route path="operations/carts" element={<AdminCarts />} />
             <Route path="operations/coupons" element={<AdminCoupons />} />
+            <Route path="operations/combos" element={<AdminCollectionCombos />} />
             <Route path="operations/shipments" element={<AdminShipments />} />
             <Route path="operations/inventory" element={<AdminInventory />} />
 
