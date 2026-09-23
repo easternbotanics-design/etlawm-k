@@ -1,5 +1,5 @@
 import NavBar from "../components/NavBar2.jsx";
-import HomeHero from "../components/HomePage/HomeHero2.jsx";
+import HomeHero from "../components/HomePage/HomeHero.jsx";
 import ProductCombo from "../components/HomePage/ProductCombo.jsx";
 import HomePrinciples from "../components/HomePage/HomePrinciples.jsx";
 import HomeSupport from "../components/HomePage/HomeSupport.jsx";
