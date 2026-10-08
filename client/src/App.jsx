@@ -16,7 +16,7 @@ import DashBoard from './pages/DashBoard.jsx';
 import Ritual from './pages/Ritual.jsx';
 import AdminDashBoard from './pages/AdminDashBoard.jsx';
 import OrderSuccess2 from './pages/OrderSuccess2.jsx';
-import AdminOrderInfo from './components/AdminPanel/AdminOrderInfo2.jsx';
+import AdminOrderInfo from './components/AdminPanel/AdminOrderInfo.jsx';
 import AdminCartInfo from './components/AdminPanel/AdminCartInfo.jsx';
 import { useAuth } from './context/AuthContext';
 import Loader from './components/LoaderHamster.jsx';

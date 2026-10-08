@@ -2081,8 +2081,10 @@ const orders = {
 
     findById: (id) =>
         query(
-            `SELECT o.*, COALESCE(o.coupon_code, eb.coupon_code) AS coupon_code
+            `SELECT o.*, u.email, u.phone_number, u.first_name, u.last_name,
+                    COALESCE(o.coupon_code, eb.coupon_code) AS coupon_code
              FROM orders o
+             LEFT JOIN users u ON u.id = o.user_id
              LEFT JOIN early_bird_discounts eb ON eb.id = o.early_bird_discount_id
              WHERE o.id = $1 LIMIT 1`,
             [id]

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getOrderById } from "../../services/orderService";
 import { colours, fonts } from "../../theme/theme";
-import Loader from "../Loader";
+import Loader from "../LoaderTruck"
 
 function AdminOrderInfo() {
   const { orderId } = useParams();
@@ -31,6 +31,17 @@ function AdminOrderInfo() {
     }
   }
 
+  const formatPurchaseDate = (dateStr) => {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   if (loading) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: colours.subBackground }}>
@@ -39,227 +50,166 @@ function AdminOrderInfo() {
     );
   }
 
+  const customerName = order?.shipping_name || `${order?.first_name || ""} ${order?.last_name || ""}`.trim() || "Customer";
+  const firstName = customerName.split(" ")[0];
+  const customerPhone = order?.phone_number || order?.phone || order?.shipping_phone;
+  const customerNumber = customerPhone.slice(2)
+
+  const subtotal = order?.items?.reduce((sum, item) => sum + Number(item.unit_price) * Number(item.quantity), 0) || Number(order?.total || 0);
+  const discount = Number(order?.early_bird_discount_amount || 0);
+  const deliveryCharge = 0; // Default or calculate from order
+  const total = Number(order?.total || 0);
+
   return (
-    <div>
-      <main
-        className="min-h-screen px-4 pb-12 pt-28 sm:px-6 lg:px-10 lg:pb-16 lg:pt-16"
-        style={{
-          backgroundColor: colours.subBackground,
-        }}
-      >
-        <div className="mx-auto max-w-3xl">
-          {/* Success Header Card */}
-          <div
-            className="mb-8 rounded-2xl border p-8 text-center shadow-[0_4px_24px_rgba(0,0,0,0.02)]"
-            style={{
-              borderColor: colours.border,
-              backgroundColor: colours.background,
-            }}
-          >              
+    <div style={{ backgroundColor: "#FFFFFF", minHeight: "100vh" }}>
 
-            
+      <main className="px-4 pb-16 pt-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-xl text-center no-print">
 
-            <div className="mt-6 flex flex-col items-center gap-2">
-              <div
-                className="inline-block rounded-xl px-4 py-2 text-sm font-semibold border"
-                style={{
-                  borderColor: colours.border,
-                  backgroundColor: colours.primary,
-                  color: colours.secondary,
-                  fontFamily: fonts.secondary,
-                }}
-              >
-                Order ID: <span className="font-mono text-xs opacity-75">{orderId}</span>
+
+          <h1
+            className="text-3xl sm:text-4xl font-normal text-stone-900 tracking-tight"
+            style={{ fontFamily: fonts.primary }}
+          >
+            Here's your receipt, {firstName}!
+          </h1>
+        </div>
+
+        {/* Receipt Content Box */}
+        <div className="mx-auto max-w-xl mt-12 pt-8 border-t border-stone-100">
+          <h2
+            className="text-lg font-bold text-black mb-6"
+            style={{ fontFamily: fonts.primary }}
+          >
+            Your purchase from {formatPurchaseDate(order?.created_at)}
+          </h2>
+
+          <div className="space-y-6 text-xs sm:text-sm mb-8" style={{ fontFamily: fonts.secondary }}>
+            <div>
+              <p className="font-bold text-black uppercase tracking-wider text-[11px]">Order number</p>
+              <p className="mt-1 font-mono text-black break-all">#{order?.id?.toUpperCase()}</p>
+            </div>
+            <div>
+              <p className="font-bold text-black uppercase tracking-wider text-[11px]">Payment option</p>
+              <p className="mt-1 text-black font-medium">Razorpay (Paid)</p>
+            </div>
+            {order?.razorpay_payment_id && (
+              <div>
+                <p className="font-bold text-black uppercase tracking-wider text-[11px]">Payment ID</p>
+                <p className="mt-1 font-mono text-black break-all">{order.razorpay_payment_id}</p>
               </div>
-
-              {order?.razorpay_payment_id && (
-                <div
-                  className="inline-block rounded-xl px-4 py-2 text-sm font-semibold border animate-in fade-in duration-200"
-                  style={{
-                    borderColor: colours.border,
-                    backgroundColor: colours.primary,
-                    color: colours.secondary,
-                    fontFamily: fonts.secondary,
-                  }}
-                >
-                  Payment ID: <span className="font-mono text-xs opacity-75">{order.razorpay_payment_id}</span>
-                </div>
-              )}
-
-              {order?.coupon_code && (
-                <div
-                  className="inline-block rounded-xl px-4 py-2 text-sm font-semibold border animate-in fade-in duration-200"
-                  style={{
-                    borderColor: colours.border,
-                    backgroundColor: colours.primary,
-                    color: colours.secondary,
-                    fontFamily: fonts.secondary,
-                  }}
-                >
-                  Coupon Used: <span className="font-mono text-xs font-bold uppercase tracking-wider">{order.coupon_code}</span>
-                  {Number(order.early_bird_discount_amount) > 0 && (
-                    <span className="text-xs opacity-75 ml-1">(-₹{parseFloat(order.early_bird_discount_amount).toFixed(2)})</span>
-                  )}
-                </div>
-              )}
+            )}
+            {order?.coupon_code && (
+              <div>
+                <p className="font-bold text-black uppercase tracking-wider text-[11px]">Coupon Used</p>
+                <p className="mt-1 font-mono text-black uppercase tracking-wider font-semibold">{order.coupon_code}</p>
+              </div>
+            )}
+            <div>
+              <p className="font-bold text-black uppercase tracking-wider text-[11px]">Delivery address</p>
+              <div className="mt-1 text-black leading-relaxed">
+                <p className="font-semibold text-black">{customerName}</p>
+                <p>{order?.shipping_line1}</p>
+                <p>{order?.shipping_city}, {order?.shipping_state} - {order?.shipping_pincode}</p>
+              </div>
+            </div>
+            <div>
+              <p className="font-bold text-stone-900 uppercase tracking-wider text-[11px]">Phone number</p>
+              <div className="mt-1 text-black font-medium">
+                {customerNumber ? (
+                  <a
+                    href={`tel:${customerNumber}`}
+                    className="hover:underline text-black"
+                  >
+                    +91-{customerNumber}
+                  </a>
+                ) : (
+                  <span className="text-stone-400">—</span>
+                )}
+              </div>
             </div>
           </div>
 
-          {error ? (
-            <div
-              className="rounded-xl border p-4 text-sm"
-              style={{
-                borderColor: colours.accent,
-                color: colours.text,
-                backgroundColor: colours.background,
-                fontFamily: fonts.secondary,
-              }}
-            >
-              <p className="font-semibold">Note: {error}</p>
-              <p className="mt-1 opacity-70">
-                Although we couldn't fetch the details right now, your payment was successful and your order is recorded.
-              </p>
-            </div>
-          ) : (
-            order && (
-              <div
-                className="rounded-2xl border divide-y shadow-[0_4px_24px_rgba(0,0,0,0.01)]"
-                style={{
-                  borderColor: colours.border,
-                  backgroundColor: colours.background,
-                  divideColor: colours.border,
-                }}
-              >
-                {/* Delivery details */}
-                <div className="p-6">
-                  <h2
-                    className="text-lg font-semibold mb-4"
-                    style={{
-                      color: colours.text,
-                      fontFamily: fonts.secondary,
-                    }}
-                  >
-                    Delivery Address
-                  </h2>
+          {/* Items Section */}
+          <div className="space-y-6 py-6 border-t border-stone-100">
+            {order?.items?.map((item) => (
+              <div key={item.id} className="flex gap-4 items-start py-2">
+                <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-xl border border-stone-100 bg-[#FAF9F6] flex items-center justify-center">
+                  {item.image_url ? (
+                    <img
+                      src={item.image_url}
+                      alt={item.product_name}
+                      className="h-full w-full object-contain p-1"
+                    />
+                  ) : (
+                    <span className="text-xs opacity-40">Item</span>
+                  )}
+                </div>
 
-                  <div
-                    className="rounded-xl p-4"
-                    style={{
-                      backgroundColor: colours.primary,
-                      fontFamily: fonts.secondary,
-                    }}
-                  >
-                    <p className="font-semibold" style={{ color: colours.text }}>
-                      {order.shipping_name}
-                    </p>
-                    <p className="mt-2 text-sm opacity-75" style={{ color: colours.text }}>
-                      {order.shipping_line1}, {order.shipping_city},{" "}
-                      {order.shipping_state} - {order.shipping_pincode}
-                    </p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm sm:text-base font-bold text-stone-900" style={{ fontFamily: fonts.primary }}>
+                    {item.product_name}
+                  </p>
+                  <div className="mt-1 text-xs text-stone-500 space-y-0.5" style={{ fontFamily: fonts.secondary }}>
+                    <p>Qty: {item.quantity}</p>
+                    {item.size_value && (
+                      <p>Size: {item.size_value} {item.size_unit}</p>
+                    )}
                   </div>
                 </div>
 
-                {/* Items summary */}
-                <div className="p-6">
-                  <h2
-                    className="text-lg font-semibold mb-4"
-                    style={{
-                      color: colours.text,
-                      fontFamily: fonts.secondary,
-                    }}
-                  >
-                    Items Ordered
-                  </h2>
-
-                  <div className="space-y-4">
-                    {order.items?.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-4"
-                        style={{ fontFamily: fonts.secondary }}
-                      >
-                        <div
-                          className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border flex items-center justify-center"
-                          style={{
-                            backgroundColor: colours.primary,
-                            borderColor: colours.border,
-                          }}
-                        >
-                          {item.image_url ? (
-                            <img
-                              src={item.image_url}
-                              alt={item.product_name}
-                              className="h-full w-full object-contain p-1"
-                            />
-                          ) : (
-                            <span className="text-xs opacity-40">Item</span>
-                          )}
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <p
-                            className="line-clamp-1 text-sm font-semibold"
-                            style={{ color: colours.text }}
-                          >
-                            {item.product_name}
-                          </p>
-                          <p className="mt-0.5 text-xs opacity-55">
-                            Qty {item.quantity} × ₹{Number(item.unit_price).toFixed(2)}
-                          </p>
-                        </div>
-
-                        <p
-                          className="text-sm font-semibold"
-                          style={{ color: colours.text }}
-                        >
-                          ₹{(Number(item.unit_price) * Number(item.quantity)).toFixed(2)}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Pricing Summary */}
-                <div className="p-6">
-                  <div className="flex items-center justify-between text-base font-semibold">
-                    <span
-                      style={{
-                        color: colours.text,
-                        fontFamily: fonts.secondary,
-                      }}
-                    >
-                      Total Paid
-                    </span>
-                    <span
-                      style={{
-                        color: colours.text,
-                        fontFamily: fonts.secondary,
-                      }}
-                    >
-                      ₹{Number(order.total).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
+                <p className="text-sm sm:text-base font-semibold text-stone-900" style={{ fontFamily: fonts.secondary }}>
+                  ₹{(Number(item.unit_price) * Number(item.quantity)).toFixed(2)}
+                </p>
               </div>
-            )
-          )}
+            ))}
+          </div>
 
-          {/* Action buttons */}
-          <div className="mt-10 flex flex-wrap gap-4 justify-center no-print">
+          {/* Pricing Breakdowns */}
+          <div className="border-t border-stone-100 pt-6">
+            <div className="w-full space-y-3 text-xs sm:text-sm text-stone-600" style={{ fontFamily: fonts.secondary }}>
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span className="text-stone-900 font-medium">₹{subtotal.toFixed(2)}</span>
+              </div>
+
+              {discount > 0 && (
+                <div className="flex justify-between text-emerald-700">
+                  <span className="flex items-center gap-1.5">
+                    {order?.coupon_code ? `Discount (${order.coupon_code})` : "Launch discount"}
+                  </span>
+                  <span className="font-semibold">-₹{discount.toFixed(2)}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between">
+                <span>Estimated shipping</span>
+                <span className="text-stone-900 font-medium">
+                  {deliveryCharge === 0 ? "Free delivery" : `₹${deliveryCharge.toFixed(2)}`}
+                </span>
+              </div>
+
+              <div className="flex justify-between text-base font-bold text-stone-900 pt-3 border-t border-stone-100">
+                <span>Total</span>
+                <span>₹{total.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Questions Section */}
+          <div className="mt-16 pt-8 border-t border-stone-100 no-print" style={{ fontFamily: fonts.secondary }}>
+            <h3 className="text-sm sm:text-base font-bold text-stone-900 mb-2">Questions?</h3>
+            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
+              Don't hesitate to reach out if you need anything at all! Contact us at 8429-121-121 or 7708-234-137. We're always here to help.
+            </p>
+          </div>
+
+
+          {/* Action Buttons */}
+          <div className="mt-12 flex justify-center no-print" style={{ fontFamily: fonts.secondary }}>
             <button
               onClick={() => window.print()}
-              className="cursor-pointer px-6 py-3 text-xs font-bold tracking-[2px] rounded-md uppercase transition-all duration-200"
-              style={{
-                fontFamily: fonts.secondary,
-                backgroundColor: colours.accent,
-                color: colours.primary,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = colours.secondary;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = colours.accent;
-              }}
+              className="cursor-pointer px-8 py-3.5 rounded-full bg-stone-900 hover:bg-stone-800 text-xs font-bold uppercase tracking-widest text-white transition-colors duration-200 border-none"
             >
               Download Receipt
             </button>
