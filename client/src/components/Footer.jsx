@@ -238,7 +238,7 @@ export default function Footer() {
           <span className="mx-1">·</span>
           <Link to="/" className="hover:text-gray-300 transition-colors">Privacy Policy</Link>
           <span className="mx-1">·</span>
-          <Link to="/" className="hover:text-gray-300 transition-colors">Terms of Use</Link>
+          <Link to="/terms-and-condition" className="hover:text-gray-300 transition-colors">Terms & Conditions</Link>
         </div>
       </div>
     </footer>

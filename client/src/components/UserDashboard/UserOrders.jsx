@@ -20,7 +20,10 @@ const UserOrders = () => {
       });
       const data = await res.json();
       if (data.success) {
-        setOrders(data.orders || []);
+        const filteredOrders = (data.orders || []).filter(
+          (order) => order.razorpay_payment_id !== null && order.razorpay_payment_id !== undefined && order.razorpay_payment_id !== ""
+        );
+        setOrders(filteredOrders);
       }
     } catch (err) {
       console.error(err);
@@ -111,13 +114,13 @@ const UserOrders = () => {
             const badge = getStatusStyles(order.status);
 
             return (
-              <div 
-                key={order.id} 
+              <div
+                key={order.id}
                 className="bg-white border rounded-xl overflow-hidden shadow-xs hover:border-neutral-300 transition-colors"
                 style={{ borderColor: colours.border }}
               >
                 {/* Header click bar */}
-                <div 
+                <div
                   onClick={() => toggleOrderExpand(order.id)}
                   className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer select-none"
                 >
@@ -243,9 +246,9 @@ const UserOrders = () => {
                               <div key={idx} className="flex items-center gap-3.5">
                                 <div className="w-12 h-12 bg-white border rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                                   {item.image_url ? (
-                                    <img 
-                                      src={item.image_url.startsWith("http") ? item.image_url : `${API}${item.image_url}`} 
-                                      alt={item.product_name} 
+                                    <img
+                                      src={item.image_url.startsWith("http") ? item.image_url : `${API}${item.image_url}`}
+                                      alt={item.product_name}
                                       className="w-full h-full object-cover"
                                     />
                                   ) : (

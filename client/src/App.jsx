@@ -25,6 +25,7 @@ import Science from './pages/Science.jsx';
 import usePageTracking from './hooks/usePageTracking.js';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import Scrap from './pages/Scrap.jsx';
+import TnC from './pages/TnC.jsx';
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -67,6 +68,8 @@ function AppRoutes() {
 
         <Route path="/" element={<Home />} />
         <Route path="/scrap" element={<Scrap />} />
+        <Route path="/terms-and-condition" element={<TnC />} />
+        
         {/* <Route path="/login"                    element={<Login />} />*/}
         <Route path="/login" element={<Login />} />
         {/* Collection routes */}
