@@ -256,6 +256,17 @@ function CartSummary({
                     : `₹${deliveryCharge.toFixed(2)}`
                 }
               />
+              {deliveryCharge > 0 && subtotal < 399 && (
+                <p
+                  className="text-[11px] font-medium tracking-wide -mt-1"
+                  style={{
+                    color: colours.accent || "#A77C6B",
+                    fontFamily: fonts.secondary,
+                  }}
+                >
+                  Add ₹{(399 - subtotal).toFixed(0)} more to unlock Free Delivery!
+                </p>
+              )}
             </div>
 
             <div

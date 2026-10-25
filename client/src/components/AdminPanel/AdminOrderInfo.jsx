@@ -57,7 +57,7 @@ function AdminOrderInfo() {
 
   const subtotal = order?.items?.reduce((sum, item) => sum + Number(item.unit_price) * Number(item.quantity), 0) || Number(order?.total || 0);
   const discount = Number(order?.early_bird_discount_amount || 0);
-  const deliveryCharge = 0; // Default or calculate from order
+  const deliveryCharge = (subtotal > 0 && subtotal < 399) ? 60 : 0;
   const total = Number(order?.total || 0);
 
   return (

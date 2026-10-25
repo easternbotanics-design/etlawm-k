@@ -234,8 +234,28 @@ export async function addToCart(
   );
 
   const data = await handleResponse(response);
+  const normalized = normalizeCart(data);
 
-  return normalizeCart(data);
+  if (typeof window !== "undefined") {
+    const cartValue = Number(
+      normalized.total != null && normalized.total > 0
+        ? normalized.total
+        : normalized.subtotal
+    ) || 0;
+
+    window.dispatchEvent(
+      new CustomEvent("cart-item-added", {
+        detail: {
+          cart: normalized,
+          cartValue,
+          productId,
+          quantity,
+        },
+      })
+    );
+  }
+
+  return normalized;
 }
 
 export async function updateCartItemQuantity(

@@ -512,7 +512,7 @@ function Cart() {
   }, [coupon, netSubtotal]);
 
   const deliveryCharge =
-    selectedItems.length === 0 || subtotal >= 500 ? 0 : 1;
+    selectedItems.length === 0 || subtotal >= 399 ? 0 : 60;
 
   const total = Math.max(
     subtotal - comboDiscount - discount + deliveryCharge,

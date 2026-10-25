@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import ScrollToTop from './components/ScrollToTop.jsx';
 import Lenis from 'lenis';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AdminRoute from './components/AdminPanel/AdminRoute.jsx';
 import Home from './pages/Home.jsx';
@@ -147,9 +148,11 @@ function AppRoutes() {
 
 const App = () => (
   <Router>
-    {/* AuthProvider wraps everything so any child can call useAuth() */}
+    {/* AuthProvider & ToastProvider wrap everything so any child can call useAuth() and useToast() */}
     <AuthProvider>
-      <AppRoutes />
+      <ToastProvider>
+        <AppRoutes />
+      </ToastProvider>
     </AuthProvider>
   </Router>
 );
