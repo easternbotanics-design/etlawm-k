@@ -95,20 +95,24 @@ export default function AddToCartNumbers({
   buttonColor,
   color,
   compact = false,
+  className = "",
 }) {
   const activeColor = buttonColor || color || colours.green;
   const formattedCount = String(count).padStart(2, "0").slice(-2);
   const tens = formattedCount[0];
   const units = formattedCount[1];
 
+  const isFullWidth = className.includes("w-full");
+
   const buttonClass = compact
     ? "flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-md border transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shrink-0"
     : "flex h-10 w-10 items-center justify-center rounded-md border transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shrink-0";
 
-  const iconSize = compact ? "14" : "16";
   const containerClass = compact
-    ? "inline-flex h-8 items-center gap-1 sm:gap-1.5 rounded-full shrink-0"
-    : "inline-flex h-8 items-center gap-2 rounded-full shrink-0";
+    ? `${isFullWidth ? "w-full flex sm:w-auto sm:inline-flex justify-between sm:justify-start" : "inline-flex"} h-8 items-center gap-1 sm:gap-1.5 rounded-full ${className}`
+    : `${isFullWidth ? "w-full flex sm:w-auto sm:inline-flex justify-between sm:justify-start" : "inline-flex"} h-8 items-center gap-2 rounded-full ${className}`;
+
+  const iconClass = compact ? "w-4 h-4 sm:w-4.5 sm:h-4.5" : "w-5 h-5";
 
   return (
     <div className={containerClass}>
@@ -123,23 +127,22 @@ export default function AddToCartNumbers({
         aria-label="Decrease quantity"
       >
         <svg
-          width={iconSize}
-          height={iconSize}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
+          className={iconClass}
         >
           <path
-            d="M5 12H19"
+            d="M4 12H20"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.5"
             strokeLinecap="round"
           />
         </svg>
       </button>
 
       <div
-        className="flex h-8 items-center overflow-hidden shrink-0"
+        className={`${isFullWidth ? "flex-1 sm:flex-initial" : ""} flex h-8 items-center justify-center overflow-hidden shrink-0 px-1`}
         style={{
           fontFamily: fonts.title,
         }}
@@ -159,22 +162,21 @@ export default function AddToCartNumbers({
         aria-label="Increase quantity"
       >
         <svg
-          width={iconSize}
-          height={iconSize}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
+          className={iconClass}
         >
           <path
-            d="M12 5V19"
+            d="M12 4V20"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.5"
             strokeLinecap="round"
           />
           <path
-            d="M5 12H19"
+            d="M4 12H20"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.5"
             strokeLinecap="round"
           />
         </svg>

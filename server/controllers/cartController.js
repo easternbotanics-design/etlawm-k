@@ -191,7 +191,8 @@ const getCart = async (req, res) => {
       couponDiscount = Math.min(couponDiscount, netSubtotal);
     }
 
-    const total = Math.max(0, subtotal - comboDiscount - couponDiscount);
+    const deliveryCharge = items.length > 0 && subtotal < 399 ? 60 : 0;
+    const total = Math.max(0, subtotal - comboDiscount - couponDiscount + deliveryCharge);
 
     res.json({
       success: true,
@@ -206,6 +207,7 @@ const getCart = async (req, res) => {
         coupon: appliedCoupon,
         coupon_discount: couponDiscount,
         discount: comboDiscount + couponDiscount,
+        delivery_charge: deliveryCharge,
         total,
       },
     });
@@ -625,6 +627,8 @@ const applyCartCoupon = async (req, res) => {
       }
       discount = Math.min(discount, subtotal);
 
+      const deliveryCharge = items.length > 0 && subtotal < 399 ? 60 : 0;
+
       return res.json({
         success: true,
         cart: {
@@ -637,7 +641,8 @@ const applyCartCoupon = async (req, res) => {
           ),
           subtotal,
           discount,
-          total: subtotal - discount,
+          delivery_charge: deliveryCharge,
+          total: Math.max(0, subtotal - discount + deliveryCharge),
           coupon: {
             id: eb.id,
             code: eb.coupon_code,
@@ -698,6 +703,8 @@ const applyCartCoupon = async (req, res) => {
     });
     await db.earlyBirdDiscount.removeFromCart(cart.id);
 
+    const deliveryCharge = items.length > 0 && subtotal < 399 ? 60 : 0;
+
     return res.json({
       success: true,
       cart: {
@@ -711,7 +718,8 @@ const applyCartCoupon = async (req, res) => {
         ),
         subtotal,
         discount,
-        total: subtotal - discount,
+        delivery_charge: deliveryCharge,
+        total: Math.max(0, subtotal - discount + deliveryCharge),
         coupon: {
           id: coupon.id,
           code: coupon.code,
@@ -754,6 +762,8 @@ const removeCartCoupon = async (req, res) => {
       0,
     );
 
+    const deliveryCharge = items.length > 0 && subtotal < 399 ? 60 : 0;
+
     return res.json({
       success: true,
       cart: {
@@ -763,7 +773,8 @@ const removeCartCoupon = async (req, res) => {
         item_count: itemCount,
         subtotal,
         discount: 0,
-        total: subtotal,
+        delivery_charge: deliveryCharge,
+        total: subtotal + deliveryCharge,
         coupon: null,
       },
     });

@@ -1994,7 +1994,8 @@ const orders = {
                 }
             }
 
-            const finalTotal = Math.max(total - earlyBirdDiscountAmount, 0);
+            const deliveryCharge = (items.length > 0 && total < 399) ? 60 : 0;
+            const finalTotal = Math.max(total - earlyBirdDiscountAmount + deliveryCharge, 0);
 
             const { rows: [order] } = await client.query(
                 `INSERT INTO orders

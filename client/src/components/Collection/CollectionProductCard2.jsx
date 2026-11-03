@@ -60,25 +60,17 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
       <style>
         {`
           .collection-product-name {
-            position: relative;
-            display: inline-block;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-word;
           }
 
-          .collection-product-name::after {
-            content: "";
-            position: absolute;
-            left: 0;
-            bottom: -3px;
-            width: 100%;
-            height: 1px;
-            background: ${colours.text};
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 0.35s ease;
-          }
-
-          .collection-product-name-link:hover .collection-product-name::after {
-            transform: scaleX(1);
+          .collection-product-name-link:hover .collection-product-name {
+            text-decoration: underline;
+            text-underline-offset: 3px;
           }
         `}
       </style>
@@ -187,7 +179,7 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
             }}
           >
             <h3
-              className="collection-product-name"
+              className="collection-product-name line-clamp-2"
               style={{
                 margin: 0,
                 fontFamily: fonts.primary,
@@ -195,6 +187,12 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
                 fontWeight: 400,
                 lineHeight: 1.25,
                 letterSpacing: "0.01em",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                minHeight: "2.5em",
               }}
             >
               {product.name}
@@ -235,8 +233,8 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
             )}
           </div>
 
-          {/* Add to Cart Container with Mobile-Optimized Side-by-Side Quantity Counter */}
-          <div className="w-full mt-2 flex flex-row items-center justify-between gap-1.5 sm:gap-2">
+          {/* Add to Cart Container - Stacked on Mobile, Side-by-Side on Desktop */}
+          <div className="w-full mt-2 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2">
             {!isUnavailable && (
               <AddToCartNumbers
                 count={quantity}
@@ -250,6 +248,7 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
                 }}
                 buttonColor={buttonColor}
                 compact
+                className="w-full sm:w-auto"
               />
             )}
 
@@ -259,7 +258,7 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
               disabled={isAdding || isUnavailable}
               onMouseEnter={() => setButtonHovered(true)}
               onMouseLeave={() => setButtonHovered(false)}
-              className="flex-1 h-8 sm:h-9 px-2 sm:px-3 rounded-md text-[0.72rem] font-semibold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+              className="w-full sm:flex-1 h-8 sm:h-9 px-2 sm:px-3 rounded-md text-[0.72rem] font-semibold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
               style={{
                 fontFamily: fonts.secondary,
                 border: "none",
@@ -278,24 +277,18 @@ export default function CollectionProductCard({ product, buttonColor = colours.a
               }}
             >
               {isAdding ? (
-                <>
-                  <span className="hidden sm:inline">Adding...</span>
-                  <span className="sm:hidden">...</span>
-                </>
+                "Adding..."
               ) : added ? (
                 <>
                   <Check size={14} />
-                  <span className="hidden sm:inline">Added</span>
+                  <span>Added</span>
                 </>
               ) : isUnavailable ? (
-                <>
-                  <span className="hidden sm:inline">Out of Stock</span>
-                  <span className="sm:hidden text-[10px]">N/A</span>
-                </>
+                "Out of Stock"
               ) : (
                 <>
-                  <ShoppingBag size={15} className="sm:hidden" />
-                  <span className="hidden sm:inline">Add to Cart</span>
+                  <ShoppingBag size={14} className="sm:hidden" />
+                  <span>Add to Cart</span>
                 </>
               )}
             </button>
